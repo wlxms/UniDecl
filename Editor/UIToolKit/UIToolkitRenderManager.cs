@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using UnityEditor;
 using VisualElement = UnityEngine.UIElements.VisualElement;
 using UniDecl.Runtime.Contexts;
@@ -10,8 +9,6 @@ namespace UniDecl.Editor.UIToolkit
 {
     public class UIToolkitRenderManager : ElementRenderHost<VisualElement>
     {
-        private readonly Dictionary<IElement, VisualElement> _elementToVE = new();
-
         protected override void DiscoverRenderers()
         {
             RegisterRenderer<Label>(new UIToolkitLabelRenderer());
@@ -42,38 +39,16 @@ namespace UniDecl.Editor.UIToolkit
             return RenderElement(rootElement);
         }
 
-        protected override void OnElementRendered(IElement element, VisualElement ve)
-        {
-            if (element != null && ve != null)
-                _elementToVE[element] = ve;
-        }
-
         protected override void ScheduleFlush()
         {
             EditorApplication.delayCall += FlushPendingRebuilds;
         }
 
-        protected override void OnAfterRebuild(IElement element)
+        protected override void OnRenderResultChanged(IElement element, VisualElement oldVE, VisualElement newVE)
         {
-            if (element == null) return;
-
-            // 先保存旧 VE 引用（RenderElement 内部的 OnElementRendered 会覆盖 _elementToVE）
-            _elementToVE.TryGetValue(element, out var oldVE);
-
-            // 清除被移除节点的缓存映射
-            RemoveStaleMappings();
-
-            // 重新渲染目标元素（RenderElement 内部会走 Update 复用路径）
-            var newVE = RenderElement(element);
-            if (newVE == null) return;
-
-            // 首次渲染，无需替换
-            if (oldVE == null) return;
-
-            // VE 复用，无需替换
+            if (oldVE == null || newVE == null) return;
             if (ReferenceEquals(oldVE, newVE)) return;
 
-            // VE 引用变了，需要在 VE 树中替换
             var parentVE = oldVE.parent;
             if (parentVE == null) return;
 
@@ -83,18 +58,6 @@ namespace UniDecl.Editor.UIToolkit
                 parentVE.Insert(index, newVE);
             else
                 parentVE.Add(newVE);
-        }
-
-        private void RemoveStaleMappings()
-        {
-            var toRemove = new List<IElement>();
-            foreach (var kv in _elementToVE)
-            {
-                if (DOMTree.GetNode(kv.Key) == null)
-                    toRemove.Add(kv.Key);
-            }
-            foreach (var e in toRemove)
-                _elementToVE.Remove(e);
         }
     }
 }

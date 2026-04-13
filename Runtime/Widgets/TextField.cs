@@ -11,7 +11,7 @@ namespace UniDecl.Runtime.Widgets
         public bool IsMultiline { get; set; }
         public bool IsReadOnly { get; set; }
         public int MaxLength { get; set; } = -1;
-        public bool IsDelayed { get; set; }
+        public bool IsDelayed { get; set; } = true;
         public Action<string, string> OnValueChange { get; set; }
         public Action<string> OnCommit { get; set; }
 

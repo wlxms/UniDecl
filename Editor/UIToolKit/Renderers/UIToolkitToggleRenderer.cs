@@ -4,7 +4,8 @@ using W = UniDecl.Runtime.Widgets;
 
 namespace UniDecl.Editor.UIToolkit.Renderers
 {
-    public class UIToolkitToggleRenderer : IElementRenderer<W.Toggle, VisualElement>, IElementUpdater<W.Toggle, VisualElement>
+    public class UIToolkitToggleRenderer : IElementRenderer<W.Toggle, VisualElement>,
+        IElementUpdater<VisualElement>, IElementUpdater<W.Toggle, VisualElement>
     {
         public VisualElement Render(W.Toggle element, IElementRenderHost<VisualElement> manager, ElementState state)
         {
@@ -15,7 +16,7 @@ namespace UniDecl.Editor.UIToolkit.Renderers
             return toggle;
         }
 
-        public bool Update(W.Toggle element, VisualElement existing, IElementRenderHost<VisualElement> manager, ElementState state)
+        public bool TryUpdate(W.Toggle element, VisualElement existing, IElementRenderHost<VisualElement> manager, ElementState state)
         {
             if (existing is UnityEngine.UIElements.Toggle ve)
             {
@@ -25,6 +26,9 @@ namespace UniDecl.Editor.UIToolkit.Renderers
             }
             return false;
         }
+
+        public bool TryUpdate(IElement element, VisualElement existing, IElementRenderHost<VisualElement> manager, ElementState state)
+            => element is W.Toggle toggle && TryUpdate(toggle, existing, manager, state);
 
         private static void RegisterToggleCallbacks(UnityEngine.UIElements.Toggle toggle, W.Toggle element, IElementRenderHost<VisualElement> manager)
         {

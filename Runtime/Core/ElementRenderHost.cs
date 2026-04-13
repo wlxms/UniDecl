@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace UniDecl.Runtime.Core
 {
@@ -19,9 +20,15 @@ namespace UniDecl.Runtime.Core
         private readonly HashSet<IElement> _rebuiltThisFlush = new HashSet<IElement>();
         private bool _flushScheduled;
 
+        /// <summary>
+        /// 重建性能监控开关。开启后会在关键重建路径分发 RebuildPerformanceEvent。
+        /// </summary>
+        public bool EnableRebuildPerformanceMonitoring { get; set; }
+
         protected ContextStack ContextStack => _contextStack;
         protected StateStack StateStack => _stateStack;
-        protected DOMTree DOMTree => _domTree;
+        protected virtual DOMTree ActiveDOMTree => _domTree;
+        protected DOMTree DOMTree => ActiveDOMTree;
 
         // ---- IEventDispatcher ----
 
@@ -44,14 +51,51 @@ namespace UniDecl.Runtime.Core
             EnsureInitialized();
             if (element == null) return;
 
+            long totalStart = 0;
+            long buildStart = 0;
+            long buildEnd = 0;
+            long afterEnd = 0;
+
+            if (EnableRebuildPerformanceMonitoring)
+            {
+                totalStart = Stopwatch.GetTimestamp();
+            }
+
             try
             {
                 EnsureRootStateManager();
                 BeginBuildFrame();
                 PushRootState();
 
-                _domTree.Build(element, this, GetRendererForBuild, _contextStack, _stateStack);
+                if (EnableRebuildPerformanceMonitoring)
+                {
+                    buildStart = Stopwatch.GetTimestamp();
+                }
+
+                ActiveDOMTree.Build(element, this, GetRendererForBuild, _contextStack, _stateStack);
+
+                if (EnableRebuildPerformanceMonitoring)
+                {
+                    buildEnd = Stopwatch.GetTimestamp();
+                }
+
                 OnBuildDOMComplete();
+
+                if (EnableRebuildPerformanceMonitoring)
+                {
+                    afterEnd = Stopwatch.GetTimestamp();
+
+                    var evt = new RebuildPerformanceEvent
+                    {
+                        Element = element,
+                        Trigger = RebuildTrigger.FullRebuild,
+                        BeforeRebuildMs = 0,
+                        DomRebuildMs = ElapsedMs(buildStart, buildEnd),
+                        AfterRebuildMs = ElapsedMs(buildEnd, afterEnd),
+                        TotalMs = ElapsedMs(totalStart, afterEnd),
+                    };
+                    OnRebuildPerformanceMeasured(evt);
+                }
             }
             finally
             {
@@ -92,11 +136,12 @@ namespace UniDecl.Runtime.Core
         {
             if (@event.Element != null)
             {
-                _domTree.RebuildNode(@event.Element);
+                RebuildWithProfiling(@event.Element, RebuildTrigger.Immediate);
                 _rebuiltThisFlush.Add(@event.Element);
-                OnAfterRebuild(@event.Element);
             }
         }
+
+        protected virtual void OnBeforeRebuild(IElement element) { }
 
         /// <summary>
         /// Rebuild 后回调，子类可 override 执行后置逻辑（如 VisualElement 同步）
@@ -108,9 +153,9 @@ namespace UniDecl.Runtime.Core
         void IEventListener<AutoRebuildRequestEvent>.OnEvent(AutoRebuildRequestEvent @event)
         {
             if (@event.Element == null) return;
-            var node = _domTree.GetNode(@event.Element);
+            var node = ActiveDOMTree.GetNode(@event.Element);
             if (node == null) return;
-            var target = _domTree.FindRebuildTarget(node);
+            var target = ActiveDOMTree.FindRebuildTarget(node);
             if (target == null) return;
 
             _pendingRebuilds.Add(target);
@@ -131,8 +176,7 @@ namespace UniDecl.Runtime.Core
             {
                 if (!_rebuiltThisFlush.Contains(element))
                 {
-                    _domTree.RebuildNode(element);
-                    OnAfterRebuild(element);
+                    RebuildWithProfiling(element, RebuildTrigger.DeferredFlush);
                 }
             }
             _pendingRebuilds.Clear();
@@ -157,7 +201,7 @@ namespace UniDecl.Runtime.Core
 
         public object GetElementState(IElement element)
         {
-            var node = _domTree.GetNode(element);
+            var node = ActiveDOMTree.GetNode(element);
             return node?.State?.Value;
         }
 
@@ -192,6 +236,48 @@ namespace UniDecl.Runtime.Core
         protected abstract void DiscoverRenderers();
         protected abstract IElementRender GetRendererForBuild(IElement element);
         protected virtual void OnRendererError(Exception ex, IElement element) { }
+
+        protected virtual void OnRebuildPerformanceMeasured(RebuildPerformanceEvent @event)
+        {
+            Dispatch(@event);
+        }
+
+        private void RebuildWithProfiling(IElement element, RebuildTrigger trigger)
+        {
+            if (element == null) return;
+
+            if (!EnableRebuildPerformanceMonitoring)
+            {
+                OnBeforeRebuild(element);
+                ActiveDOMTree.RebuildNode(element);
+                OnAfterRebuild(element);
+                return;
+            }
+
+            var t0 = Stopwatch.GetTimestamp();
+            OnBeforeRebuild(element);
+            var t1 = Stopwatch.GetTimestamp();
+            ActiveDOMTree.RebuildNode(element);
+            var t2 = Stopwatch.GetTimestamp();
+            OnAfterRebuild(element);
+            var t3 = Stopwatch.GetTimestamp();
+
+            var evt = new RebuildPerformanceEvent
+            {
+                Element = element,
+                Trigger = trigger,
+                BeforeRebuildMs = ElapsedMs(t0, t1),
+                DomRebuildMs = ElapsedMs(t1, t2),
+                AfterRebuildMs = ElapsedMs(t2, t3),
+                TotalMs = ElapsedMs(t0, t3),
+            };
+            OnRebuildPerformanceMeasured(evt);
+        }
+
+        private static double ElapsedMs(long start, long end)
+        {
+            return (end - start) * 1000.0 / Stopwatch.Frequency;
+        }
     }
 
     /// <summary>
@@ -313,7 +399,10 @@ namespace UniDecl.Runtime.Core
     {
         private readonly Dictionary<Type, IElementRender<TRenderResult>> _typedRenderers =
             new Dictionary<Type, IElementRender<TRenderResult>>();
-        private readonly Dictionary<DOMNode, TRenderResult> _renderCache = new();
+        private readonly DOMTree<TRenderResult> _typedDomTree = new DOMTree<TRenderResult>();
+        private readonly Dictionary<IElement, (bool hasValue, TRenderResult value)> _preRebuildResults = new();
+
+        protected override DOMTree ActiveDOMTree => _typedDomTree;
 
         /// <summary>
         /// 注册泛型渲染器
@@ -346,13 +435,13 @@ namespace UniDecl.Runtime.Core
 
         /// <summary>
         /// 渲染指定元素，返回 TRenderResult（供泛型渲染器回调，递归渲染子节点）
-        /// diff 模式下：优先尝试 IElementUpdater 增量更新，失败则完全渲染
+        /// diff 模式下：优先尝试 IElementUpdater.TryUpdate 增量更新，失败则完全渲染
         /// </summary>
         public TRenderResult RenderElement(IElement element)
         {
             if (element == null) return default;
 
-            var node = DOMTree.GetNode(element);
+            var node = _typedDomTree.GetNode(element);
             if (node == null) return default;
 
             var pushedContext = PushNodeContext(node);
@@ -361,21 +450,17 @@ namespace UniDecl.Runtime.Core
                 var typedRenderer = GetTypedRenderer(element);
                 if (typedRenderer != null)
                 {
-                    // 复用路径：查缓存 + 尝试 Update
-                    if (TryGetCachedRender(node, out var cached))
+                    // 复用路径：节点缓存 + 尝试 TryUpdate
+                    if (node.HasRenderResult
+                        && typedRenderer is IElementUpdater<TRenderResult> updater
+                        && updater.TryUpdate(element, node.RenderResult, this, node.State))
                     {
-                        if (typedRenderer is IElementUpdater<IElement, TRenderResult> updater
-                            && updater.Update(element, cached, this, node.State))
-                        {
-                            return cached;
-                        }
-                        // Update 失败或渲染器不支持 Update，清除旧缓存
-                        RemoveCachedRender(node);
+                        return node.RenderResult;
                     }
 
                     // 完全渲染
                     var result = typedRenderer.Render(element, this, node.State);
-                    OnElementRendered(element, result);
+                    node.RenderResult = result;
                     return result;
                 }
 
@@ -383,10 +468,11 @@ namespace UniDecl.Runtime.Core
                 if (node.Children != null && node.Children.Count > 0 && node.Children[0]?.Element != null)
                 {
                     var result = RenderElement(node.Children[0].Element);
-                    OnElementRendered(element, result);
+                    node.RenderResult = result;
                     return result;
                 }
 
+                node.ClearRenderResult();
                 return default;
             }
             catch (Exception ex)
@@ -400,7 +486,7 @@ namespace UniDecl.Runtime.Core
             }
         }
 
-        protected override void OnBuildDOMComplete() => ClearRenderCache();
+        protected override void OnBuildDOMComplete() { }
 
         /// <summary>
         /// 基于 DOM 树进行实际渲染，返回根节点的渲染结果
@@ -424,34 +510,36 @@ namespace UniDecl.Runtime.Core
 
         protected override void ScheduleFlush() => FlushPendingRebuilds();
 
-        /// <summary>
-        /// RenderElement 返回渲染结果后回调，自动写入渲染缓存
-        /// </summary>
-        protected virtual void OnElementRendered(IElement element, TRenderResult result)
+        protected override void OnBeforeRebuild(IElement element)
         {
-            if (result != null)
+            if (element == null) return;
+
+            var node = _typedDomTree.GetNode(element);
+            if (node != null && node.HasRenderResult)
             {
-                var node = DOMTree.GetNode(element);
-                if (node != null)
-                    _renderCache[node] = result;
+                _preRebuildResults[element] = (true, node.RenderResult);
+                return;
             }
+
+            _preRebuildResults[element] = (false, default);
         }
 
-        /// <summary>
-        /// 获取指定 DOMNode 的缓存渲染结果
-        /// </summary>
-        protected bool TryGetCachedRender(DOMNode node, out TRenderResult result)
-            => _renderCache.TryGetValue(node, out result);
+        protected override void OnAfterRebuild(IElement element)
+        {
+            if (element == null) return;
 
-        /// <summary>
-        /// 移除指定 DOMNode 的缓存渲染结果
-        /// </summary>
-        protected void RemoveCachedRender(DOMNode node) => _renderCache.Remove(node);
+            _preRebuildResults.TryGetValue(element, out var old);
+            _preRebuildResults.Remove(element);
 
-        /// <summary>
-        /// 清除所有缓存渲染结果
-        /// </summary>
-        protected void ClearRenderCache() => _renderCache.Clear();
+            var newResult = RenderElement(element);
+            var newNode = _typedDomTree.GetNode(element);
+            var hasNew = newNode != null && newNode.HasRenderResult;
+
+            if (old.hasValue && hasNew && !EqualityComparer<TRenderResult>.Default.Equals(old.value, newResult))
+                OnRenderResultChanged(element, old.value, newResult);
+        }
+
+        protected virtual void OnRenderResultChanged(IElement element, TRenderResult oldResult, TRenderResult newResult) { }
 
         /// <summary>
         /// 同步容器的 VE 子节点，根据 DOMNode 子列表变化增删 VE
@@ -460,7 +548,7 @@ namespace UniDecl.Runtime.Core
         protected void SyncChildren<TContainer>(TContainer containerElement, Action<TRenderResult> add,
             Action<TRenderResult> remove) where TContainer : IContainerElement
         {
-            var node = DOMTree.GetNode(containerElement);
+            var node = _typedDomTree.GetNode(containerElement);
             if (node == null) return;
 
             foreach (var childNode in node.Children)

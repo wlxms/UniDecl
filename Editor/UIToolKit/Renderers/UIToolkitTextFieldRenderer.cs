@@ -28,11 +28,19 @@ namespace UniDecl.Editor.UIToolkit.Renderers
                 element.Value = evt.newValue;
                 element.OnValueChange?.Invoke(evt.newValue, evt.previousValue);
                 manager.Dispatch(new TextFieldChangeEvent(element, evt.newValue, evt.previousValue));
+
+                // 非 delayed 模式下，输入变更即触发增量重建
+                if (!element.IsDelayed)
+                    element.NotifyChanged();
             });
-textField.RegisterCallback<BlurEvent>(_ =>
+
+            textField.RegisterCallback<BlurEvent>(_ =>
             {
                 element.OnCommit?.Invoke(element.Value);
-                element.NotifyChanged();
+
+                // delayed 模式下沿用提交触发重建
+                if (element.IsDelayed)
+                    element.NotifyChanged();
             });
 
             if (!element.IsMultiline && !element.IsPassword)
@@ -42,7 +50,9 @@ textField.RegisterCallback<BlurEvent>(_ =>
                     if (e.keyCode == KeyCode.Return || e.keyCode == KeyCode.KeypadEnter)
                     {
                         element.OnCommit?.Invoke(element.Value);
-                        element.NotifyChanged();
+
+                        if (element.IsDelayed)
+                            element.NotifyChanged();
                     }
                 });
             }

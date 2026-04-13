@@ -43,8 +43,18 @@ namespace UniDecl.Runtime.Core
             Clear();
             if (element == null) return;
 
-            Root = new DOMNode();
+            Root = CreateRootNode();
             BuildElement(element, Root);
+        }
+
+        protected virtual DOMNode CreateRootNode()
+        {
+            return new DOMNode();
+        }
+
+        protected virtual DOMNode CreateDOMNode()
+        {
+            return new DOMNode();
         }
 
         // ==== 核心构建逻辑 ====
@@ -195,14 +205,12 @@ namespace UniDecl.Runtime.Core
         /// <summary>
         /// 创建节点并添加到父节点
         /// </summary>
-        private DOMNode CreateNode(IElement element, DOMNode parent)
+        protected virtual DOMNode CreateNode(IElement element, DOMNode parent)
         {
-            var node = new DOMNode
-            {
-                Element = element,
-                Renderer = _getRenderer(element),
-                Parent = parent
-            };
+            var node = CreateDOMNode();
+            node.Element = element;
+            node.Renderer = _getRenderer(element);
+            node.Parent = parent;
 
             parent.Children.Add(node);
             _allNodes.Add(node);
@@ -656,6 +664,24 @@ namespace UniDecl.Runtime.Core
             _allNodes.Clear();
             _elementToNode.Clear();
             _containerStateManagers.Clear();
+        }
+    }
+
+    public class DOMTree<TRenderResult> : DOMTree
+    {
+        protected override DOMNode CreateRootNode()
+        {
+            return new DOMNode<TRenderResult>();
+        }
+
+        protected override DOMNode CreateDOMNode()
+        {
+            return new DOMNode<TRenderResult>();
+        }
+
+        public new DOMNode<TRenderResult> GetNode(IElement element)
+        {
+            return base.GetNode(element) as DOMNode<TRenderResult>;
         }
     }
 }
