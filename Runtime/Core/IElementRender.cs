@@ -56,19 +56,13 @@ namespace UniDecl.Runtime.Core
     // ==== Updater 接口（diff 模式增量更新）====
 
     /// <summary>
-    /// 增量更新器接口（类型擦除，预留）
+    /// 泛型增量更新器接口（类型擦除）
+    /// 供渲染管线在不知道具体 TElement 时调用
     /// </summary>
-    public interface IElementUpdater
+    public interface IElementUpdater<TRenderResult>
     {
-        bool Update(IElement element, IElementRenderHost manager, ElementState state);
-    }
-
-    /// <summary>
-    /// 带元素类型的增量更新器（预留）
-    /// </summary>
-    public interface IElementUpdater<TElement> : IElementUpdater where TElement : IElement
-    {
-        bool Update(TElement element, IElementRenderHost manager, ElementState state);
+        bool TryUpdate(IElement element, TRenderResult existing,
+            IElementRenderHost<TRenderResult> manager, ElementState state);
     }
 
     /// <summary>
@@ -76,9 +70,9 @@ namespace UniDecl.Runtime.Core
     /// Renderer 可同时实现此接口，在 diff 模式下复用已有渲染结果
     /// 返回 true 表示成功复用，返回 false 则框架回退到 Render()
     /// </summary>
-    public interface IElementUpdater<TElement, TRenderResult> where TElement : IElement
+    public interface IElementUpdater<TElement, TRenderResult> : IElementUpdater<TRenderResult> where TElement : IElement
     {
-        bool Update(TElement element, TRenderResult existing,
+        bool TryUpdate(TElement element, TRenderResult existing,
             IElementRenderHost<TRenderResult> manager, ElementState state);
     }
 }

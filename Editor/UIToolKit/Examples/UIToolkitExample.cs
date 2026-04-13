@@ -54,12 +54,21 @@ namespace UniDecl.Editor.UIToolKit.Examples
         public class TabState
         {
             public int CurrentTab;
+            public string InputText = "默认文本";
+            public string PasswordText = string.Empty;
+            public string MultilineText = "多行\n输入";
+            public int IntegerValue = 42;
+            public float FloatValue = 3.14f;
+            public int DropdownIndex;
+            public int EnumValue;
         }
 
         private static readonly string[] TabNames =
         {
             "基础控件", "输入控件", "滑动与颜色", "布局容器", "进度与状态"
         };
+
+        private static readonly string[] DropdownChoices = { "选项 A", "选项 B", "选项 C", "选项 D" };
 
         public override TabState BuildState() => new TabState();
 
@@ -79,7 +88,7 @@ namespace UniDecl.Editor.UIToolKit.Examples
             IElement content = state.CurrentTab switch
             {
                 0 => BuildBasicControlsTab(),
-                1 => BuildInputControlsTab(),
+                1 => BuildInputControlsTab(state),
                 2 => BuildSliderColorTab(),
                 3 => BuildLayoutTab(),
                 4 => BuildProgressStateTab(),
@@ -114,26 +123,63 @@ namespace UniDecl.Editor.UIToolKit.Examples
         }
 
         // === Tab 2: 输入控件 ===
-        private static Panel BuildInputControlsTab()
+        private static Panel BuildInputControlsTab(TabState state)
         {
+            var textField = new TextField(state.InputText, "请输入...")
+            {
+                OnValueChange = (next, _) => state.InputText = next,
+            };
+
+            var passwordField = new TextField(state.PasswordText, "密码框")
+            {
+                IsPassword = true,
+                OnValueChange = (next, _) => state.PasswordText = next,
+            };
+
+            var multilineField = new TextField(state.MultilineText, "")
+            {
+                IsMultiline = true,
+                OnValueChange = (next, _) => state.MultilineText = next,
+            };
+
+            var integerField = new IntegerField(state.IntegerValue)
+            {
+                OnValueChanged = (next, _) => state.IntegerValue = next,
+            };
+
+            var floatField = new FloatField(state.FloatValue)
+            {
+                OnValueChanged = (next, _) => state.FloatValue = next,
+            };
+
+            var dropdown = new W.Dropdown("选择项目", DropdownChoices, state.DropdownIndex)
+            {
+                OnSelectionChanged = idx => state.DropdownIndex = idx,
+            };
+
+            var enumField = new W.EnumField("日志级别", typeof(LogType), state.EnumValue)
+            {
+                OnValueChanged = value => state.EnumValue = value,
+            };
+
             return new Panel
             {
                 new Label("--- TextField 文本输入 ---"),
-                new TextField("默认文本", "请输入..."),
-                new TextField("", "密码框") { IsPassword = true },
-                new TextField("多行\n输入", "") { IsMultiline = true },
+                textField,
+                passwordField,
+                multilineField,
                 new Label(""),
                 new Label("--- IntegerField 整数输入 ---"),
-                new IntegerField(42),
+                integerField,
                 new Label(""),
                 new Label("--- FloatField 浮点输入 ---"),
-                new FloatField(3.14f),
+                floatField,
                 new Label(""),
                 new Label("--- Dropdown 下拉选择 ---"),
-                new W.Dropdown("选择项目", new[] { "选项 A", "选项 B", "选项 C", "选项 D" }, 0),
+                dropdown,
                 new Label(""),
                 new Label("--- EnumField 枚举选择 ---"),
-                new W.EnumField("日志级别", typeof(LogType), 0),
+                enumField,
             };
         }
 
@@ -229,8 +275,19 @@ namespace UniDecl.Editor.UIToolKit.Examples
         }
     }
 
-    public class UIToolkitExample : EditorWindow
+    public class UIToolkitExample : EditorWindow, IEventListener<RebuildPerformanceEvent>
     {
+        private UIToolkitRenderManager _manager;
+
+        public void OnEvent(RebuildPerformanceEvent @event)
+        {
+            var elementName = @event.Element?.GetType().Name ?? "<null>";
+            Debug.Log(
+                $"[UniDecl][RebuildPerf] Trigger={@event.Trigger}, Element={elementName}, " +
+                $"Before={@event.BeforeRebuildMs:F3}ms, DOM={@event.DomRebuildMs:F3}ms, " +
+                $"After={@event.AfterRebuildMs:F3}ms, Total={@event.TotalMs:F3}ms");
+        }
+
         [MenuItem("Window/UniDecl UIToolkit Example")]
         public static void ShowWindow()
         {
@@ -239,9 +296,12 @@ namespace UniDecl.Editor.UIToolKit.Examples
 
         public void CreateGUI()
         {
-            var manager = new UIToolkitRenderManager();
+            _manager = new UIToolkitRenderManager();
+            _manager.EnableRebuildPerformanceMonitoring = true;
+            _manager.Subscribe(this);
+
             var root = new Panel { new TabContentElement() };
-            var ve = manager.RenderRoot(root);
+            var ve = _manager.RenderRoot(root);
             if (ve != null)
                 rootVisualElement.Add(ve);
         }

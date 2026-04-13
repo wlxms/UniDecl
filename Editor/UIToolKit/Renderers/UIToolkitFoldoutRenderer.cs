@@ -4,7 +4,8 @@ using W = UniDecl.Runtime.Widgets;
 
 namespace UniDecl.Editor.UIToolkit.Renderers
 {
-    public class UIToolkitFoldoutRenderer : IElementRenderer<W.Foldout, VisualElement>, IElementUpdater<W.Foldout, VisualElement>
+    public class UIToolkitFoldoutRenderer : IElementRenderer<W.Foldout, VisualElement>,
+        IElementUpdater<VisualElement>, IElementUpdater<W.Foldout, VisualElement>
     {
         public VisualElement Render(W.Foldout element, IElementRenderHost<VisualElement> manager, ElementState state)
         {
@@ -26,7 +27,7 @@ namespace UniDecl.Editor.UIToolkit.Renderers
             return foldout;
         }
 
-        public bool Update(W.Foldout element, VisualElement existing, IElementRenderHost<VisualElement> manager, ElementState state)
+        public bool TryUpdate(W.Foldout element, VisualElement existing, IElementRenderHost<VisualElement> manager, ElementState state)
         {
             if (existing is UnityEngine.UIElements.Foldout ve)
             {
@@ -36,5 +37,8 @@ namespace UniDecl.Editor.UIToolkit.Renderers
             }
             return false;
         }
+
+        public bool TryUpdate(IElement element, VisualElement existing, IElementRenderHost<VisualElement> manager, ElementState state)
+            => element is W.Foldout foldout && TryUpdate(foldout, existing, manager, state);
     }
 }

@@ -4,7 +4,8 @@ using W = UniDecl.Runtime.Widgets;
 
 namespace UniDecl.Editor.UIToolkit.Renderers
 {
-    public class UIToolkitLabelRenderer : IElementRenderer<W.Label, VisualElement>, IElementUpdater<W.Label, VisualElement>
+    public class UIToolkitLabelRenderer : IElementRenderer<W.Label, VisualElement>,
+        IElementUpdater<VisualElement>, IElementUpdater<W.Label, VisualElement>
     {
         public VisualElement Render(W.Label element, IElementRenderHost<VisualElement> manager, ElementState state)
         {
@@ -16,7 +17,7 @@ namespace UniDecl.Editor.UIToolkit.Renderers
             };
         }
 
-        public bool Update(W.Label element, VisualElement existing, IElementRenderHost<VisualElement> manager, ElementState state)
+        public bool TryUpdate(W.Label element, VisualElement existing, IElementRenderHost<VisualElement> manager, ElementState state)
         {
             if (existing is Label ve)
             {
@@ -27,5 +28,8 @@ namespace UniDecl.Editor.UIToolkit.Renderers
             }
             return false;
         }
+
+        public bool TryUpdate(IElement element, VisualElement existing, IElementRenderHost<VisualElement> manager, ElementState state)
+            => element is W.Label label && TryUpdate(label, existing, manager, state);
     }
 }

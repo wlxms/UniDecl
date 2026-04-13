@@ -50,4 +50,28 @@ namespace UniDecl.Runtime.Core
         /// </summary>
         public Type ContextType { get; set; }
     }
+
+    public class DOMNode<TRenderResult> : DOMNode
+    {
+        private bool _hasRenderResult;
+        private TRenderResult _renderResult;
+
+        public bool HasRenderResult => _hasRenderResult;
+
+        public TRenderResult RenderResult
+        {
+            get => _renderResult;
+            set
+            {
+                _renderResult = value;
+                _hasRenderResult = true;
+            }
+        }
+
+        public void ClearRenderResult()
+        {
+            _renderResult = default;
+            _hasRenderResult = false;
+        }
+    }
 }
