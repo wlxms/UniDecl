@@ -668,3 +668,146 @@
     background-color: rgba(10, 133, 255, 0.08);
     color: #E0E0E0;
 }
+
+/* ============================================================
+   MD Headings (H1–H6)
+   ============================================================ */
+
+.ud-heading,
+.ue5-heading {
+    -unity-font-style: bold;
+    margin-top: 6px;
+    margin-bottom: 4px;
+}
+
+.ud-h1,
+.ue5-h1 {
+    font-size: 28px;
+    color: #FFFFFF;
+    margin-top: 10px;
+    margin-bottom: 6px;
+    padding-bottom: 4px;
+    border-bottom-width: 1px;
+    border-bottom-color: rgba(10, 133, 255, 0.3);
+}
+
+.ud-h2,
+.ue5-h2 {
+    font-size: 22px;
+    color: #F2F2F2;
+    margin-top: 8px;
+    margin-bottom: 5px;
+    padding-bottom: 3px;
+    border-bottom-width: 1px;
+    border-bottom-color: rgba(255, 255, 255, 0.1);
+}
+
+.ud-h3,
+.ue5-h3 {
+    font-size: 18px;
+    color: #EBEBEB;
+    margin-top: 6px;
+    margin-bottom: 4px;
+}
+
+.ud-h4,
+.ue5-h4 {
+    font-size: 15px;
+    color: #E0E0E0;
+    margin-top: 5px;
+    margin-bottom: 3px;
+}
+
+.ud-h5,
+.ue5-h5 {
+    font-size: 13px;
+    color: #D8D8D8;
+    margin-top: 4px;
+    margin-bottom: 2px;
+}
+
+.ud-h6,
+.ue5-h6 {
+    font-size: 12px;
+    color: #C8C8C8;
+    margin-top: 4px;
+    margin-bottom: 2px;
+}
+
+/* ============================================================
+   TocView — Table of Contents / Left Navigation Sidebar
+   ============================================================ */
+
+.ud-toc-view,
+.ue5-toc-view {
+    flex-direction: column;
+    background-color: #1E1E1E;
+    border-width: 1px;
+    border-color: #3A3A3A;
+    border-radius: 2px;
+    padding: 4px 0;
+}
+
+.ud-toc-item,
+.ue5-toc-item {
+    flex-direction: row;
+    align-items: center;
+    padding-top: 4px;
+    padding-bottom: 4px;
+    padding-right: 8px;
+}
+
+.ud-toc-item-label,
+.ue5-toc-item-label {
+    font-size: 12px;
+    color: #B0B0B0;
+    flex-grow: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ud-toc-item--l1 > .ud-toc-item-label,
+.ue5-toc-item--l1 > .ue5-toc-item-label {
+    -unity-font-style: bold;
+    color: #E8E8E8;
+}
+
+.ud-toc-item--l2 > .ud-toc-item-label,
+.ue5-toc-item--l2 > .ue5-toc-item-label {
+    color: #D0D0D0;
+}
+
+.ud-toc-item--l3 > .ud-toc-item-label,
+.ud-toc-item--l4 > .ud-toc-item-label,
+.ud-toc-item--l5 > .ud-toc-item-label,
+.ud-toc-item--l6 > .ud-toc-item-label,
+.ue5-toc-item--l3 > .ue5-toc-item-label,
+.ue5-toc-item--l4 > .ue5-toc-item-label,
+.ue5-toc-item--l5 > .ue5-toc-item-label,
+.ue5-toc-item--l6 > .ue5-toc-item-label {
+    color: #9A9A9A;
+    font-size: 11px;
+}
+
+.ud-toc-item--clickable,
+.ue5-toc-item--clickable {
+    cursor: link;
+}
+
+.ud-toc-item--clickable:hover,
+.ue5-toc-item--clickable:hover {
+    background-color: rgba(10, 133, 255, 0.1);
+}
+
+.ud-toc-item--selected,
+.ue5-toc-item--selected {
+    background-color: rgba(10, 133, 255, 0.18);
+    border-left-width: 3px;
+    border-left-color: #0A85FF;
+}
+
+.ud-toc-item--selected > .ud-toc-item-label,
+.ue5-toc-item--selected > .ue5-toc-item-label {
+    color: #7FBFFF;
+}

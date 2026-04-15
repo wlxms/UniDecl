@@ -67,7 +67,7 @@ namespace UniDecl.Editor.UIToolKit.Examples
         private static readonly string[] TabNames =
         {
             "基础控件", "输入控件", "滑动与颜色", "布局容器", "进度与状态",
-            "引用与资源", "向量与曲线", "Toolbar与工具"
+            "引用与资源", "向量与曲线", "Toolbar与工具", "MD 控件"
         };
 
         private static readonly string[] DropdownChoices = { "选项 A", "选项 B", "选项 C", "选项 D" };
@@ -97,6 +97,7 @@ namespace UniDecl.Editor.UIToolKit.Examples
                 5 => BuildResourceRefTab(),
                 6 => BuildVectorCurveTab(),
                 7 => BuildToolbarToolTab(),
+                8 => BuildMarkdownTab(),
                 _ => new Label("未知"),
             };
 
@@ -417,6 +418,38 @@ namespace UniDecl.Editor.UIToolKit.Examples
                     if (GUILayout.Button("IMGUI 按钮"))
                         Debug.Log("IMGUI Button clicked");
                 }),
+            };
+        }
+
+        // === Tab 9: MD 控件 ===
+        private static Panel BuildMarkdownTab()
+        {
+            var toc = new W.TocView(new[]
+            {
+                new W.TocEntry("文档标题", 1),
+                new W.TocEntry("简介", 2),
+                new W.TocEntry("快速开始", 2),
+                new W.TocEntry("安装", 3),
+                new W.TocEntry("配置", 3),
+                new W.TocEntry("进阶用法", 2),
+                new W.TocEntry("自定义样式", 3),
+                new W.TocEntry("事件回调", 3),
+                new W.TocEntry("注意事项", 4),
+                new W.TocEntry("API 参考", 2),
+            });
+
+            return new Panel
+            {
+                new Label("--- 标题控件 H1–H6 ---"),
+                new H1("H1 文档标题"),
+                new H2("H2 章节标题"),
+                new H3("H3 小节标题"),
+                new H4("H4 细节标题"),
+                new H5("H5 补充说明"),
+                new H6("H6 脚注级标题"),
+                new Label(""),
+                new Label("--- TocView 目录导航栏 ---"),
+                toc,
             };
         }
     }
