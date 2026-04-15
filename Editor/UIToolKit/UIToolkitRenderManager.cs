@@ -89,6 +89,14 @@ namespace UniDecl.Editor.UIToolkit
             RegisterRenderer<SliderInt>(new UIToolkitSliderIntRenderer());
             RegisterRenderer<DoubleField>(new UIToolkitDoubleFieldRenderer());
             RegisterRenderer<LongField>(new UIToolkitLongFieldRenderer());
+            // MD: 标题控件 H1–H6 与目录导航栏 TocView
+            RegisterRenderer<H1>(new UIToolkitH1Renderer());
+            RegisterRenderer<H2>(new UIToolkitH2Renderer());
+            RegisterRenderer<H3>(new UIToolkitH3Renderer());
+            RegisterRenderer<H4>(new UIToolkitH4Renderer());
+            RegisterRenderer<H5>(new UIToolkitH5Renderer());
+            RegisterRenderer<H6>(new UIToolkitH6Renderer());
+            RegisterRenderer<TocView>(new UIToolkitTocViewRenderer());
         }
 
         public VisualElement RenderRoot(IElement rootElement)

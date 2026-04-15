@@ -75,6 +75,7 @@ namespace UniDecl.Editor.UIToolKit.Examples
                 BuildLayoutSection(),
                 BuildHelpBoxSection(),
                 BuildToolbarSection(),
+                BuildMarkdownSection(),
             };
 
             var root = new Panel
@@ -263,6 +264,36 @@ namespace UniDecl.Editor.UIToolKit.Examples
                         FontSize = 11,
                         UnityTextAlign = TextAnchor.MiddleCenter,
                     }.FlexRow().JustifyCenter()),
+            }.With(new UITKStyle().AddClass("ud-panel"));
+        }
+
+        private static IElement BuildMarkdownSection()
+        {
+            var toc = new TocView(new[]
+            {
+                new TocEntry("Introduction", 1),
+                new TocEntry("Getting Started", 2),
+                new TocEntry("Installation", 3),
+                new TocEntry("Configuration", 3),
+                new TocEntry("Advanced Usage", 2),
+                new TocEntry("Custom Styles", 3),
+                new TocEntry("Event Callbacks", 3),
+                new TocEntry("API Reference", 2),
+            });
+
+            return new Panel
+            {
+                new Label("MD Headings")
+                    .With(new UITKStyle().AddClass("ud-label--divider")),
+                new H1("H1 Document Title"),
+                new H2("H2 Section Heading"),
+                new H3("H3 Subsection"),
+                new H4("H4 Detail"),
+                new H5("H5 Supplementary"),
+                new H6("H6 Footnote Level"),
+                new Label("TocView (Left Navigation)")
+                    .With(new UITKStyle().AddClass("ud-label--divider")),
+                toc,
             }.With(new UITKStyle().AddClass("ud-panel"));
         }
     }

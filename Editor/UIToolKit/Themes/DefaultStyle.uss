@@ -171,3 +171,124 @@
     border-bottom-width: 1px;
     border-bottom-color: rgba(255, 255, 255, 0.06);
 }
+
+/* ============================================================
+   MD Headings (H1–H6)
+   ============================================================ */
+
+.ud-heading {
+    -unity-font-style: bold;
+    margin-top: 6px;
+    margin-bottom: 4px;
+}
+
+.ud-h1 {
+    font-size: 28px;
+    color: #e8e8e8;
+    margin-top: 10px;
+    margin-bottom: 6px;
+    padding-bottom: 4px;
+    border-bottom-width: 1px;
+    border-bottom-color: rgba(255, 255, 255, 0.15);
+}
+
+.ud-h2 {
+    font-size: 22px;
+    color: #e0e0e0;
+    margin-top: 8px;
+    margin-bottom: 5px;
+    padding-bottom: 3px;
+    border-bottom-width: 1px;
+    border-bottom-color: rgba(255, 255, 255, 0.10);
+}
+
+.ud-h3 {
+    font-size: 18px;
+    color: #d8d8d8;
+    margin-top: 6px;
+    margin-bottom: 4px;
+}
+
+.ud-h4 {
+    font-size: 15px;
+    color: #d0d0d0;
+    margin-top: 5px;
+    margin-bottom: 3px;
+}
+
+.ud-h5 {
+    font-size: 13px;
+    color: #c8c8c8;
+    margin-top: 4px;
+    margin-bottom: 2px;
+}
+
+.ud-h6 {
+    font-size: 12px;
+    color: #b8b8b8;
+    margin-top: 4px;
+    margin-bottom: 2px;
+}
+
+/* ============================================================
+   TocView — Table of Contents / Left Navigation Sidebar
+   ============================================================ */
+
+.ud-toc-view {
+    flex-direction: column;
+    background-color: rgba(0, 0, 0, 0.1);
+    border-width: 1px;
+    border-color: rgba(255, 255, 255, 0.08);
+    border-radius: 2px;
+    padding: 4px 0;
+}
+
+.ud-toc-item {
+    flex-direction: row;
+    align-items: center;
+    padding-top: 3px;
+    padding-bottom: 3px;
+    padding-right: 8px;
+}
+
+.ud-toc-item-label {
+    font-size: 12px;
+    color: #c0c0c0;
+    flex-grow: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ud-toc-item--l1 > .ud-toc-item-label {
+    -unity-font-style: bold;
+    color: #d8d8d8;
+}
+
+.ud-toc-item--l2 > .ud-toc-item-label {
+    color: #c8c8c8;
+}
+
+.ud-toc-item--l3 > .ud-toc-item-label,
+.ud-toc-item--l4 > .ud-toc-item-label,
+.ud-toc-item--l5 > .ud-toc-item-label,
+.ud-toc-item--l6 > .ud-toc-item-label {
+    color: #a8a8a8;
+    font-size: 11px;
+}
+
+.ud-toc-item--clickable {
+    cursor: link;
+}
+
+.ud-toc-item--clickable:hover {
+    background-color: rgba(255, 255, 255, 0.06);
+}
+
+.ud-toc-item--selected {
+    background-color: rgba(90, 160, 255, 0.12);
+}
+
+.ud-toc-item--selected > .ud-toc-item-label {
+    color: #7ab8ff;
+}

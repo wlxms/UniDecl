@@ -604,3 +604,146 @@
     background-color: rgba(10, 133, 255, 0.08);
     color: #E0E0E0;
 }
+
+/* ============================================================
+   MD Headings (H1–H6)
+   ============================================================ */
+
+.ud-heading,
+.ueh-heading {
+    -unity-font-style: bold;
+    margin-top: 6px;
+    margin-bottom: 4px;
+}
+
+.ud-h1,
+.ueh-h1 {
+    font-size: 28px;
+    color: #FFFFFF;
+    margin-top: 10px;
+    margin-bottom: 6px;
+    padding-bottom: 4px;
+    border-bottom-width: 1px;
+    border-bottom-color: rgba(10, 133, 255, 0.3);
+}
+
+.ud-h2,
+.ueh-h2 {
+    font-size: 22px;
+    color: #F0F0F0;
+    margin-top: 8px;
+    margin-bottom: 5px;
+    padding-bottom: 3px;
+    border-bottom-width: 1px;
+    border-bottom-color: rgba(255, 255, 255, 0.1);
+}
+
+.ud-h3,
+.ueh-h3 {
+    font-size: 18px;
+    color: #E8E8E8;
+    margin-top: 6px;
+    margin-bottom: 4px;
+}
+
+.ud-h4,
+.ueh-h4 {
+    font-size: 15px;
+    color: #E0E0E0;
+    margin-top: 5px;
+    margin-bottom: 3px;
+}
+
+.ud-h5,
+.ueh-h5 {
+    font-size: 13px;
+    color: #D8D8D8;
+    margin-top: 4px;
+    margin-bottom: 2px;
+}
+
+.ud-h6,
+.ueh-h6 {
+    font-size: 12px;
+    color: #C8C8C8;
+    margin-top: 4px;
+    margin-bottom: 2px;
+}
+
+/* ============================================================
+   TocView — Table of Contents / Left Navigation Sidebar
+   ============================================================ */
+
+.ud-toc-view,
+.ueh-toc-view {
+    flex-direction: column;
+    background-color: #1E1E1E;
+    border-width: 1px;
+    border-color: #3A3A3A;
+    border-radius: 2px;
+    padding: 4px 0;
+}
+
+.ud-toc-item,
+.ueh-toc-item {
+    flex-direction: row;
+    align-items: center;
+    padding-top: 4px;
+    padding-bottom: 4px;
+    padding-right: 8px;
+}
+
+.ud-toc-item-label,
+.ueh-toc-item-label {
+    font-size: 12px;
+    color: #B0B0B0;
+    flex-grow: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ud-toc-item--l1 > .ud-toc-item-label,
+.ueh-toc-item--l1 > .ueh-toc-item-label {
+    -unity-font-style: bold;
+    color: #E8E8E8;
+}
+
+.ud-toc-item--l2 > .ud-toc-item-label,
+.ueh-toc-item--l2 > .ueh-toc-item-label {
+    color: #D0D0D0;
+}
+
+.ud-toc-item--l3 > .ud-toc-item-label,
+.ud-toc-item--l4 > .ud-toc-item-label,
+.ud-toc-item--l5 > .ud-toc-item-label,
+.ud-toc-item--l6 > .ud-toc-item-label,
+.ueh-toc-item--l3 > .ueh-toc-item-label,
+.ueh-toc-item--l4 > .ueh-toc-item-label,
+.ueh-toc-item--l5 > .ueh-toc-item-label,
+.ueh-toc-item--l6 > .ueh-toc-item-label {
+    color: #9A9A9A;
+    font-size: 11px;
+}
+
+.ud-toc-item--clickable,
+.ueh-toc-item--clickable {
+    cursor: link;
+}
+
+.ud-toc-item--clickable:hover,
+.ueh-toc-item--clickable:hover {
+    background-color: rgba(10, 133, 255, 0.1);
+}
+
+.ud-toc-item--selected,
+.ueh-toc-item--selected {
+    background-color: rgba(10, 133, 255, 0.18);
+    border-left-width: 3px;
+    border-left-color: #0A85FF;
+}
+
+.ud-toc-item--selected > .ud-toc-item-label,
+.ueh-toc-item--selected > .ueh-toc-item-label {
+    color: #7FBFFF;
+}
