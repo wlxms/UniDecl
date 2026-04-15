@@ -41,8 +41,7 @@ namespace UniDecl.Editor.UIToolkit.Renderers
 
                     if (entry.OnClick != null)
                     {
-                        var clickAction = entry.OnClick;
-                        item.RegisterCallback<ClickEvent>(_ => clickAction?.Invoke());
+                        item.RegisterCallback<ClickEvent>(_ => entry.OnClick?.Invoke());
                         item.AddToClassList("ud-toc-item--clickable");
                     }
 
