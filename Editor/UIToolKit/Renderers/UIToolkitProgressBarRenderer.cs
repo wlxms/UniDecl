@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.UIElements;
 using UniDecl.Runtime.Core;
 using W = UniDecl.Runtime.Widgets;
+using UniDecl.Editor.UIToolKit.Style;
 
 namespace UniDecl.Editor.UIToolkit.Renderers
 {
@@ -22,14 +23,12 @@ namespace UniDecl.Editor.UIToolkit.Renderers
             }
 
             var track = new VisualElement();
-            track.style.backgroundColor = new Color(0.3f, 0.3f, 0.3f);
-            track.style.height = 22;
+            track.AddToClassList("ud-progress-track");
             track.style.flexGrow = 1;
             track.style.position = Position.Relative;
 
             var fill = new VisualElement();
-            fill.style.backgroundColor = new Color(0.2f, 0.6f, 1f);
-            fill.style.height = 22;
+            fill.AddToClassList("ud-progress-fill");
             fill.style.position = Position.Absolute;
             fill.style.left = 0;
             fill.style.top = 0;
@@ -37,6 +36,7 @@ namespace UniDecl.Editor.UIToolkit.Renderers
 
             track.Add(fill);
             container.Add(track);
+            UIToolkitStyleApplier.ApplyElementStyles(element, container);
             return container;
         }
     }

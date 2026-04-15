@@ -1,7 +1,6 @@
 using UnityEngine.UIElements;
 using UniDecl.Runtime.Core;
-using W = UniDecl.Runtime.Widgets;
-
+using W = UniDecl.Runtime.Widgets;using UniDecl.Editor.UIToolKit.Style;
 namespace UniDecl.Editor.UIToolkit.Renderers
 {
     public class UIToolkitLabelRenderer : IElementRenderer<W.Label, VisualElement>,
@@ -10,11 +9,13 @@ namespace UniDecl.Editor.UIToolkit.Renderers
         public VisualElement Render(W.Label element, IElementRenderHost<VisualElement> manager, ElementState state)
         {
             if (element == null) return null;
-            return new Label(element.Text)
+            var label = new Label(element.Text)
             {
                 enableRichText = element.EnableRichText,
                 parseEscapeSequences = element.ParseEscapeSequences,
             };
+            UIToolkitStyleApplier.ApplyElementStyles(element, label);
+            return label;
         }
 
         public bool TryUpdate(W.Label element, VisualElement existing, IElementRenderHost<VisualElement> manager, ElementState state)

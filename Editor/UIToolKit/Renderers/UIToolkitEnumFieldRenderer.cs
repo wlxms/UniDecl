@@ -1,6 +1,7 @@
 using System;
 using UnityEngine.UIElements;
 using UniDecl.Runtime.Core;
+using UniDecl.Editor.UIToolKit.Style;
 using W = UniDecl.Runtime.Widgets;
 
 namespace UniDecl.Editor.UIToolkit.Renderers
@@ -24,6 +25,7 @@ namespace UniDecl.Editor.UIToolkit.Renderers
                 element.NotifyChanged();
             });
 
+            UIToolkitStyleApplier.ApplyElementStyles(element, field);
             return field;
         }
     }

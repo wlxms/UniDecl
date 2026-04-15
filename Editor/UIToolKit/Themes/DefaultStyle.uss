@@ -1,0 +1,173 @@
+/* ============================================================
+   Default Style Theme for UniDecl UIToolkit
+   Neutral style driven by ud-* default classes.
+   ============================================================ */
+
+.ud-root {
+    padding: 8px;
+    flex-direction: column;
+    flex-grow: 1;
+    min-height: 0;
+}
+
+.ud-root-scrollview,
+.ue5-root-scrollview {
+    flex-grow: 1;
+    min-height: 0;
+}
+
+.ud-root-scrollview > .unity-scroll-view__content-container,
+.ue5-root-scrollview > .unity-scroll-view__content-container {
+    padding-left: 2px;
+    padding-right: 2px;
+}
+
+.ud-panel,
+.ud-card {
+    padding: 8px;
+    margin-bottom: 6px;
+    border-width: 1px;
+    border-color: rgba(255, 255, 255, 0.08);
+    border-radius: 2px;
+    flex-direction: column;
+}
+    .ud-card-title {
+        font-size: 12px;
+        margin-bottom: 4px;
+        -unity-font-style: bold;
+    }
+
+.ud-label {
+    color: #d0d0d0;
+    font-size: 12px;
+}
+
+.ud-label--heading {
+    font-size: 16px;
+    -unity-font-style: bold;
+    color: #e0e0e0;
+    margin-bottom: 4px;
+}
+
+.ud-label--subheading {
+    font-size: 12px;
+    -unity-font-style: bold;
+    color: #b8b8b8;
+    margin-top: 6px;
+    margin-bottom: 4px;
+}
+
+.ud-label--divider {
+    font-size: 11px;
+    -unity-font-style: bold;
+    color: #a8a8a8;
+    margin-top: 6px;
+    margin-bottom: 4px;
+}
+
+.ud-button,
+.ud-toolbar-button,
+.ud-toolbar-menu,
+.ud-toolbar-toggle {
+    min-height: 20px;
+}
+
+.ud-button-row {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    margin-bottom: 4px;
+}
+
+.ud-button--secondary {
+    border-width: 1px;
+    border-color: rgba(255, 255, 255, 0.25);
+}
+
+.ud-button--danger {
+    border-width: 1px;
+    border-color: rgba(224, 60, 60, 0.4);
+    color: #e38a8a;
+}
+
+.ud-textfield,
+.ud-numfield,
+.ud-dropdown,
+.ud-enumfield {
+    min-height: 22px;
+    margin-bottom: 4px;
+}
+
+.ud-slider {
+    margin-bottom: 6px;
+}
+    .ud-progress-track {
+        height: 6px;
+        background-color: rgba(255, 255, 255, 0.14);
+    }
+    .ud-progress-fill {
+        height: 6px;
+        background-color: rgba(90, 160, 255, 0.9);
+    }
+
+.ud-helpbox {
+    margin-bottom: 6px;
+}
+
+.ud-scrollview--compact,
+.ue5-scrollview--compact {
+    max-height: 150px;
+}
+
+.ud-toolbar {
+    flex-direction: row;
+    align-items: center;
+    padding: 2px 2px;
+}
+
+.ud-toolbar > UnityEngine.UIElements.ToolbarButton,
+.ud-toolbar .unity-toolbar-button,
+.ud-toolbar > UnityEngine.UIElements.ToolbarMenu,
+.ud-toolbar .unity-toolbar-menu,
+.ud-toolbar > UnityEngine.UIElements.ToolbarToggle,
+.ud-toolbar .unity-toolbar-toggle {
+    flex-shrink: 0;
+    margin-right: 2px;
+    min-height: 20px;
+}
+
+.ud-toolbar > UnityEngine.UIElements.ToolbarToggle,
+.ud-toolbar .unity-toolbar-toggle {
+    min-width: 42px;
+    padding-left: 4px;
+    padding-right: 4px;
+}
+
+.ud-toolbar .unity-toolbar-toggle .unity-toggle__label,
+.ud-toolbar .unity-toolbar-toggle .unity-toggle__text {
+    -unity-text-align: middle-center;
+    margin-left: 0px;
+    margin-right: 0px;
+}
+
+.ud-toolbar .unity-toolbar-search-field {
+    flex-grow: 1;
+    flex-shrink: 1;
+    min-width: 96px;
+    flex-basis: 120px;
+    margin-left: 2px;
+    margin-right: 2px;
+}
+
+.ud-toolbar > UnityEngine.UIElements.ToolbarMenu,
+.ud-toolbar .unity-toolbar-menu {
+    min-width: 0px;
+    margin-right: 0px;
+}
+
+.ud-scroll-item {
+    padding: 4px 8px;
+    color: #bbbbbb;
+    border-bottom-width: 1px;
+    border-bottom-color: rgba(255, 255, 255, 0.06);
+}

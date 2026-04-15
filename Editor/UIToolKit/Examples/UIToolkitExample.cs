@@ -5,6 +5,7 @@ using UniDecl.Runtime.Core;
 using UniDecl.Runtime.Widgets;
 using UniDecl.Editor.UIToolkit;
 using UniDecl.Editor.UIToolkit.Renderers;
+using UniDecl.Editor.UIToolKit.Style;
 
 namespace UniDecl.Editor.UIToolKit.Examples
 {
@@ -65,7 +66,8 @@ namespace UniDecl.Editor.UIToolKit.Examples
 
         private static readonly string[] TabNames =
         {
-            "基础控件", "输入控件", "滑动与颜色", "布局容器", "进度与状态"
+            "基础控件", "输入控件", "滑动与颜色", "布局容器", "进度与状态",
+            "引用与资源", "向量与曲线", "Toolbar与工具"
         };
 
         private static readonly string[] DropdownChoices = { "选项 A", "选项 B", "选项 C", "选项 D" };
@@ -92,6 +94,9 @@ namespace UniDecl.Editor.UIToolKit.Examples
                 2 => BuildSliderColorTab(),
                 3 => BuildLayoutTab(),
                 4 => BuildProgressStateTab(),
+                5 => BuildResourceRefTab(),
+                6 => BuildVectorCurveTab(),
+                7 => BuildToolbarToolTab(),
                 _ => new Label("未知"),
             };
 
@@ -119,6 +124,27 @@ namespace UniDecl.Editor.UIToolKit.Examples
                 new W.HelpBox("这是一条信息提示", HelpBoxMessageType.Info),
                 new W.HelpBox("这是一条警告提示", HelpBoxMessageType.Warning),
                 new W.HelpBox("这是一条错误提示", HelpBoxMessageType.Error),
+                new Label(""),
+                new Label("--- UITKStyle 样式示例 ---"),
+                new Label("红色背景白色文字")
+                    .With(new UITKStyle
+                    {
+                        BackgroundColor = new Color(0.8f, 0.2f, 0.2f),
+                        Color = Color.white,
+                        FontSize = 14,
+                    }),
+                new Label("Flex 布局居中 - 使用 Fluent API")
+                    .With(new UITKStyle().FlexRow().JustifyCenter().AlignCenter().Padding(10)),
+                new Button("蓝色边框按钮", () => Debug.Log("Styled!"))
+                    .With(new UITKStyle
+                    {
+                        BorderTopColor = new Color(0.2f, 0.4f, 0.8f),
+                        BorderBottomColor = new Color(0.2f, 0.4f, 0.8f),
+                        BorderLeftColor = new Color(0.2f, 0.4f, 0.8f),
+                        BorderRightColor = new Color(0.2f, 0.4f, 0.8f),
+                    }
+                    .BorderRadius(4)
+                    .Margin(0, 0, 5, 0)),
             };
         }
 
@@ -271,6 +297,126 @@ namespace UniDecl.Editor.UIToolKit.Examples
                 {
                     new CounterElement(),
                 },
+            };
+        }
+
+        // === Tab 6: 引用与资源 ===
+        private static Panel BuildResourceRefTab()
+        {
+            return new Panel
+            {
+                new Label("--- TagField 标签选择 ---"),
+                new W.TagField("标签", "Untagged"),
+                new Label(""),
+                new Label("--- LayerField 层级选择 ---"),
+                new W.LayerField("层级", 0),
+                new Label(""),
+                new Label("--- MaskField Layer Mask ---"),
+                new W.MaskField("层掩码", 0, new[] { "Layer 0", "Layer 1", "Layer 2", "Layer 3", "Layer 4", "Layer 5", "Layer 6", "Layer 7" }),
+                new Label(""),
+                new Label("--- EnumFlagsField 枚举标志 ---"),
+                new W.EnumFlagsField("光照模式", typeof(UnityEngine.LightType), 0),
+                new Label(""),
+                new Label("--- ObjectField 对象引用 ---"),
+                new W.ObjectField("纹理", typeof(Texture2D)),
+                new W.ObjectField("材质", typeof(Material)),
+                new W.ObjectField("预制体", typeof(GameObject)),
+                new Label(""),
+                new Label("--- PropertyField 属性绑定 ---"),
+                new W.PropertyField("m_Name"),
+                new Label(""),
+                new Label("--- SliderInt / DoubleField / LongField ---"),
+                new W.SliderInt("整数滑块", 5, 0, 10),
+                new W.DoubleField("双精度", 3.14159265358979),
+                new W.LongField("长整数", 1234567890123),
+                new Label(""),
+                new Label("--- ResizableTextArea ---"),
+                new W.ResizableTextArea("可调整大小\n的多行文本", "备注"),
+                new Label(""),
+                new Label("--- Tooltip 支持 ---"),
+                new Label("鼠标悬停查看提示").With(new UITKStyle { Tooltip = "这是一条 tooltip 提示" }),
+            };
+        }
+
+        // === Tab 7: 向量与曲线 ===
+        private static Panel BuildVectorCurveTab()
+        {
+            return new Panel
+            {
+                new Label("--- Vector2Field ---"),
+                new W.Vector2Field("UV 偏移", new Vector2(0.5f, 0.5f)),
+                new Label(""),
+                new Label("--- Vector3Field ---"),
+                new W.Vector3Field("位置", new Vector3(1f, 2f, 3f)),
+                new Label(""),
+                new Label("--- Vector4Field ---"),
+                new W.Vector4Field("裁剪平面", new Vector4(0f, 1f, 0f, 100f)),
+                new Label(""),
+                new Label("--- Vector2IntField ---"),
+                new W.Vector2IntField("网格坐标", new Vector2Int(10, 20)),
+                new Label(""),
+                new Label("--- Vector3IntField ---"),
+                new W.Vector3IntField("体素坐标", new Vector3Int(1, 2, 3)),
+                new Label(""),
+                new Label("--- RectField ---"),
+                new W.RectField("矩形", new Rect(10f, 20f, 100f, 200f)),
+                new Label(""),
+                new Label("--- RectIntField ---"),
+                new W.RectIntField("整数矩形", new RectInt(0, 0, 256, 256)),
+                new Label(""),
+                new Label("--- BoundsField ---"),
+                new W.BoundsField("包围盒", new Bounds(Vector3.zero, Vector3.one * 10f)),
+                new Label(""),
+                new Label("--- BoundsIntField ---"),
+                new W.BoundsIntField("整数包围盒", new BoundsInt(Vector3Int.zero, new Vector3Int(16, 16, 16))),
+                new Label(""),
+                new Label("--- CurveField ---"),
+                new W.CurveField("动画曲线", AnimationCurve.Linear(0f, 0f, 1f, 1f)),
+                new Label(""),
+                new Label("--- GradientField ---"),
+                new W.GradientField("渐变"),
+            };
+        }
+
+        // === Tab 8: Toolbar 与工具 ===
+        private static Panel BuildToolbarToolTab()
+        {
+            return new Panel
+            {
+                new Label("--- Toolbar ---"),
+                new W.Toolbar
+                {
+                    new W.ToolbarButton("新建", () => Debug.Log("New")),
+                    new W.ToolbarButton("打开", () => Debug.Log("Open")),
+                    new W.ToolbarToggle("自动保存", false),
+                    new W.ToolbarSearchField(),
+                    new W.ToolbarMenu("更多选项"),
+                },
+                new Label(""),
+                new Label("--- TwoPaneSplitView ---"),
+                new W.TwoPaneSplitView(0, SplitViewOrientation.Horizontal, 200f)
+                {
+                    new VerticalLayout
+                    {
+                        new Label("左侧面板"),
+                        new Button("按钮 A", () => Debug.Log("A")),
+                        new Button("按钮 B", () => Debug.Log("B")),
+                    },
+                    new VerticalLayout
+                    {
+                        new Label("右侧面板"),
+                        new W.Slider("参数", 50f, 0f, 100f),
+                    },
+                },
+                new Label(""),
+                new Label("--- IMGUIContainer ---"),
+                new W.IMGUIContainer(() =>
+                {
+                    GUILayout.Label("这是 IMGUI 内容");
+                    GUILayout.Space(10);
+                    if (GUILayout.Button("IMGUI 按钮"))
+                        Debug.Log("IMGUI Button clicked");
+                }),
             };
         }
     }

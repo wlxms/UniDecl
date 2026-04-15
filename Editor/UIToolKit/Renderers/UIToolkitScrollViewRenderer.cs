@@ -1,7 +1,6 @@
 using UnityEngine.UIElements;
 using UniDecl.Runtime.Core;
-using W = UniDecl.Runtime.Widgets;
-
+using W = UniDecl.Runtime.Widgets;using UniDecl.Editor.UIToolKit.Style;
 namespace UniDecl.Editor.UIToolkit.Renderers
 {
     public class UIToolkitScrollViewRenderer : IElementRenderer<W.ScrollView, VisualElement>
@@ -19,6 +18,7 @@ namespace UniDecl.Editor.UIToolkit.Renderers
                     scrollView.Add(childElement);
             }
 
+            UIToolkitStyleApplier.ApplyElementStyles(element, scrollView);
             return scrollView;
         }
     }

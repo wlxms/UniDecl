@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine.UIElements;
 using UniDecl.Runtime.Core;
+using UniDecl.Editor.UIToolKit.Style;
 
 namespace UniDecl.Editor.UIToolkit.Renderers
 {
@@ -31,6 +32,7 @@ namespace UniDecl.Editor.UIToolkit.Renderers
                     container.Add(childElement);
             }
 
+            UIToolkitStyleApplier.ApplyElementStyles(element, container);
             return container;
         }
     }

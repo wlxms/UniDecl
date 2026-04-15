@@ -1,6 +1,7 @@
 using UnityEngine.UIElements;
 using UniDecl.Runtime.Contexts;
 using UniDecl.Runtime.Core;
+using UniDecl.Editor.UIToolKit.Style;
 
 namespace UniDecl.Editor.UIToolkit.Renderers
 {
@@ -14,6 +15,7 @@ namespace UniDecl.Editor.UIToolkit.Renderers
             if (childElement == null) return null;
 
             childElement.SetEnabled(!element.Value);
+            UIToolkitStyleApplier.ApplyElementStyles(element, childElement);
             return childElement;
         }
     }

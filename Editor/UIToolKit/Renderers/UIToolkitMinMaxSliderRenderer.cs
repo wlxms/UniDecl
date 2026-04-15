@@ -1,6 +1,7 @@
 using UnityEngine.UIElements;
 using UniDecl.Runtime.Core;
 using W = UniDecl.Runtime.Widgets;
+using UniDecl.Editor.UIToolKit.Style;
 
 namespace UniDecl.Editor.UIToolkit.Renderers
 {
@@ -38,6 +39,7 @@ namespace UniDecl.Editor.UIToolkit.Renderers
             });
 
             container.Add(slider);
+            UIToolkitStyleApplier.ApplyElementStyles(element, container);
             return container;
         }
     }

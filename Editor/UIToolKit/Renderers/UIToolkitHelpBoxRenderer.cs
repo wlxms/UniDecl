@@ -1,7 +1,6 @@
 using UnityEngine.UIElements;
 using UniDecl.Runtime.Core;
-using W = UniDecl.Runtime.Widgets;
-
+using W = UniDecl.Runtime.Widgets;using UniDecl.Editor.UIToolKit.Style;
 namespace UniDecl.Editor.UIToolkit.Renderers
 {
     public class UIToolkitHelpBoxRenderer : IElementRenderer<W.HelpBox, VisualElement>
@@ -11,7 +10,9 @@ namespace UniDecl.Editor.UIToolkit.Renderers
             if (element == null) return null;
 
             var msgType = ConvertMessageType(element.MessageType);
-            return new HelpBox(element.Text ?? "", msgType);
+            var helpBox = new HelpBox(element.Text ?? "", msgType);
+            UIToolkitStyleApplier.ApplyElementStyles(element, helpBox);
+            return helpBox;
         }
 
         private static HelpBoxMessageType ConvertMessageType(W.HelpBoxMessageType type)

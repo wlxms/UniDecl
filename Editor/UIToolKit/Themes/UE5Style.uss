@@ -1,0 +1,670 @@
+﻿/* ============================================================
+   UE5 Style Theme for UniDecl UIToolkit
+   Unreal Engine 5 Dark Editor Style
+   ============================================================ */
+
+/* === Root Container === */
+.ud-root,
+.ue5-root {
+    background-color: #1B1B1B;
+    color: #E0E0E0;
+    font-size: 12px;
+    padding: 8px;
+    flex-direction: column;
+    flex-grow: 1;
+    min-height: 0;
+}
+
+.ud-root-scrollview,
+.ue5-root-scrollview {
+    flex-grow: 1;
+    min-height: 0;
+}
+
+.ud-root-scrollview > .unity-scroll-view__content-container,
+.ue5-root-scrollview > .unity-scroll-view__content-container {
+    padding-left: 4px;
+    padding-right: 4px;
+    width: 100%;
+    max-width: 920px;
+    align-self: center;
+}
+
+/* === Headings === */
+.ud-label--heading,
+.ue5-label--heading {
+    font-size: 16px;
+    color: #FFFFFF;
+    -unity-font-style: bold;
+    margin-bottom: 6px;
+    padding-bottom: 4px;
+    border-bottom-width: 1px;
+    border-bottom-color: rgba(10, 133, 255, 0.22);
+}
+
+.ud-label--subheading,
+.ue5-label--subheading {
+    font-size: 13px;
+    color: #A8A8A8;
+    -unity-font-style: bold;
+    margin-top: 6px;
+    margin-bottom: 3px;
+    margin-left: 0px;
+}
+
+.ud-label--divider,
+.ue5-label--divider {
+    color: #929292;
+    font-size: 11px;
+    -unity-font-style: bold;
+    margin-top: 4px;
+    margin-bottom: 5px;
+    padding-left: 0px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* === Panel Card === */
+.ud-panel,
+.ud-panel,
+.ue5-panel {
+    background-color: #232323;
+    border-width: 1px;
+    border-color: rgba(255, 255, 255, 0.08);
+    border-radius: 2px;
+    padding: 10px;
+    margin-bottom: 8px;
+    flex-direction: column;
+}
+
+/* === Button Row === */
+.ud-button-row,
+.ue5-button-row {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    margin-bottom: 2px;
+}
+
+/* === Primary Button === */
+.ud-button,
+.ud-button,
+.ue5-button {
+    background-color: #0A85FF;
+    color: #FFFFFF;
+    border-width: 0px;
+    border-radius: 3px;
+    padding-left: 12px;
+    padding-right: 12px;
+    padding-top: 4px;
+    padding-bottom: 4px;
+    font-size: 12px;
+    -unity-font-style: bold;
+    cursor: link;
+    margin-right: 4px;
+    margin-bottom: 4px;
+    min-height: 22px;
+}
+
+.ud-button:hover,
+.ue5-button:hover {
+    background-color: #3CA0FF;
+}
+
+.ud-button:active,
+.ue5-button:active {
+    background-color: #0070E0;
+}
+
+/* === Secondary Button === */
+.ud-button--secondary,
+.ue5-button--secondary {
+    background-color: rgba(10, 133, 255, 0.15);
+    color: #0A85FF;
+    border-width: 1px;
+    border-color: rgba(10, 133, 255, 0.4);
+    border-radius: 3px;
+    padding-left: 12px;
+    padding-right: 12px;
+    padding-top: 4px;
+    padding-bottom: 4px;
+    font-size: 12px;
+    cursor: link;
+    margin-right: 4px;
+    margin-bottom: 4px;
+    min-height: 22px;
+}
+
+.ud-button--secondary:hover,
+.ue5-button--secondary:hover {
+    background-color: rgba(10, 133, 255, 0.25);
+    border-color: rgba(10, 133, 255, 0.6);
+}
+
+/* === Danger Button === */
+.ud-button--danger,
+.ue5-button--danger {
+    background-color: rgba(224, 60, 60, 0.15);
+    color: #E03C3C;
+    border-width: 1px;
+    border-color: rgba(224, 60, 60, 0.4);
+    border-radius: 3px;
+    padding-left: 12px;
+    padding-right: 12px;
+    padding-top: 4px;
+    padding-bottom: 4px;
+    font-size: 12px;
+    cursor: link;
+    margin-right: 4px;
+    margin-bottom: 4px;
+    min-height: 22px;
+}
+
+.ud-button--danger:hover,
+.ue5-button--danger:hover {
+    background-color: rgba(224, 60, 60, 0.25);
+}
+
+/* === Property Rows === */
+.ud-textfield,
+.ue5-textfield,
+.ud-numfield,
+.ue5-numfield,
+.ud-dropdown,
+.ue5-dropdown,
+.ud-enumfield,
+.ue5-enumfield,
+.ud-colorfield,
+.ue5-colorfield {
+    background-color: #1A1A1A;
+    border-width: 1px;
+    border-color: #3A3A3A;
+    border-radius: 3px;
+    color: #E0E0E0;
+    font-size: 12px;
+    margin-bottom: 4px;
+    min-height: 24px;
+    align-items: center;
+}
+
+/* Force enum and dropdown to share identical popup-field behavior */
+.ud-enumfield,
+.ue5-enumfield {
+    border-color: #3A3A3A;
+    background-color: #1A1A1A;
+}
+
+.ud-textfield:hover,
+.ue5-textfield:hover,
+.ud-numfield:hover,
+.ue5-numfield:hover,
+.ud-dropdown:hover,
+.ue5-dropdown:hover,
+.ud-enumfield:hover,
+.ue5-enumfield:hover,
+.ud-colorfield:hover,
+.ue5-colorfield:hover {
+    border-color: #555555;
+}
+
+.ud-textfield:focus,
+.ue5-textfield:focus,
+.ud-numfield:focus,
+.ue5-numfield:focus,
+.ud-dropdown:focus,
+.ue5-dropdown:focus,
+.ud-enumfield:focus,
+.ue5-enumfield:focus,
+.ud-colorfield:focus,
+.ue5-colorfield:focus {
+    border-color: #0A85FF;
+}
+
+.ud-dropdown > .unity-base-field__label,
+.ue5-dropdown > .unity-base-field__label,
+.ud-enumfield > .unity-base-field__label,
+.ue5-enumfield > .unity-base-field__label,
+.ud-numfield > .unity-base-field__label,
+.ue5-numfield > .unity-base-field__label,
+.ud-textfield > .unity-base-field__label,
+.ue5-textfield > .unity-base-field__label,
+.ud-colorfield > .unity-base-field__label,
+.ue5-colorfield > .unity-base-field__label,
+.ud-slider > .unity-base-field__label,
+.ue5-slider > .unity-base-field__label {
+    width: 136px;
+    min-width: 136px;
+    flex-shrink: 0;
+    color: #B7B7B7;
+    padding-left: 10px;
+    padding-right: 12px;
+    min-height: 24px;
+    -unity-text-align: middle-left;
+}
+
+.ud-textfield > .unity-base-text-field__input,
+.ue5-textfield > .unity-base-text-field__input,
+.ud-textfield > .unity-text-input,
+.ue5-textfield > .unity-text-input,
+.ud-dropdown .unity-base-popup-field__input,
+.ue5-dropdown .unity-base-popup-field__input,
+.ud-colorfield .unity-base-field__input,
+.ue5-colorfield .unity-base-field__input {
+    background-color: #202020;
+    color: #E0E0E0;
+    border-width: 0px;
+    border-left-width: 1px;
+    border-left-color: rgba(255, 255, 255, 0.05);
+    padding-left: 10px;
+    padding-right: 10px;
+    padding-top: 4px;
+    padding-bottom: 4px;
+    min-height: 24px;
+    -unity-text-align: middle-left;
+}
+
+.ud-enumfield .unity-base-popup-field__input,
+.ue5-enumfield .unity-base-popup-field__input,
+.ud-enumfield .unity-base-field__input,
+.ue5-enumfield .unity-base-field__input {
+    background-color: #202020;
+    color: #E0E0E0;
+    border-width: 0px;
+    border-left-width: 1px;
+    border-left-color: rgba(255, 255, 255, 0.05);
+    padding-left: 10px;
+    padding-right: 10px;
+    padding-top: 4px;
+    padding-bottom: 4px;
+    min-height: 24px;
+    -unity-text-align: middle-left;
+}
+
+.ud-numfield .unity-base-field__input,
+.ue5-numfield .unity-base-field__input {
+    background-color: #202020;
+    color: #E0E0E0;
+    border-width: 0px;
+    border-left-width: 1px;
+    border-left-color: rgba(255, 255, 255, 0.05);
+    min-height: 24px;
+}
+
+.ud-dropdown .unity-base-popup-field__arrow,
+.ue5-dropdown .unity-base-popup-field__arrow,
+.ud-enumfield .unity-base-popup-field__arrow,
+.ue5-enumfield .unity-base-popup-field__arrow,
+.ud-enumfield .unity-base-field__arrow,
+.ue5-enumfield .unity-base-field__arrow {
+    color: #9A9A9A;
+    margin-right: 8px;
+}
+
+.ud-dropdown .unity-popup-field__text,
+.ue5-dropdown .unity-popup-field__text,
+.ud-enumfield .unity-enum-field__text,
+.ue5-enumfield .unity-enum-field__text {
+    color: #D8D8D8;
+}
+
+/* === Toggle === */
+.ud-toggle,
+.ue5-toggle {
+    margin-bottom: 4px;
+    min-height: 24px;
+    align-items: center;
+    padding-left: 0px;
+    padding-right: 0px;
+    color: #E0E0E0;
+    font-size: 12px;
+}
+
+.ud-toggle > .unity-toggle__input,
+.ue5-toggle > .unity-toggle__input {
+    margin-left: 0px;
+    margin-right: 0px;
+}
+
+.ud-toggle > .unity-toggle__label,
+.ue5-toggle > .unity-toggle__label {
+    color: #B7B7B7;
+    min-height: 24px;
+    width: 136px;
+    min-width: 136px;
+    flex-shrink: 0;
+    padding-left: 10px;
+    padding-right: 12px;
+    -unity-text-align: middle-left;
+    margin-left: 0px;
+}
+
+/* === Slider === */
+.ud-slider,
+.ue5-slider {
+    margin-bottom: 6px;
+    min-height: 24px;
+    flex-direction: column;
+    align-items: stretch;
+}
+
+.ud-slider > .unity-label,
+.ue5-slider > .unity-label {
+    width: auto;
+    min-width: 0px;
+    flex-shrink: 1;
+    color: #B7B7B7;
+    padding-left: 10px;
+    padding-right: 0px;
+    min-height: 18px;
+    -unity-text-align: middle-left;
+    margin-bottom: 2px;
+}
+
+.ud-slider > .unity-base-slider,
+.ue5-slider > .unity-base-slider,
+.ud-slider > .unity-slider,
+.ue5-slider > .unity-slider,
+.ud-slider > .unity-min-max-slider,
+.ue5-slider > .unity-min-max-slider {
+    flex-grow: 1;
+    margin-left: 10px;
+    margin-right: 10px;
+}
+
+.ud-slider .unity-base-field__input,
+.ue5-slider .unity-base-field__input,
+.ud-slider .unity-drag-container,
+.ue5-slider .unity-drag-container,
+.ud-slider .unity-tracker,
+.ue5-slider .unity-tracker {
+    padding-right: 0px;
+}
+
+/* === Color Field === */
+.ud-colorfield,
+.ue5-colorfield {
+    margin-bottom: 4px;
+}
+
+/* === Progress Bar === */
+.ud-progress-bar,
+.ud-progress-bar,
+.ue5-progress-bar {
+    margin-bottom: 6px;
+    flex-direction: column;
+}
+
+.ud-progress-track,
+.ue5-progress-track {
+    height: 6px;
+    border-radius: 3px;
+    background-color: #3A3A3A;
+    overflow: hidden;
+}
+
+.ud-progress-fill,
+.ue5-progress-fill {
+    height: 6px;
+    border-radius: 3px;
+    background-color: #0A85FF;
+}
+
+/* === HelpBox === */
+.ud-helpbox-info,
+.ud-helpbox-info,
+.ue5-helpbox-info {
+    background-color: rgba(60, 189, 110, 0.1);
+    border-left-width: 3px;
+    border-left-color: #3CBD6E;
+    border-radius: 0px 2px 2px 0px;
+    padding: 7px 9px;
+    margin-bottom: 6px;
+    color: #3CBD6E;
+    font-size: 12px;
+}
+
+.ud-helpbox-warning,
+.ud-helpbox-warning,
+.ue5-helpbox-warning {
+    background-color: rgba(232, 166, 48, 0.1);
+    border-left-width: 3px;
+    border-left-color: #E8A630;
+    border-radius: 0px 2px 2px 0px;
+    padding: 7px 9px;
+    margin-bottom: 6px;
+    color: #E8A630;
+    font-size: 12px;
+}
+
+.ud-helpbox-error,
+.ud-helpbox-error,
+.ue5-helpbox-error {
+    background-color: rgba(224, 60, 60, 0.1);
+    border-left-width: 3px;
+    border-left-color: #E03C3C;
+    border-radius: 0px 2px 2px 0px;
+    padding: 7px 9px;
+    margin-bottom: 6px;
+    color: #E03C3C;
+    font-size: 12px;
+}
+
+/* === Foldout === */
+.ud-foldout,
+.ud-foldout,
+.ue5-foldout {
+    margin-bottom: 4px;
+    border-width: 1px;
+    border-color: #3A3A3A;
+    border-radius: 2px;
+    background-color: #2D2D2D;
+    flex-direction: column;
+}
+
+.ud-foldout > .unity-foldout__content,
+.ue5-foldout > .unity-foldout__content {
+    background-color: #2D2D2D;
+    border-top-width: 1px;
+    border-top-color: rgba(255, 255, 255, 0.06);
+    padding: 4px 6px;
+}
+
+.ud-foldout > .unity-foldout__content .ud-toggle,
+.ue5-foldout > .unity-foldout__content .ue5-toggle,
+.ue5-foldout > .unity-foldout__content .ud-toggle {
+    min-height: 18px;
+    margin-bottom: 1px;
+    padding-left: 0px;
+    padding-right: 0px;
+}
+
+.ud-foldout > .unity-foldout__content .ud-toggle > .unity-toggle__input,
+.ue5-foldout > .unity-foldout__content .ud-toggle > .unity-toggle__input,
+.ue5-foldout > .unity-foldout__content .ue5-toggle > .unity-toggle__input {
+    margin-right: 4px;
+}
+
+.ud-foldout > .unity-foldout__content .ud-toggle > .unity-toggle__label,
+.ue5-foldout > .unity-foldout__content .ud-toggle > .unity-toggle__label,
+.ue5-foldout > .unity-foldout__content .ue5-toggle > .unity-toggle__label {
+    width: auto;
+    min-width: 0px;
+    flex-shrink: 1;
+    padding-left: 2px;
+    padding-right: 4px;
+}
+
+/* === Toolbar === */
+.ud-toolbar,
+.ud-toolbar,
+.ue5-toolbar {
+    background-color: #252525;
+    border-width: 1px;
+    border-color: #3A3A3A;
+    border-radius: 2px;
+    padding: 2px 0px;
+    margin-bottom: 6px;
+    flex-direction: row;
+    align-items: center;
+}
+
+.ud-toolbar > UnityEngine.UIElements.ToolbarButton,
+.ud-toolbar .unity-toolbar-button,
+.ud-toolbar > UnityEngine.UIElements.ToolbarMenu,
+.ud-toolbar .unity-toolbar-menu,
+.ud-toolbar > UnityEngine.UIElements.ToolbarToggle,
+.ud-toolbar .unity-toolbar-toggle,
+.ue5-toolbar > UnityEngine.UIElements.ToolbarButton,
+.ue5-toolbar .unity-toolbar-button,
+.ue5-toolbar > UnityEngine.UIElements.ToolbarMenu,
+.ue5-toolbar .unity-toolbar-menu,
+.ue5-toolbar > UnityEngine.UIElements.ToolbarToggle,
+.ue5-toolbar .unity-toolbar-toggle {
+    color: #CCCCCC;
+    font-size: 12px;
+    padding-left: 6px;
+    padding-right: 6px;
+    padding-top: 0px;
+    padding-bottom: 0px;
+    margin-left: 0px;
+    margin-right: 2px;
+    border-radius: 2px;
+    -unity-text-align: middle-center;
+    background-color: rgba(255, 255, 255, 0.02);
+    border-width: 1px;
+    border-color: transparent;
+    flex-shrink: 0;
+    min-height: 20px;
+}
+
+.ud-toolbar > UnityEngine.UIElements.ToolbarToggle,
+.ud-toolbar .unity-toolbar-toggle,
+.ue5-toolbar > UnityEngine.UIElements.ToolbarToggle,
+.ue5-toolbar .unity-toolbar-toggle {
+    min-width: 42px;
+    padding-left: 4px;
+    padding-right: 4px;
+}
+
+.ud-toolbar .unity-toolbar-toggle .unity-toggle__label,
+.ud-toolbar .unity-toolbar-toggle .unity-toggle__text,
+.ue5-toolbar .unity-toolbar-toggle .unity-toggle__label,
+.ue5-toolbar .unity-toolbar-toggle .unity-toggle__text {
+    -unity-text-align: middle-center;
+    margin-left: 0px;
+    margin-right: 0px;
+}
+
+.ud-toolbar .unity-toolbar-search-field,
+.ue5-toolbar .unity-toolbar-search-field {
+    flex-grow: 1;
+    flex-shrink: 1;
+    min-width: 96px;
+    flex-basis: 120px;
+    margin-left: 2px;
+    margin-right: 2px;
+}
+
+.ud-toolbar > UnityEngine.UIElements.ToolbarMenu,
+.ud-toolbar .unity-toolbar-menu,
+.ue5-toolbar > UnityEngine.UIElements.ToolbarMenu,
+.ue5-toolbar .unity-toolbar-menu {
+    min-width: 0px;
+    padding-right: 2px;
+    margin-right: 0px;
+    flex-shrink: 0;
+}
+
+.ud-toolbar > UnityEngine.UIElements.ToolbarButton:hover,
+.ud-toolbar .unity-toolbar-button:hover,
+.ud-toolbar > UnityEngine.UIElements.ToolbarMenu:hover,
+.ud-toolbar .unity-toolbar-menu:hover,
+.ud-toolbar > UnityEngine.UIElements.ToolbarToggle:hover,
+.ud-toolbar .unity-toolbar-toggle:hover,
+.ue5-toolbar > UnityEngine.UIElements.ToolbarButton:hover,
+.ue5-toolbar .unity-toolbar-button:hover,
+.ue5-toolbar > UnityEngine.UIElements.ToolbarMenu:hover,
+.ue5-toolbar .unity-toolbar-menu:hover,
+.ue5-toolbar > UnityEngine.UIElements.ToolbarToggle:hover,
+.ue5-toolbar .unity-toolbar-toggle:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: #FFFFFF;
+    border-color: rgba(255, 255, 255, 0.12);
+}
+
+.ud-toolbar > UnityEngine.UIElements.ToolbarButton:active,
+.ud-toolbar .unity-toolbar-button:active,
+.ud-toolbar > UnityEngine.UIElements.ToolbarMenu:active,
+.ud-toolbar .unity-toolbar-menu:active,
+.ud-toolbar > UnityEngine.UIElements.ToolbarToggle:active,
+.ud-toolbar .unity-toolbar-toggle:active,
+.ue5-toolbar > UnityEngine.UIElements.ToolbarButton:active,
+.ue5-toolbar .unity-toolbar-button:active,
+.ue5-toolbar > UnityEngine.UIElements.ToolbarMenu:active,
+.ue5-toolbar .unity-toolbar-menu:active,
+.ue5-toolbar > UnityEngine.UIElements.ToolbarToggle:active,
+.ue5-toolbar .unity-toolbar-toggle:active {
+    background-color: rgba(10, 133, 255, 0.2);
+    color: #FFFFFF;
+    border-color: rgba(10, 133, 255, 0.5);
+}
+
+.ud-toolbar > UnityEngine.UIElements.ToolbarToggle:checked,
+.ud-toolbar .unity-toolbar-toggle:checked,
+.ud-toolbar > UnityEngine.UIElements.ToolbarToggle.unity-toggle--checked,
+.ud-toolbar .unity-toolbar-toggle.unity-toggle--checked,
+.ue5-toolbar > UnityEngine.UIElements.ToolbarToggle:checked,
+.ue5-toolbar .unity-toolbar-toggle:checked,
+.ue5-toolbar > UnityEngine.UIElements.ToolbarToggle.unity-toggle--checked,
+.ue5-toolbar .unity-toolbar-toggle.unity-toggle--checked {
+    background-color: rgba(10, 133, 255, 0.2);
+    color: #FFFFFF;
+    border-color: rgba(10, 133, 255, 0.55);
+}
+
+.ud-toolbar > UnityEngine.UIElements.ToolbarToggle:checked:hover,
+.ud-toolbar .unity-toolbar-toggle:checked:hover,
+.ud-toolbar > UnityEngine.UIElements.ToolbarToggle.unity-toggle--checked:hover,
+.ud-toolbar .unity-toolbar-toggle.unity-toggle--checked:hover,
+.ue5-toolbar > UnityEngine.UIElements.ToolbarToggle:checked:hover,
+.ue5-toolbar .unity-toolbar-toggle:checked:hover,
+.ue5-toolbar > UnityEngine.UIElements.ToolbarToggle.unity-toggle--checked:hover,
+.ue5-toolbar .unity-toolbar-toggle.unity-toggle--checked:hover {
+    background-color: rgba(10, 133, 255, 0.28);
+    border-color: rgba(10, 133, 255, 0.68);
+}
+
+/* === ScrollView === */
+.ud-scrollview,
+.ue5-scrollview {
+    background-color: transparent;
+    border-width: 0px;
+    flex-direction: column;
+}
+
+.ud-scrollview--compact,
+.ue5-scrollview--compact {
+    max-height: 150px;
+}
+
+/* === Layout Helpers === */
+.ue5-row {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.ud-scroll-item,
+.ue5-scroll-item {
+    padding: 4px 8px;
+    color: #999999;
+    font-size: 11px;
+    border-bottom-width: 1px;
+    border-bottom-color: rgba(255, 255, 255, 0.04);
+}
+
+.ud-scroll-item:hover,
+.ue5-scroll-item:hover {
+    background-color: rgba(10, 133, 255, 0.08);
+    color: #E0E0E0;
+}
