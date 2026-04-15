@@ -1,6 +1,7 @@
 using UnityEngine.UIElements;
 using UniDecl.Runtime.Core;
 using W = UniDecl.Runtime.Widgets;
+using UniDecl.Editor.UIToolKit.Style;
 
 namespace UniDecl.Editor.UIToolkit.Renderers
 {
@@ -12,6 +13,7 @@ namespace UniDecl.Editor.UIToolkit.Renderers
             if (element == null) return null;
 
             var toggle = new UnityEngine.UIElements.Toggle(element.Label) { value = element.Value };
+            UIToolkitStyleApplier.ApplyElementStyles(element, toggle);
             RegisterToggleCallbacks(toggle, element, manager);
             return toggle;
         }

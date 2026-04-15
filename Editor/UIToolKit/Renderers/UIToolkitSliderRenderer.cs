@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.UIElements;
 using UniDecl.Runtime.Core;
 using W = UniDecl.Runtime.Widgets;
+using UniDecl.Editor.UIToolKit.Style;
 
 namespace UniDecl.Editor.UIToolkit.Renderers
 {
@@ -42,6 +43,7 @@ slider.RegisterCallback<PointerUpEvent>(_ =>
 
             
             container.Add(slider);
+            UIToolkitStyleApplier.ApplyElementStyles(element, container);
             return container;
         }
     }
