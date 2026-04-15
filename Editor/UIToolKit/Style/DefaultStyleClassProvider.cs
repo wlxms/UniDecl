@@ -120,6 +120,33 @@ namespace UniDecl.Editor.UIToolKit.Style
                 case DisableContext:
                     yield return "ud-disable-context";
                     break;
+                case H1:
+                    yield return "ud-heading";
+                    yield return "ud-h1";
+                    break;
+                case H2:
+                    yield return "ud-heading";
+                    yield return "ud-h2";
+                    break;
+                case H3:
+                    yield return "ud-heading";
+                    yield return "ud-h3";
+                    break;
+                case H4:
+                    yield return "ud-heading";
+                    yield return "ud-h4";
+                    break;
+                case H5:
+                    yield return "ud-heading";
+                    yield return "ud-h5";
+                    break;
+                case H6:
+                    yield return "ud-heading";
+                    yield return "ud-h6";
+                    break;
+                case TocView:
+                    yield return "ud-toc-view";
+                    break;
             }
         }
 
