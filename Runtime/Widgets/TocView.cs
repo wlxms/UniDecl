@@ -34,6 +34,10 @@ namespace UniDecl.Runtime.Widgets
     {
         public List<TocEntry> Items { get; set; } = new List<TocEntry>();
 
+        /// <summary>
+        /// TocView is handled entirely by UIToolkitTocViewRenderer and does not compose
+        /// child elements declaratively; the renderer builds the visual tree directly.
+        /// </summary>
         public override IElement Render() => null;
 
         public TocView() { }
