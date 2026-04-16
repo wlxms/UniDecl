@@ -1,4 +1,5 @@
-using UniDecl.Runtime.Core;
+﻿using UniDecl.Runtime.Core;
+using UniDecl.Runtime.Components;
 
 namespace UniDecl.Runtime.Widgets
 {
@@ -11,6 +12,6 @@ namespace UniDecl.Runtime.Widgets
 
         public override IElement Render() =>
             new Label(Text) { EnableRichText = EnableRichText }
-                .With(new StyleClasses("ud-heading", "ud-h3"));
+                .With(new InlineStyle("ud-heading", "ud-h3"));
     }
 }

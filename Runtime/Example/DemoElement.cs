@@ -1,4 +1,5 @@
 using UniDecl.Runtime.Contexts;
+using UniDecl.Runtime.Components;
 using UniDecl.Runtime.Core;
 using UniDecl.Runtime.Widgets;
 
@@ -19,7 +20,7 @@ namespace UniDecl.Runtime.Example
                     })
                 },
                 new Label("Hello World!"),
-            }.With(new Components.Style("demo-style"));
+            }.With(new InlineStyle("demo-style"));
         }
     }
 }

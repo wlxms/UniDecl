@@ -1,0 +1,16 @@
+{
+    "name": "UniDecl.UIToolKit",
+    "rootNamespace": "",
+    "references": [
+        "GUID:edc4e07212f02c340ab84c8ed61f779a"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
