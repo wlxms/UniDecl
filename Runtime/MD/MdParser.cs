@@ -20,6 +20,37 @@ namespace UniDecl.Runtime.MD
     public static class MdParser
     {
         // =====================================================================
+        // Pre-compiled Regex patterns
+        // =====================================================================
+
+        private static readonly Regex RxAtxHeading =
+            new Regex(@"^(#{1,6})\s+(.+?)(?:\s+#+\s*)?$", RegexOptions.Compiled);
+
+        private static readonly Regex RxHorizontalRule =
+            new Regex(@"^(\*{3,}|-{3,}|_{3,})\s*$", RegexOptions.Compiled);
+
+        private static readonly Regex RxUnorderedListItem =
+            new Regex(@"^[ \t]*[-*+][ \t]+(.*)", RegexOptions.Compiled);
+
+        private static readonly Regex RxOrderedListItem =
+            new Regex(@"^[ \t]*\d+\.[ \t]+(.*)", RegexOptions.Compiled);
+
+        private static readonly Regex RxSetextH1 =
+            new Regex(@"^={3,}\s*$", RegexOptions.Compiled);
+
+        private static readonly Regex RxSetextH2 =
+            new Regex(@"^-{3,}\s*$", RegexOptions.Compiled);
+
+        private static readonly Regex RxAtxHeadingStart =
+            new Regex(@"^#{1,6}\s+", RegexOptions.Compiled);
+
+        private static readonly Regex RxUnorderedListStart =
+            new Regex(@"^[ \t]*[-*+][ \t]+", RegexOptions.Compiled);
+
+        private static readonly Regex RxOrderedListStart =
+            new Regex(@"^[ \t]*\d+\.[ \t]+", RegexOptions.Compiled);
+
+        // =====================================================================
         // Public entry point
         // =====================================================================
 
@@ -59,7 +90,7 @@ namespace UniDecl.Runtime.MD
                 }
 
                 // ATX heading: # H1 … ###### H6
-                var headingMatch = Regex.Match(line, @"^(#{1,6})\s+(.+?)(?:\s+#+\s*)?$");
+                var headingMatch = RxAtxHeading.Match(line);
                 if (headingMatch.Success)
                 {
                     var content = headingMatch.Groups[2].Value.Trim();
@@ -75,7 +106,7 @@ namespace UniDecl.Runtime.MD
                 }
 
                 // Horizontal rule: ---, ***, ___
-                if (Regex.IsMatch(line, @"^(\*{3,}|-{3,}|_{3,})\s*$"))
+                if (RxHorizontalRule.IsMatch(line))
                 {
                     blocks.Add(new MdBlock { Type = MdBlockType.HorizontalRule });
                     i++;
@@ -90,14 +121,14 @@ namespace UniDecl.Runtime.MD
                 }
 
                 // Unordered list: -, *, +
-                if (Regex.IsMatch(line, @"^[ \t]*[-*+][ \t]+"))
+                if (RxUnorderedListStart.IsMatch(line))
                 {
                     i = ParseUnorderedList(lines, i, end, blocks);
                     continue;
                 }
 
                 // Ordered list: 1., 2., …
-                if (Regex.IsMatch(line, @"^[ \t]*\d+\.[ \t]+"))
+                if (RxOrderedListStart.IsMatch(line))
                 {
                     i = ParseOrderedList(lines, i, end, blocks);
                     continue;
@@ -107,7 +138,7 @@ namespace UniDecl.Runtime.MD
                 if (i + 1 < end)
                 {
                     var next = lines[i + 1];
-                    if (Regex.IsMatch(next, @"^={3,}\s*$"))
+                    if (RxSetextH1.IsMatch(next))
                     {
                         var content = line.Trim();
                         blocks.Add(new MdBlock
@@ -117,7 +148,7 @@ namespace UniDecl.Runtime.MD
                         });
                         i += 2; continue;
                     }
-                    if (Regex.IsMatch(next, @"^-{3,}\s*$"))
+                    if (RxSetextH2.IsMatch(next))
                     {
                         var content = line.Trim();
                         blocks.Add(new MdBlock
@@ -193,7 +224,7 @@ namespace UniDecl.Runtime.MD
                 var line = lines[i];
                 if (string.IsNullOrWhiteSpace(line)) { i++; break; }
 
-                var m = Regex.Match(line, @"^[ \t]*[-*+][ \t]+(.*)");
+                var m = RxUnorderedListItem.Match(line);
                 if (!m.Success) break;
 
                 items.Add(new MdListItem { Inlines = ParseInlines(m.Groups[1].Value) });
@@ -215,7 +246,7 @@ namespace UniDecl.Runtime.MD
                 var line = lines[i];
                 if (string.IsNullOrWhiteSpace(line)) { i++; break; }
 
-                var m = Regex.Match(line, @"^[ \t]*\d+\.[ \t]+(.*)");
+                var m = RxOrderedListItem.Match(line);
                 if (!m.Success) break;
 
                 items.Add(new MdListItem
@@ -245,11 +276,11 @@ namespace UniDecl.Runtime.MD
 
                 // Stop on any new block type
                 if (trimmed.StartsWith("```") || trimmed.StartsWith("~~~")) break;
-                if (Regex.IsMatch(line, @"^#{1,6}\s+")) break;
-                if (Regex.IsMatch(line, @"^(\*{3,}|-{3,}|_{3,})\s*$")) break;
+                if (RxAtxHeadingStart.IsMatch(line)) break;
+                if (RxHorizontalRule.IsMatch(line)) break;
                 if (trimmed.StartsWith(">")) break;
-                if (Regex.IsMatch(line, @"^[ \t]*[-*+][ \t]+")) break;
-                if (Regex.IsMatch(line, @"^[ \t]*\d+\.[ \t]+")) break;
+                if (RxUnorderedListStart.IsMatch(line)) break;
+                if (RxOrderedListStart.IsMatch(line)) break;
 
                 if (sb.Length > 0) sb.Append('\n');
                 sb.Append(line);

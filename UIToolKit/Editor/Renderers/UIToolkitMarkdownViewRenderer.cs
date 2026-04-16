@@ -20,6 +20,16 @@ namespace UniDecl.Editor.UIToolKit.Renderers
     /// </summary>
     public class UIToolkitMarkdownViewRenderer : IElementRenderer<W.MarkdownView, VisualElement>
     {
+        // =====================================================================
+        // Rich-text color constants
+        // =====================================================================
+
+        /// <summary>Color applied to inline code spans in rich-text labels.</summary>
+        private const string InlineCodeColor = "#c0392b";
+
+        /// <summary>Color applied to hyperlink text in rich-text labels.</summary>
+        private const string LinkColor = "#5b9bd5";
+
         public VisualElement Render(W.MarkdownView element, IElementRenderHost<VisualElement> manager, ElementState state)
         {
             if (element == null) return null;
@@ -207,12 +217,12 @@ namespace UniDecl.Editor.UIToolKit.Renderers
                         sb.Append("<b><i>").Append(EscapeRichText(inline.Text)).Append("</i></b>");
                         break;
                     case MdInlineType.Code:
-                        sb.Append("<color=#c0392b>").Append(inline.Text).Append("</color>");
+                        sb.Append($"<color={InlineCodeColor}>").Append(inline.Text).Append("</color>");
                         break;
                     case MdInlineType.Link:
                         // Render as underlined blue text (not clickable in this path, but
                         // HasClickable should have returned true — kept for safety)
-                        sb.Append("<color=#5b9bd5><u>").Append(EscapeRichText(inline.Text)).Append("</u></color>");
+                        sb.Append($"<color={LinkColor}><u>").Append(EscapeRichText(inline.Text)).Append("</u></color>");
                         break;
                     case MdInlineType.Image:
                         sb.Append("[").Append(EscapeRichText(inline.Text)).Append("]");
@@ -300,7 +310,7 @@ namespace UniDecl.Editor.UIToolKit.Renderers
                                 textBuf.Append("<b><i>").Append(EscapeRichText(inline.Text)).Append("</i></b>");
                                 break;
                             case MdInlineType.Code:
-                                textBuf.Append("<color=#c0392b>").Append(inline.Text).Append("</color>");
+                                textBuf.Append($"<color={InlineCodeColor}>").Append(inline.Text).Append("</color>");
                                 break;
                         }
                         break;
