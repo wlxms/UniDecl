@@ -123,6 +123,9 @@ namespace UniDecl.Editor.UIToolKit.Style
                 case TocView:
                     yield return "ud-toc-view";
                     break;
+                case MarkdownView:
+                    yield return "ud-markdown";
+                    break;
             }
         }
 

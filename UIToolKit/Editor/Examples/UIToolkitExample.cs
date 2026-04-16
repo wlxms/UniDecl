@@ -437,6 +437,63 @@ namespace UniDecl.Editor.UIToolKit.Examples
                 new W.TocEntry("API 参考", 2),
             });
 
+            const string sampleMarkdown = @"# UniDecl MarkdownView
+
+## 简介
+
+**UniDecl** 是一个仿 React 风格的 Unity GUI 框架，支持声明式 UI 构建。
+
+本控件 `MarkdownView` 可直接传入 Markdown 字符串并渲染为完整的富文本界面。
+
+---
+
+## 功能特性
+
+- **标题**：H1 ~ H6 均支持
+- **行内格式**：粗体 `**text**`、斜体 `*text*`、粗斜体 `***text***`
+- **内联代码**：使用反引号 `` `code` ``
+- 有序列表与无序列表
+- 代码块、引用、水平分割线
+
+## 快速开始
+
+### 安装
+
+在 Unity Package Manager 中通过 Git URL 添加：
+
+```
+https://github.com/wlxms/UniDecl.git
+```
+
+### 配置
+
+```csharp
+var mdView = new MarkdownView(markdownText)
+{
+    OnUrlClick = url => Debug.Log(""Clicked: "" + url),
+};
+```
+
+## 链接示例
+
+访问 [UniDecl GitHub 仓库](https://github.com/wlxms/UniDecl) 获取最新源码。
+
+> **注意**：点击上方链接会触发 `OnUrlClick` 回调，
+> 而不是直接打开浏览器，从而支持自定义跳转逻辑。
+
+---
+
+## API 参考
+
+| 属性 | 类型 | 说明 |
+|------|------|------|
+| `Markdown` | string | Markdown 源文本 |
+| `OnUrlClick` | Action<string> | 链接点击回调 |
+";
+
+            var markdownView = new W.MarkdownView(sampleMarkdown,
+                url => Debug.Log($"[MarkdownView] URL clicked: {url}"));
+
             return new Panel
             {
                 new Label("--- 标题控件 H1–H6 ---"),
@@ -449,6 +506,9 @@ namespace UniDecl.Editor.UIToolKit.Examples
                 new Label(""),
                 new Label("--- TocView 目录导航栏 ---"),
                 toc,
+                new Label(""),
+                new Label("--- MarkdownView 完整 MD 渲染控件 ---"),
+                markdownView,
             };
         }
     }
