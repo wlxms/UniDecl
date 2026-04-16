@@ -116,6 +116,13 @@ namespace UniDecl.Editor.UIToolKit.Style
             // Apply framework default classes first so themes can style every widget consistently.
             DefaultStyleClassProvider.Apply(element, ve);
 
+            // Apply runtime StyleClasses component (e.g. from encapsulation-penetration widgets).
+            var styleClasses = element.Get<StyleClasses>();
+            if (styleClasses?.Names != null)
+                foreach (var cls in styleClasses.Names)
+                    if (!string.IsNullOrEmpty(cls) && !ve.ClassListContains(cls))
+                        ve.AddToClassList(cls);
+
             var uitkStyle = element.Get<UITKStyle>();
             if (uitkStyle != null)
             {
