@@ -7,8 +7,10 @@ namespace UniDecl.Runtime.Widgets
         public string Text { get; set; }
         public bool EnableRichText { get; set; } = true;
 
-        public override IElement Render() => null;
-
         public H5(string text) { Text = text; }
+
+        public override IElement Render() =>
+            new Label(Text) { EnableRichText = EnableRichText }
+                .With(new StyleClasses("ud-heading", "ud-h5"));
     }
 }
