@@ -292,3 +292,146 @@
 .ud-toc-item--selected > .ud-toc-item-label {
     color: #7ab8ff;
 }
+
+/* ============================================================
+   MarkdownView — full Markdown rendering widget
+   ============================================================ */
+
+/* Root scroll container */
+.ud-markdown {
+    flex-grow: 1;
+    flex-direction: column;
+    padding: 8px 10px;
+}
+
+/* Paragraph */
+.ud-md-paragraph {
+    margin-bottom: 6px;
+    white-space: normal;
+}
+
+/* Plain text label inside paragraphs / headings */
+.ud-md-text {
+    color: #d0d0d0;
+    font-size: 12px;
+    white-space: normal;
+    -unity-word-wrap: true;
+}
+
+/* Flex-wrap row used when inlines contain clickable links */
+.ud-md-text-row {
+    flex-direction: row;
+    flex-wrap: wrap;
+    margin-bottom: 4px;
+}
+
+/* Hard line-break spacer inside a flex-wrap row */
+.ud-md-br {
+    width: 100%;
+    height: 0;
+}
+
+/* Hyperlink label */
+.ud-md-link {
+    color: #5b9bd5;
+    font-size: 12px;
+}
+
+.ud-md-link--clickable {
+    cursor: link;
+    -unity-text-decoration: underline;
+}
+
+.ud-md-link--clickable:hover {
+    color: #7ab8ff;
+}
+
+/* Image placeholder label */
+.ud-md-image-placeholder {
+    color: #888888;
+    font-size: 12px;
+    font-style: italic;
+}
+
+/* Fenced code block container */
+.ud-md-codeblock {
+    background-color: rgba(0, 0, 0, 0.3);
+    border-width: 1px;
+    border-color: rgba(255, 255, 255, 0.10);
+    border-radius: 4px;
+    padding: 8px;
+    margin-top: 4px;
+    margin-bottom: 8px;
+    flex-direction: column;
+}
+
+/* Language tag inside a code block */
+.ud-md-codeblock-lang {
+    font-size: 10px;
+    color: #888888;
+    margin-bottom: 4px;
+    -unity-font-style: italic;
+}
+
+/* Code content (monospace preferred; falls back to default font) */
+.ud-md-code {
+    color: #ce9178;
+    font-size: 12px;
+    white-space: pre;
+}
+
+/* Unordered list container */
+.ud-md-ul {
+    margin-left: 8px;
+    margin-bottom: 6px;
+    flex-direction: column;
+}
+
+/* Ordered list container */
+.ud-md-ol {
+    margin-left: 8px;
+    margin-bottom: 6px;
+    flex-direction: column;
+}
+
+/* List item row */
+.ud-md-li {
+    flex-direction: row;
+    margin-bottom: 2px;
+}
+
+/* Bullet / number label */
+.ud-md-li-bullet {
+    color: #5b9bd5;
+    font-size: 12px;
+    min-width: 18px;
+    margin-right: 4px;
+    -unity-text-align: upper-right;
+}
+
+/* List item content (grows to fill remaining width) */
+.ud-md-li-content {
+    flex-grow: 1;
+    flex-shrink: 1;
+    white-space: normal;
+}
+
+/* Blockquote container */
+.ud-md-blockquote {
+    border-left-width: 3px;
+    border-left-color: rgba(91, 155, 213, 0.6);
+    padding-left: 10px;
+    margin-left: 4px;
+    margin-top: 4px;
+    margin-bottom: 6px;
+    flex-direction: column;
+    background-color: rgba(91, 155, 213, 0.05);
+}
+
+/* Horizontal rule */
+.ud-md-hr {
+    height: 1px;
+    background-color: rgba(255, 255, 255, 0.15);
+    margin-top: 8px;
+    margin-bottom: 8px;
+}
