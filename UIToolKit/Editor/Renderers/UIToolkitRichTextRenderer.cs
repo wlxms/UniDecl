@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
-using UnityEngine;
 using UnityEngine.UIElements;
 using UniDecl.Runtime.Core;
 using UniDecl.Runtime.MD;
@@ -11,164 +10,36 @@ using W = UniDecl.Runtime.Widgets;
 namespace UniDecl.Editor.UIToolKit.Renderers
 {
     /// <summary>
-    /// UIToolkit renderer for <see cref="W.MarkdownView"/>.
-    /// Parses the <see cref="W.MarkdownView.Markdown"/> string with <see cref="MdParser"/>
-    /// and builds a <see cref="ScrollView"/> containing styled <see cref="VisualElement"/>s.
+    /// UIToolkit renderer for <see cref="W.RichText"/>.
     ///
-    /// URL forwarding: every hyperlink and image fires
-    /// <see cref="W.MarkdownView.OnUrlClick"/> when clicked.
+    /// Fast path (no links/images): a single Unity rich-text <see cref="Label"/>.
+    /// Slow path (links present):  a flex-wrap row where each segment is an individual
+    /// <see cref="Label"/>, and link/image labels are made clickable.
+    ///
+    /// URL clicks are forwarded to <see cref="W.RichText.OnUrlClick"/>.
     /// </summary>
-    public class UIToolkitMarkdownViewRenderer : IElementRenderer<W.MarkdownView, VisualElement>
+    public class UIToolkitRichTextRenderer : IElementRenderer<W.RichText, VisualElement>
     {
-        // =====================================================================
-        // Rich-text color constants
-        // =====================================================================
-
-        /// <summary>Color applied to inline code spans in rich-text labels.</summary>
         private const string InlineCodeColor = "#c0392b";
-
-        /// <summary>Color applied to hyperlink text in rich-text labels.</summary>
         private const string LinkColor = "#5b9bd5";
 
-        public VisualElement Render(W.MarkdownView element, IElementRenderHost<VisualElement> manager, ElementState state)
+        public VisualElement Render(W.RichText element, IElementRenderHost<VisualElement> manager, ElementState state)
         {
             if (element == null) return null;
 
-            var root = new ScrollView();
-            root.AddToClassList("ud-markdown");
-
-            if (!string.IsNullOrEmpty(element.Markdown))
-            {
-                var blocks = MdParser.Parse(element.Markdown);
-                foreach (var block in blocks)
-                {
-                    var ve = RenderBlock(block, element.OnUrlClick);
-                    if (ve != null)
-                        root.Add(ve);
-                }
-            }
-
-            UIToolkitStyleApplier.ApplyElementStyles(element, root);
-            return root;
-        }
-
-        // =====================================================================
-        // Block rendering
-        // =====================================================================
-
-        private static VisualElement RenderBlock(MdBlock block, Action<string> onUrlClick)
-        {
-            switch (block.Type)
-            {
-                case MdBlockType.Heading:      return RenderHeading(block, onUrlClick);
-                case MdBlockType.Paragraph:    return RenderParagraph(block, onUrlClick);
-                case MdBlockType.CodeBlock:    return RenderCodeBlock(block);
-                case MdBlockType.UnorderedList: return RenderList(block, onUrlClick, ordered: false);
-                case MdBlockType.OrderedList:  return RenderList(block, onUrlClick, ordered: true);
-                case MdBlockType.Blockquote:   return RenderBlockquote(block, onUrlClick);
-                case MdBlockType.HorizontalRule: return RenderHorizontalRule();
-                default: return null;
-            }
-        }
-
-        private static VisualElement RenderHeading(MdBlock block, Action<string> onUrlClick)
-        {
-            var ve = RenderInlineContainer(block.Inlines, onUrlClick);
-            ve.AddToClassList("ud-heading");
-            ve.AddToClassList($"ud-h{Mathf.Clamp(block.Level, 1, 6)}");
+            var ve = RenderInlineContainer(element.Inlines, element.OnUrlClick);
+            UIToolkitStyleApplier.ApplyElementStyles(element, ve);
             return ve;
         }
 
-        private static VisualElement RenderParagraph(MdBlock block, Action<string> onUrlClick)
-        {
-            var ve = RenderInlineContainer(block.Inlines, onUrlClick);
-            ve.AddToClassList("ud-md-paragraph");
-            return ve;
-        }
-
-        private static VisualElement RenderCodeBlock(MdBlock block)
-        {
-            var container = new VisualElement();
-            container.AddToClassList("ud-md-codeblock");
-            container.style.flexDirection = FlexDirection.Column;
-
-            if (!string.IsNullOrEmpty(block.Language))
-            {
-                var langLabel = new Label(block.Language);
-                langLabel.AddToClassList("ud-md-codeblock-lang");
-                container.Add(langLabel);
-            }
-
-            var codeLabel = new Label(block.RawText) { enableRichText = false };
-            codeLabel.AddToClassList("ud-md-code");
-            container.Add(codeLabel);
-
-            return container;
-        }
-
-        private static VisualElement RenderList(MdBlock block, Action<string> onUrlClick, bool ordered)
-        {
-            var container = new VisualElement();
-            container.AddToClassList(ordered ? "ud-md-ol" : "ud-md-ul");
-            container.style.flexDirection = FlexDirection.Column;
-
-            foreach (var item in block.Items)
-            {
-                var row = new VisualElement();
-                row.style.flexDirection = FlexDirection.Row;
-                row.AddToClassList("ud-md-li");
-
-                var bullet = new Label(ordered ? $"{item.OrderIndex}." : "•");
-                bullet.AddToClassList("ud-md-li-bullet");
-                row.Add(bullet);
-
-                var content = RenderInlineContainer(item.Inlines, onUrlClick);
-                content.AddToClassList("ud-md-li-content");
-                row.Add(content);
-
-                container.Add(row);
-            }
-
-            return container;
-        }
-
-        private static VisualElement RenderBlockquote(MdBlock block, Action<string> onUrlClick)
-        {
-            var container = new VisualElement();
-            container.AddToClassList("ud-md-blockquote");
-            container.style.flexDirection = FlexDirection.Column;
-
-            foreach (var inner in block.Blocks)
-            {
-                var ve = RenderBlock(inner, onUrlClick);
-                if (ve != null)
-                    container.Add(ve);
-            }
-
-            return container;
-        }
-
-        private static VisualElement RenderHorizontalRule()
-        {
-            var hr = new VisualElement();
-            hr.AddToClassList("ud-md-hr");
-            return hr;
-        }
-
         // =====================================================================
-        // Inline rendering
+        // Inline container
         // =====================================================================
 
-        /// <summary>
-        /// Renders a list of inlines.  When there are no links/images the result is a single
-        /// rich-text Label.  When links are present a flex-wrap container is used so that
-        /// clickable segments can be individual VisualElements.
-        /// </summary>
-        private static VisualElement RenderInlineContainer(List<MdInline> inlines, Action<string> onUrlClick)
+        private VisualElement RenderInlineContainer(List<MdInline> inlines, Action<string> onUrlClick)
         {
             if (!HasClickable(inlines))
             {
-                // Fast path: pure rich text label
                 var sb = new StringBuilder();
                 BuildRichText(inlines, sb);
                 var lbl = new Label(sb.ToString()) { enableRichText = true };
@@ -176,12 +47,10 @@ namespace UniDecl.Editor.UIToolKit.Renderers
                 return lbl;
             }
 
-            // Slow path: mixed content with clickable links / images
             var container = new VisualElement();
             container.AddToClassList("ud-md-text-row");
             container.style.flexDirection = FlexDirection.Row;
             container.style.flexWrap = Wrap.Wrap;
-
             RenderInlinesIntoContainer(inlines, container, onUrlClick);
             return container;
         }
@@ -195,11 +64,13 @@ namespace UniDecl.Editor.UIToolKit.Renderers
             return false;
         }
 
-        // Builds a Unity rich-text string for the given inlines (no link interactivity).
-        private static void BuildRichText(List<MdInline> inlines, StringBuilder sb)
+        // =====================================================================
+        // Fast path: pure rich-text string
+        // =====================================================================
+
+        private void BuildRichText(List<MdInline> inlines, StringBuilder sb)
         {
             if (inlines == null) return;
-
             foreach (var inline in inlines)
             {
                 switch (inline.Type)
@@ -220,8 +91,6 @@ namespace UniDecl.Editor.UIToolKit.Renderers
                         sb.Append($"<color={InlineCodeColor}>").Append(inline.Text).Append("</color>");
                         break;
                     case MdInlineType.Link:
-                        // Render as underlined blue text (not clickable in this path, but
-                        // HasClickable should have returned true — kept for safety)
                         sb.Append($"<color={LinkColor}><u>").Append(EscapeRichText(inline.Text)).Append("</u></color>");
                         break;
                     case MdInlineType.Image:
@@ -234,8 +103,11 @@ namespace UniDecl.Editor.UIToolKit.Renderers
             }
         }
 
-        // Renders inlines into a flex-wrap container, making links clickable VisualElements.
-        private static void RenderInlinesIntoContainer(
+        // =====================================================================
+        // Slow path: clickable segments in flex-wrap container
+        // =====================================================================
+
+        private void RenderInlinesIntoContainer(
             List<MdInline> inlines, VisualElement container, Action<string> onUrlClick)
         {
             if (inlines == null) return;
@@ -286,15 +158,15 @@ namespace UniDecl.Editor.UIToolKit.Renderers
                     }
 
                     case MdInlineType.LineBreak:
+                    {
                         FlushText();
-                        // Insert an invisible full-width element to force a line wrap
                         var br = new VisualElement();
                         br.AddToClassList("ud-md-br");
                         container.Add(br);
                         break;
+                    }
 
                     default:
-                        // Accumulate as rich text segment
                         switch (inline.Type)
                         {
                             case MdInlineType.Text:
@@ -325,14 +197,12 @@ namespace UniDecl.Editor.UIToolKit.Renderers
         // =====================================================================
 
         /// <summary>
-        /// Escapes angle brackets so that arbitrary text does not accidentally activate
-        /// Unity's rich-text tag parser inside a Label with enableRichText = true.
-        /// Unity TextCore supports the &lt;noparse&gt; tag for exactly this purpose.
+        /// Wraps text containing angle brackets in a Unity <c>&lt;noparse&gt;</c> tag so that
+        /// arbitrary user text does not accidentally trigger the rich-text tag parser.
         /// </summary>
         private static string EscapeRichText(string text)
         {
             if (string.IsNullOrEmpty(text)) return text;
-            // Use noparse to wrap the entire segment when angle brackets are present.
             if (text.IndexOf('<') >= 0 || text.IndexOf('>') >= 0)
                 return "<noparse>" + text + "</noparse>";
             return text;
