@@ -95,8 +95,12 @@ namespace UniDecl.Editor.UIToolKit
             RegisterRenderer<LongField>(new UIToolkitLongFieldRenderer());
             // MD: 目录导航栏 TocView（H1–H6 通过封装穿透到 Label 渲染，无需专属渲染器）
             RegisterRenderer<TocView>(new UIToolkitTocViewRenderer());
-            // MD: MarkdownView — 完整 Markdown 渲染控件（解析 + 渲染 + URL 转发）
-            RegisterRenderer<MarkdownView>(new UIToolkitMarkdownViewRenderer());
+            // MD: inline widgets — RichText, Blockquote, Divider, MdTable
+            // MarkdownView composes via Render() and needs no dedicated renderer.
+            RegisterRenderer<RichText>(new UIToolkitRichTextRenderer());
+            RegisterRenderer<Blockquote>(new UIToolkitBlockquoteRenderer());
+            RegisterRenderer<Divider>(new UIToolkitDividerRenderer());
+            RegisterRenderer<MdTable>(new UIToolkitMdTableRenderer());
         }
 
         public VisualElement RenderRoot(IElement rootElement)
