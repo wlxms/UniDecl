@@ -1,9 +1,14 @@
 /* ============================================================
    Default Style Theme for UniDecl UIToolkit
    Neutral style driven by ud-* default classes.
+   中文界面字体：微软雅黑 msyh.ttc
    ============================================================ */
 
 .ud-root {
+    --unity-font: url("project://database/Assets/ThirdParty/UniDecl/UIToolKit/Editor/Resources/Fonts/msyh.ttc");
+    -unity-font: url("project://database/Assets/ThirdParty/UniDecl/UIToolKit/Editor/Resources/Fonts/msyh.ttc");
+    -unity-font-definition: url("project://database/Assets/ThirdParty/UniDecl/UIToolKit/Editor/Resources/Fonts/msyh.ttc");
+    -unity-font-style: normal;
     padding: 8px;
     flex-direction: column;
     flex-grow: 1;
@@ -77,6 +82,34 @@
     flex-wrap: wrap;
     align-items: center;
     margin-bottom: 4px;
+}
+
+.ud-sidebar {
+    background-color: rgba(0, 0, 0, 0.18);
+    border-right-width: 1px;
+    border-right-color: rgba(255, 255, 255, 0.12);
+}
+
+.ud-sidebar-theme-row {
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    margin-bottom: 6px;
+}
+
+.ud-sidebar-theme-row .ud-button,
+.ud-sidebar-theme-row .ud-button--secondary {
+    min-width: 0px;
+    flex-grow: 1;
+    flex-shrink: 1;
+    padding-left: 8px;
+    padding-right: 8px;
+    margin-right: 4px;
+    margin-bottom: 0px;
+}
+
+.ud-sidebar-scroll {
+    padding-left: 1px;
+    padding-right: 1px;
 }
 
 .ud-button--secondary {
@@ -239,16 +272,22 @@
     background-color: rgba(0, 0, 0, 0.1);
     border-width: 1px;
     border-color: rgba(255, 255, 255, 0.08);
-    border-radius: 2px;
-    padding: 4px 0;
+    border-radius: 4px;
+    padding: 5px 4px;
 }
 
 .ud-toc-item {
     flex-direction: row;
     align-items: center;
-    padding-top: 3px;
-    padding-bottom: 3px;
-    padding-right: 8px;
+    padding-top: 4px;
+    padding-bottom: 4px;
+    padding-right: 10px;
+    padding-left: 8px;
+    margin-left: 3px;
+    margin-right: 3px;
+    border-radius: 2px;
+    border-left-width: 0px;
+    transition-duration: 80ms;
 }
 
 .ud-toc-item-label {
@@ -258,15 +297,26 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    padding-left: 4px;
 }
 
 .ud-toc-item--l1 > .ud-toc-item-label {
     -unity-font-style: bold;
-    color: #d8d8d8;
+    color: #e0e0e0;
+    font-size: 13px;
+}
+
+.ud-toc-item--l1 {
+    margin-top: 3px;
+    margin-bottom: 1px;
 }
 
 .ud-toc-item--l2 > .ud-toc-item-label {
     color: #c8c8c8;
+}
+
+.ud-toc-item--l2 {
+    padding-left: 10px;
 }
 
 .ud-toc-item--l3 > .ud-toc-item-label,
@@ -277,6 +327,14 @@
     font-size: 11px;
 }
 
+.ud-toc-item--l3,
+.ud-toc-item--l4,
+.ud-toc-item--l5,
+.ud-toc-item--l6 {
+    padding-left: 14px;
+}
+
+/* Clickable items — cursor and hover highlight */
 .ud-toc-item--clickable {
     cursor: link;
 }
@@ -285,12 +343,50 @@
     background-color: rgba(255, 255, 255, 0.06);
 }
 
+.ud-toc-item--clickable:active {
+    background-color: rgba(255, 255, 255, 0.10);
+}
+
+/* Selected item — accent highlight with left border */
 .ud-toc-item--selected {
-    background-color: rgba(90, 160, 255, 0.12);
+    background-color: rgba(90, 160, 255, 0.16);
+    border-left-width: 3px;
+    border-left-color: #5b9bd5;
+    margin-left: 0px;
+}
+
+.ud-toc-item--selected:hover {
+    background-color: rgba(90, 160, 255, 0.24);
 }
 
 .ud-toc-item--selected > .ud-toc-item-label {
     color: #7ab8ff;
+}
+
+/* Chevron indicator for expandable items */
+.ud-toc-chevron {
+    font-size: 8px;
+    color: #808080;
+    min-width: 16px;
+    margin-right: 2px;
+    flex-shrink: 0;
+    -unity-text-align: middle-center;
+    transition-duration: 120ms;
+}
+
+.ud-toc-item--has-children:hover > .ud-toc-chevron {
+    color: #a0a0a0;
+}
+
+.ud-toc-item--selected > .ud-toc-chevron {
+    color: #5b9bd5;
+}
+
+/* Children container — indented group */
+.ud-toc-children {
+    flex-direction: column;
+    padding-left: 0px;
+    margin-bottom: 2px;
 }
 
 /* ============================================================
@@ -306,8 +402,9 @@
 
 /* Paragraph */
 .ud-md-paragraph {
-    margin-bottom: 6px;
+    margin-bottom: 8px;
     white-space: normal;
+    -unity-paragraph-spacing: 4px;
 }
 
 /* Plain text label inside paragraphs / headings */
@@ -315,20 +412,21 @@
     color: #d0d0d0;
     font-size: 12px;
     white-space: normal;
-    -unity-word-wrap: true;
+    -unity-paragraph-spacing: 4px;
 }
 
 /* Flex-wrap row used when inlines contain clickable links */
 .ud-md-text-row {
     flex-direction: row;
     flex-wrap: wrap;
-    margin-bottom: 4px;
+    align-items: center;
+    margin-bottom: 0px;
 }
 
 /* Hard line-break spacer inside a flex-wrap row */
 .ud-md-br {
     width: 100%;
-    height: 0;
+    height: 2px;
 }
 
 /* Hyperlink label */
@@ -339,74 +437,126 @@
 
 .ud-md-link--clickable {
     cursor: link;
-    -unity-text-decoration: underline;
+    transition-duration: 150ms;
 }
 
 .ud-md-link--clickable:hover {
     color: #7ab8ff;
 }
 
-/* Image placeholder label */
-.ud-md-image-placeholder {
+/* Image container with icon + alt text */
+.ud-md-image-container {
+    flex-direction: row;
+    align-items: center;
+    margin: 2px 4px;
+    padding: 2px 6px;
+    border-width: 1px;
+    border-color: rgba(255, 255, 255, 0.10);
+    border-radius: 2px;
+    background-color: rgba(0, 0, 0, 0.15);
+}
+
+.ud-md-image-icon {
+    width: 16px;
+    height: 16px;
+    margin-right: 4px;
+    flex-shrink: 0;
+}
+
+.ud-md-image-alt {
     color: #888888;
-    font-size: 12px;
-    font-style: italic;
+    font-size: 11px;
+    -unity-font-style: italic;
 }
 
 /* Fenced code block container */
 .ud-md-codeblock {
-    background-color: rgba(0, 0, 0, 0.3);
+    background-color: rgba(0, 0, 0, 0.35);
     border-width: 1px;
-    border-color: rgba(255, 255, 255, 0.10);
+    border-color: rgba(255, 255, 255, 0.08);
     border-radius: 4px;
-    padding: 8px;
-    margin-top: 4px;
-    margin-bottom: 8px;
+    padding: 0px;
+    margin-top: 6px;
+    margin-bottom: 10px;
+    overflow: hidden;
     flex-direction: column;
+    cursor: Text;
 }
 
 /* Language tag inside a code block */
 .ud-md-codeblock-lang {
     font-size: 10px;
     color: #888888;
-    margin-bottom: 4px;
+    padding: 4px 10px 2px 10px;
     -unity-font-style: italic;
+    border-bottom-width: 1px;
+    border-bottom-color: rgba(255, 255, 255, 0.06);
+    background-color: rgba(255, 255, 255, 0.03);
+}
+
+/* Copy button inside code block header */
+.ud-md-codeblock-copy-btn {
+    background-color: transparent;
+    border-width: 0;
+    padding-left: 4px;
+    padding-right: 4px;
+    margin-left: 4px;
+    margin-right: 0;
+}
+.ud-md-codeblock-copy-btn:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+}
+.ud-md-codeblock-copy-btn:active {
+    background-color: rgba(255, 255, 255, 0.18);
+    border-radius: 3px;
 }
 
 /* Code content (monospace preferred; falls back to default font) */
 .ud-md-code {
-    color: #ce9178;
+    color: #d4d4d4;
     font-size: 12px;
-    white-space: pre;
+    white-space: nowrap;
+    padding: 8px 10px;
+    cursor: Text;
 }
 
 /* Unordered list container */
 .ud-md-ul {
     margin-left: 8px;
-    margin-bottom: 6px;
+    margin-top: 4px;
+    margin-bottom: 8px;
     flex-direction: column;
 }
 
 /* Ordered list container */
 .ud-md-ol {
     margin-left: 8px;
-    margin-bottom: 6px;
+    margin-top: 4px;
+    margin-bottom: 8px;
     flex-direction: column;
 }
 
 /* List item row */
 .ud-md-li {
     flex-direction: row;
-    margin-bottom: 2px;
+    align-items: center;
+    margin-bottom: 5px;
+    padding-top: 0px;
+    padding-bottom: 0px;
 }
 
 /* Bullet / number label */
 .ud-md-li-bullet {
     color: #5b9bd5;
-    font-size: 12px;
-    min-width: 18px;
-    margin-right: 4px;
-    -unity-text-align: upper-right;
+    font-size: 13px;
+    min-width: 16px;
+    margin-right: 1px;
+    -unity-text-align: middle-left;
+    align-self: center;
+    padding-top: 0px;
+    padding-bottom: 0px;
+    flex-shrink: 0;
 }
 
 /* List item content (grows to fill remaining width) */
@@ -414,24 +564,99 @@
     flex-grow: 1;
     flex-shrink: 1;
     white-space: normal;
+    -unity-paragraph-spacing: 1px;
+    align-self: center;
+}
+
+/* Normalize RichText spacing inside list rows so text aligns with bullet/number */
+.ud-md-li-content .ud-md-text,
+.ud-md-li-content .ud-md-text-row {
+    margin-bottom: 0px;
+    -unity-paragraph-spacing: 1px;
+    -unity-text-align: middle-left;
+    align-items: center;
 }
 
 /* Blockquote container */
 .ud-md-blockquote {
     border-left-width: 3px;
     border-left-color: rgba(91, 155, 213, 0.6);
-    padding-left: 10px;
-    margin-left: 4px;
-    margin-top: 4px;
-    margin-bottom: 6px;
+    padding: 8px 12px;
+    margin-top: 6px;
+    margin-bottom: 10px;
     flex-direction: column;
     background-color: rgba(91, 155, 213, 0.05);
+    border-radius: 0px 3px 3px 0px;
+}
+
+.ud-md-blockquote .ud-md-paragraph,
+.ud-md-blockquote .ud-md-text {
+    margin-bottom: 4px;
+}
+
+.ud-md-blockquote .ud-md-ul,
+.ud-md-blockquote .ud-md-ol {
+    margin-top: 2px;
 }
 
 /* Horizontal rule */
 .ud-md-hr {
     height: 1px;
     background-color: rgba(255, 255, 255, 0.15);
-    margin-top: 8px;
-    margin-bottom: 8px;
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+
+/* ============================================================
+   MdTable — Markdown table rendering
+   ============================================================ */
+
+.ud-md-table {
+    border-width: 1px;
+    border-color: rgba(255, 255, 255, 0.10);
+    border-radius: 3px;
+    margin-top: 6px;
+    margin-bottom: 10px;
+    overflow: hidden;
+    flex-direction: column;
+}
+
+.ud-md-table-header {
+    flex-direction: row;
+    background-color: rgba(255, 255, 255, 0.06);
+    border-bottom-width: 1px;
+    border-bottom-color: rgba(255, 255, 255, 0.12);
+}
+
+.ud-md-table-header-cell {
+    padding: 5px 10px;
+    font-size: 11px;
+    -unity-font-style: bold;
+    color: #c8c8c8;
+    flex-grow: 1;
+    flex-shrink: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ud-md-table-row {
+    flex-direction: row;
+    border-bottom-width: 1px;
+    border-bottom-color: rgba(255, 255, 255, 0.05);
+}
+
+.ud-md-table-cell {
+    padding: 4px 10px;
+    font-size: 12px;
+    color: #b8b8b8;
+    flex-grow: 1;
+    flex-shrink: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ud-md-table-row:hover {
+    background-color: rgba(255, 255, 255, 0.03);
 }

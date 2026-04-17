@@ -6,6 +6,10 @@
 /* === Root Container === */
 .ud-root,
 .ue5-root {
+    --unity-font: url("project://database/Assets/ThirdParty/UniDecl/UIToolKit/Editor/Resources/Fonts/msyh.ttc");
+    -unity-font: url("project://database/Assets/ThirdParty/UniDecl/UIToolKit/Editor/Resources/Fonts/msyh.ttc");
+    -unity-font-definition: url("project://database/Assets/ThirdParty/UniDecl/UIToolKit/Editor/Resources/Fonts/msyh.ttc");
+    -unity-font-style: normal;
     background-color: #1B1B1B;
     color: #E0E0E0;
     font-size: 12px;
@@ -60,7 +64,6 @@
     margin-top: 4px;
     margin-bottom: 5px;
     padding-left: 0px;
-    text-transform: uppercase;
     letter-spacing: 0.5px;
 }
 
@@ -84,6 +87,39 @@
     flex-wrap: wrap;
     align-items: center;
     margin-bottom: 2px;
+}
+
+.ud-sidebar,
+.ue5-sidebar {
+    background-color: #1C1C1C;
+    border-right-width: 1px;
+    border-right-color: #353535;
+}
+
+.ud-sidebar-theme-row,
+.ue5-sidebar-theme-row {
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    margin-bottom: 6px;
+}
+
+.ud-sidebar-theme-row .ud-button,
+.ud-sidebar-theme-row .ud-button--secondary,
+.ue5-sidebar-theme-row .ue5-button,
+.ue5-sidebar-theme-row .ue5-button--secondary {
+    min-width: 0px;
+    flex-grow: 1;
+    flex-shrink: 1;
+    padding-left: 8px;
+    padding-right: 8px;
+    margin-right: 4px;
+    margin-bottom: 0px;
+}
+
+.ud-sidebar-scroll,
+.ue5-sidebar-scroll {
+    padding-left: 1px;
+    padding-right: 1px;
 }
 
 /* === Primary Button === */
@@ -744,8 +780,8 @@
     background-color: #1E1E1E;
     border-width: 1px;
     border-color: #3A3A3A;
-    border-radius: 2px;
-    padding: 4px 0;
+    border-radius: 4px;
+    padding: 5px 4px;
 }
 
 .ud-toc-item,
@@ -754,7 +790,13 @@
     align-items: center;
     padding-top: 4px;
     padding-bottom: 4px;
-    padding-right: 8px;
+    padding-right: 10px;
+    padding-left: 8px;
+    margin-left: 3px;
+    margin-right: 3px;
+    border-radius: 2px;
+    border-left-width: 0px;
+    transition-duration: 80ms;
 }
 
 .ud-toc-item-label,
@@ -765,17 +807,30 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    padding-left: 4px;
 }
 
 .ud-toc-item--l1 > .ud-toc-item-label,
 .ue5-toc-item--l1 > .ue5-toc-item-label {
     -unity-font-style: bold;
     color: #E8E8E8;
+    font-size: 13px;
+}
+
+.ud-toc-item--l1,
+.ue5-toc-item--l1 {
+    margin-top: 3px;
+    margin-bottom: 1px;
 }
 
 .ud-toc-item--l2 > .ud-toc-item-label,
 .ue5-toc-item--l2 > .ue5-toc-item-label {
     color: #D0D0D0;
+}
+
+.ud-toc-item--l2,
+.ue5-toc-item--l2 {
+    padding-left: 10px;
 }
 
 .ud-toc-item--l3 > .ud-toc-item-label,
@@ -790,6 +845,17 @@
     font-size: 11px;
 }
 
+.ud-toc-item--l3,
+.ud-toc-item--l4,
+.ud-toc-item--l5,
+.ud-toc-item--l6,
+.ue5-toc-item--l3,
+.ue5-toc-item--l4,
+.ue5-toc-item--l5,
+.ue5-toc-item--l6 {
+    padding-left: 14px;
+}
+
 .ud-toc-item--clickable,
 .ue5-toc-item--clickable {
     cursor: link;
@@ -800,14 +866,363 @@
     background-color: rgba(10, 133, 255, 0.1);
 }
 
+.ud-toc-item--clickable:active,
+.ue5-toc-item--clickable:active {
+    background-color: rgba(10, 133, 255, 0.16);
+}
+
 .ud-toc-item--selected,
 .ue5-toc-item--selected {
     background-color: rgba(10, 133, 255, 0.18);
     border-left-width: 3px;
     border-left-color: #0A85FF;
+    margin-left: 0px;
+}
+
+.ud-toc-item--selected:hover,
+.ue5-toc-item--selected:hover {
+    background-color: rgba(10, 133, 255, 0.24);
 }
 
 .ud-toc-item--selected > .ud-toc-item-label,
 .ue5-toc-item--selected > .ue5-toc-item-label {
     color: #7FBFFF;
+}
+
+/* Chevron indicator for expandable items */
+.ud-toc-chevron,
+.ue5-toc-chevron {
+    font-size: 8px;
+    color: #666666;
+    min-width: 16px;
+    margin-right: 2px;
+    flex-shrink: 0;
+    -unity-text-align: middle-center;
+    transition-duration: 120ms;
+}
+
+.ud-toc-item--has-children:hover > .ud-toc-chevron,
+.ue5-toc-item--has-children:hover > .ue5-toc-chevron {
+    color: #999999;
+}
+
+.ud-toc-item--selected > .ud-toc-chevron,
+.ue5-toc-item--selected > .ue5-toc-chevron {
+    color: #0A85FF;
+}
+
+/* Children container — indented group */
+.ud-toc-children,
+.ue5-toc-children {
+    flex-direction: column;
+    padding-left: 0px;
+    margin-bottom: 2px;
+}
+
+/* ============================================================
+   MarkdownView — full Markdown rendering widget
+   ============================================================ */
+
+.ud-markdown,
+.ue5-markdown {
+    flex-grow: 1;
+    flex-direction: column;
+    padding: 8px 10px;
+}
+
+.ud-md-paragraph,
+.ue5-md-paragraph {
+    margin-bottom: 8px;
+    white-space: normal;
+    -unity-paragraph-spacing: 4px;
+}
+
+.ud-md-text,
+.ue5-md-text {
+    color: #D8D8D8;
+    font-size: 12px;
+    white-space: normal;
+    -unity-paragraph-spacing: 4px;
+}
+
+.ud-md-text-row,
+.ue5-md-text-row {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    margin-bottom: 0px;
+}
+
+.ud-md-br,
+.ue5-md-br {
+    width: 100%;
+    height: 2px;
+}
+
+.ud-md-link,
+.ue5-md-link {
+    color: #5B9BD5;
+    font-size: 12px;
+}
+
+.ud-md-link--clickable,
+.ue5-md-link--clickable {
+    cursor: link;
+    transition-duration: 150ms;
+}
+
+.ud-md-link--clickable:hover,
+.ue5-md-link--clickable:hover {
+    color: #3CA0FF;
+}
+
+/* Image container with icon + alt text */
+.ud-md-image-container,
+.ue5-md-image-container {
+    flex-direction: row;
+    align-items: center;
+    margin: 2px 4px;
+    padding: 2px 6px;
+    border-width: 1px;
+    border-color: #3A3A3A;
+    border-radius: 2px;
+    background-color: #1E1E1E;
+}
+
+.ud-md-image-icon,
+.ue5-md-image-icon {
+    width: 16px;
+    height: 16px;
+    margin-right: 4px;
+    flex-shrink: 0;
+}
+
+.ud-md-image-alt,
+.ue5-md-image-alt {
+    color: #9A9A9A;
+    font-size: 11px;
+    -unity-font-style: italic;
+}
+
+.ud-md-image-placeholder,
+.ue5-md-image-placeholder {
+    color: #9A9A9A;
+    font-size: 11px;
+    -unity-font-style: italic;
+    padding: 2px 6px;
+    border-width: 1px;
+    border-color: #3A3A3A;
+    border-radius: 2px;
+    background-color: #1E1E1E;
+}
+
+.ud-md-codeblock,
+.ue5-md-codeblock {
+    background-color: #1A1A1A;
+    border-width: 1px;
+    border-color: #3A3A3A;
+    border-radius: 4px;
+    padding: 0px;
+    margin-top: 6px;
+    margin-bottom: 10px;
+    overflow: hidden;
+    flex-direction: column;
+    cursor: Text;
+}
+
+.ud-md-codeblock-lang,
+.ue5-md-codeblock-lang {
+    font-size: 10px;
+    color: #9A9A9A;
+    padding: 4px 10px 2px 10px;
+    -unity-font-style: italic;
+    border-bottom-width: 1px;
+    border-bottom-color: #2D2D2D;
+    background-color: rgba(10, 133, 255, 0.04);
+}
+
+.ud-md-codeblock-copy-btn,
+.ue5-md-codeblock-copy-btn {
+    background-color: transparent;
+    border-width: 0;
+    padding-left: 4px;
+    padding-right: 4px;
+    margin-left: 4px;
+    margin-right: 0;
+}
+.ud-md-codeblock-copy-btn:hover,
+.ue5-md-codeblock-copy-btn:hover {
+    background-color: rgba(255, 255, 255, 0.08);
+    border-radius: 3px;
+}
+.ud-md-codeblock-copy-btn:active,
+.ue5-md-codeblock-copy-btn:active {
+    background-color: rgba(255, 255, 255, 0.15);
+    border-radius: 3px;
+}
+
+.ud-md-code,
+.ue5-md-code {
+    color: #d4d4d4;
+    font-size: 12px;
+    white-space: nowrap;
+    padding: 8px 10px;
+    cursor: Text;
+}
+
+.ud-md-ul,
+.ue5-md-ul {
+    margin-left: 8px;
+    margin-top: 4px;
+    margin-bottom: 8px;
+    flex-direction: column;
+}
+
+.ud-md-ol,
+.ue5-md-ol {
+    margin-left: 8px;
+    margin-top: 4px;
+    margin-bottom: 8px;
+    flex-direction: column;
+}
+
+.ud-md-li,
+.ue5-md-li {
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: 5px;
+    padding-top: 0px;
+    padding-bottom: 0px;
+}
+
+.ud-md-li-bullet,
+.ue5-md-li-bullet {
+    color: #0A85FF;
+    font-size: 13px;
+    min-width: 16px;
+    margin-right: 1px;
+    -unity-text-align: middle-left;
+    align-self: center;
+    padding-top: 0px;
+    padding-bottom: 0px;
+    flex-shrink: 0;
+}
+
+.ud-md-li-content,
+.ue5-md-li-content {
+    flex-grow: 1;
+    flex-shrink: 1;
+    white-space: normal;
+    -unity-paragraph-spacing: 1px;
+    align-self: center;
+}
+
+/* Normalize RichText spacing inside list rows so text aligns with bullet/number */
+.ud-md-li-content .ud-md-text,
+.ud-md-li-content .ud-md-text-row,
+.ue5-md-li-content .ud-md-text,
+.ue5-md-li-content .ud-md-text-row {
+    margin-bottom: 0px;
+    -unity-paragraph-spacing: 1px;
+    -unity-text-align: middle-left;
+    align-items: center;
+}
+
+.ud-md-blockquote,
+.ue5-md-blockquote {
+    border-left-width: 3px;
+    border-left-color: #0A85FF;
+    padding: 8px 12px;
+    margin-top: 6px;
+    margin-bottom: 10px;
+    flex-direction: column;
+    background-color: rgba(10, 133, 255, 0.04);
+    border-radius: 0px 3px 3px 0px;
+}
+
+.ud-md-blockquote .ud-md-paragraph,
+.ud-md-blockquote .ud-md-text,
+.ue5-md-blockquote .ud-md-paragraph,
+.ue5-md-blockquote .ud-md-text {
+    margin-bottom: 4px;
+}
+
+.ud-md-blockquote .ud-md-text-row,
+.ue5-md-blockquote .ud-md-text-row {
+    margin-bottom: 4px;
+}
+
+.ud-md-blockquote .ud-md-ul,
+.ud-md-blockquote .ud-md-ol,
+.ue5-md-blockquote .ud-md-ul,
+.ue5-md-blockquote .ud-md-ol {
+    margin-top: 2px;
+}
+
+.ud-md-hr,
+.ue5-md-hr {
+    height: 1px;
+    background-color: #3A3A3A;
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+
+/* ============================================================
+   MdTable — Markdown table rendering
+   ============================================================ */
+
+.ud-md-table,
+.ue5-md-table {
+    border-width: 1px;
+    border-color: #3A3A3A;
+    border-radius: 3px;
+    margin-top: 6px;
+    margin-bottom: 10px;
+    overflow: hidden;
+    flex-direction: column;
+}
+
+.ud-md-table-header,
+.ue5-md-table-header {
+    flex-direction: row;
+    background-color: rgba(10, 133, 255, 0.08);
+    border-bottom-width: 1px;
+    border-bottom-color: #3A3A3A;
+}
+
+.ud-md-table-header-cell,
+.ue5-md-table-header-cell {
+    padding: 5px 10px;
+    font-size: 11px;
+    -unity-font-style: bold;
+    color: #E0E0E0;
+    flex-grow: 1;
+    flex-shrink: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ud-md-table-row,
+.ue5-md-table-row {
+    flex-direction: row;
+    border-bottom-width: 1px;
+    border-bottom-color: #2A2A2A;
+}
+
+.ud-md-table-cell,
+.ue5-md-table-cell {
+    padding: 4px 10px;
+    font-size: 12px;
+    color: #CCCCCC;
+    flex-grow: 1;
+    flex-shrink: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ud-md-table-row:hover,
+.ue5-md-table-row:hover {
+    background-color: rgba(10, 133, 255, 0.06);
 }

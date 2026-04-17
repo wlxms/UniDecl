@@ -4,9 +4,11 @@ using VisualElement = UnityEngine.UIElements.VisualElement;
 using UniDecl.Runtime.Contexts;
 using UniDecl.Runtime.Core;
 using UniDecl.Runtime.Widgets;
+using UniDecl.Runtime.Widgets.MD;
+using UniDecl.Runtime.Widgets.UE;
 using UniDecl.Editor.UIToolKit.Renderers;
 using UniDecl.Editor.UIToolKit.Renderers.UE;
-using UniDecl.Runtime.Widgets.UE;
+using UniDecl.Editor.UIToolKit.Renderers.MD;
 
 namespace UniDecl.Editor.UIToolKit
 {
@@ -95,12 +97,13 @@ namespace UniDecl.Editor.UIToolKit
             RegisterRenderer<LongField>(new UIToolkitLongFieldRenderer());
             // MD: 目录导航栏 TocView（H1–H6 通过封装穿透到 Label 渲染，无需专属渲染器）
             RegisterRenderer<TocView>(new UIToolkitTocViewRenderer());
-            // MD: inline widgets — RichText, Blockquote, Divider, MdTable
+            // MD: inline widgets — RichText, Blockquote, Divider, MdTable, CodeBlock
             // MarkdownView composes via Render() and needs no dedicated renderer.
             RegisterRenderer<RichText>(new UIToolkitRichTextRenderer());
             RegisterRenderer<Blockquote>(new UIToolkitBlockquoteRenderer());
             RegisterRenderer<Divider>(new UIToolkitDividerRenderer());
             RegisterRenderer<MdTable>(new UIToolkitMdTableRenderer());
+            RegisterRenderer<CodeBlock>(new UIToolkitCodeBlockRenderer());
         }
 
         public VisualElement RenderRoot(IElement rootElement)

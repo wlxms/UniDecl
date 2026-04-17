@@ -3,12 +3,14 @@ using UnityEngine;
 using UniDecl.Runtime.Contexts;
 using UniDecl.Runtime.Core;
 using UniDecl.Runtime.Widgets;
+using UniDecl.Runtime.Widgets.MD;
 using UniDecl.Editor.UIToolKit;
 using UITKStyle = UniDecl.UIToolKit.Runtime.UITKStyle;
 
 namespace UniDecl.Editor.UIToolKit.Examples
 {
     using W = UniDecl.Runtime.Widgets;
+    using WM = UniDecl.Runtime.Widgets.MD;
 
     /// <summary>
     /// 状态化计数器组件 — 测试DOM重建能力
@@ -423,18 +425,18 @@ namespace UniDecl.Editor.UIToolKit.Examples
         // === Tab 9: MD 控件 ===
         private static Panel BuildMarkdownTab()
         {
-            var toc = new W.TocView(new[]
+            var toc = new WM.TocView(new[]
             {
-                new W.TocEntry("文档标题", 1),
-                new W.TocEntry("简介", 2),
-                new W.TocEntry("快速开始", 2),
-                new W.TocEntry("安装", 3),
-                new W.TocEntry("配置", 3),
-                new W.TocEntry("进阶用法", 2),
-                new W.TocEntry("自定义样式", 3),
-                new W.TocEntry("事件回调", 3),
-                new W.TocEntry("注意事项", 4),
-                new W.TocEntry("API 参考", 2),
+                new WM.TocEntry("文档标题", 1),
+                new WM.TocEntry("简介", 2),
+                new WM.TocEntry("快速开始", 2),
+                new WM.TocEntry("安装", 3),
+                new WM.TocEntry("配置", 3),
+                new WM.TocEntry("进阶用法", 2),
+                new WM.TocEntry("自定义样式", 3),
+                new WM.TocEntry("事件回调", 3),
+                new WM.TocEntry("注意事项", 4),
+                new WM.TocEntry("API 参考", 2),
             });
 
             const string sampleMarkdown = @"# UniDecl MarkdownView
@@ -491,7 +493,7 @@ var mdView = new MarkdownView(markdownText)
 | `OnUrlClick` | Action<string> | 链接点击回调 |
 ";
 
-            var markdownView = new W.MarkdownView(sampleMarkdown,
+            var markdownView = new WM.MarkdownView(sampleMarkdown,
                 url => Debug.Log($"[MarkdownView] URL clicked: {url}"));
 
             return new Panel
