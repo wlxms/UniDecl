@@ -20,11 +20,6 @@ namespace UniDecl.Runtime.Core
         public ElementState State { get; set; }
 
         /// <summary>
-        /// 匹配到的渲染器
-        /// </summary>
-        public IElementRender Renderer { get; set; }
-
-        /// <summary>
         /// 子节点
         /// </summary>
         public List<DOMNode> Children { get; } = new List<DOMNode>();
@@ -37,8 +32,6 @@ namespace UniDecl.Runtime.Core
         /// <summary>
         /// 是否有渲染器
         /// </summary>
-        public bool HasRenderer => Renderer != null;
-
         /// <summary>
         /// 需要在 Render 阶段入栈的 Context（由 IContextProvider 设置）
         /// 非 null 时，RenderNode 遍历到此节点会 Push 到 ContextStack

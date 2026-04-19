@@ -16,5 +16,10 @@ namespace UniDecl.Runtime.Widgets
             Text = text;
             MessageType = type;
         }
+        public HelpBox(string text, HelpBoxMessageType type = HelpBoxMessageType.Info, params IElementComponent[] components) : base(components)
+        {
+            Text = text;
+            MessageType = type;
+        }
     }
 }

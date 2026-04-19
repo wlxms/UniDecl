@@ -21,5 +21,12 @@ namespace UniDecl.Runtime.Widgets
             LowValue = low;
             HighValue = high;
         }
+        public Slider(string label = "", float value = 0f, float low = 0f, float high = 100f, params IElementComponent[] components) : base(components)
+        {
+            Label = label;
+            Value = value;
+            LowValue = low;
+            HighValue = high;
+        }
     }
 }

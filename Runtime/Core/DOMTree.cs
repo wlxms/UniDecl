@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using UniDecl.Runtime.Navigation;
+using UnityEngine;
 
 namespace UniDecl.Runtime.Core
 {
@@ -12,9 +14,9 @@ namespace UniDecl.Runtime.Core
         private readonly List<DOMNode> _allNodes = new();
         private readonly Dictionary<IElement, DOMNode> _elementToNode = new();
         private readonly Dictionary<IElement, IStateManager> _containerStateManagers = new();
+        private readonly Dictionary<string, DOMNode> _anchorToNode = new();
         
         private IElementRenderHostBase _manager;
-        private Func<IElement, IElementRender> _getRenderer;
         private ContextStack _contextStack;
         private StateStack _stateStack;
 
@@ -29,14 +31,65 @@ namespace UniDecl.Runtime.Core
         public IReadOnlyList<DOMNode> AllNodes => _allNodes;
 
         /// <summary>
+        /// 根据锚点 ID 查找 DOM 节点
+        /// </summary>
+        public DOMNode GetNodeByAnchor(string anchorId)
+        {
+            if (string.IsNullOrEmpty(anchorId)) return null;
+            _anchorToNode.TryGetValue(anchorId, out var node);
+            return node;
+        }
+
+        private void SubscribeNodeListeners(DOMNode node)
+        {
+            if (node.Element is IEventListener listener)
+                _manager.Subscribe(listener);
+            if (node.Element is Element e)
+                foreach (var comp in e.Components)
+                    if (comp is IEventListener compListener)
+                        _manager.Subscribe(compListener);
+        }
+
+        private void UnsubscribeNodeListeners(DOMNode node)
+        {
+            if (node.Element is IEventListener listener)
+                _manager.Unsubscribe(listener);
+            if (node.Element is Element e)
+                foreach (var comp in e.Components)
+                    if (comp is IEventListener compListener)
+                        _manager.Unsubscribe(compListener);
+        }
+
+        private void RegisterAnchor(DOMNode node)
+        {
+            if (node.Element is Element e && e.Get<Anchor>() is { } anchor)
+            {
+                if (_anchorToNode.ContainsKey(anchor.Id))
+                    throw new InvalidOperationException($"重复的 Anchor ID: '{anchor.Id}'");
+                _anchorToNode[anchor.Id] = node;
+            }
+        }
+
+        private void UnregisterAnchor(DOMNode node)
+        {
+            if (node.Element is Element e && e.Get<Anchor>() is { } anchor)
+                _anchorToNode.Remove(anchor.Id);
+        }
+
+        private void UnregisterAnchorSubtree(DOMNode node)
+        {
+            UnregisterAnchor(node);
+            foreach (var child in node.Children)
+                UnregisterAnchorSubtree(child);
+        }
+
+        /// <summary>
         /// 展开元素树为 DOM 树
         /// </summary>
         public void Build(IElement element, IElementRenderHostBase manager,
-            Func<IElement, IElementRender> getRenderer, ContextStack contextStack,
-            StateStack stateStack)
+            ContextStack contextStack, StateStack stateStack)
         {
             _manager = manager;
-            _getRenderer = getRenderer;
             _contextStack = contextStack;
             _stateStack = stateStack;
 
@@ -209,7 +262,6 @@ namespace UniDecl.Runtime.Core
         {
             var node = CreateDOMNode();
             node.Element = element;
-            node.Renderer = _getRenderer(element);
             node.Parent = parent;
 
             parent.Children.Add(node);
@@ -218,8 +270,8 @@ namespace UniDecl.Runtime.Core
             if (element != null)
             {
                 _elementToNode[element] = node;
-                if (element is IEventListener listener)
-                    _manager.Subscribe(listener);
+                SubscribeNodeListeners(node);
+                RegisterAnchor(node);
             }
 
             return node;
@@ -402,8 +454,8 @@ namespace UniDecl.Runtime.Core
 
             foreach (var n in nodesToRemove)
             {
-                if (n.Element is IEventListener listener)
-                    _manager.Unsubscribe(listener);
+                UnsubscribeNodeListeners(n);
+                UnregisterAnchor(n);
                 if (n.Element != null)
                 {
                     _elementToNode.Remove(n.Element);
@@ -524,12 +576,11 @@ namespace UniDecl.Runtime.Core
             if (oldElement != null)
             {
                 _elementToNode.Remove(oldElement);
-                if (oldElement is IEventListener oldListener)
-                    _manager.Unsubscribe(oldListener);
+                UnsubscribeNodeListeners(node);
+                UnregisterAnchor(node);
             }
 
             node.Element = newElement;
-            node.Renderer = _getRenderer(newElement);
 
             if (newElement != null)
             {
@@ -538,8 +589,8 @@ namespace UniDecl.Runtime.Core
                 newElement.Initialize(node.Parent.Children.Count - 1, _manager);
 
                 _elementToNode[newElement] = node;
-                if (newElement is IEventListener newListener)
-                    _manager.Subscribe(newListener);
+                SubscribeNodeListeners(node);
+                RegisterAnchor(node);
 
                 // 状态恢复
                 if (newElement is IStatefulElement sf)
@@ -573,8 +624,8 @@ namespace UniDecl.Runtime.Core
             CollectAndCleanupDescendants(node);
 
             // 清理节点本身
-            if (node.Element is IEventListener listener)
-                _manager.Unsubscribe(listener);
+            UnsubscribeNodeListeners(node);
+            UnregisterAnchor(node);
             if (node.Element != null)
             {
                 _elementToNode.Remove(node.Element);
@@ -600,8 +651,8 @@ namespace UniDecl.Runtime.Core
 
             foreach (var child in node.Children)
             {
-                if (child.Element is IEventListener listener)
-                    _manager.Unsubscribe(listener);
+                UnsubscribeNodeListeners(child);
+                UnregisterAnchor(child);
                 if (child.Element != null)
                 {
                     _elementToNode.Remove(child.Element);
@@ -654,8 +705,7 @@ namespace UniDecl.Runtime.Core
         {
             foreach (var node in _allNodes)
             {
-                if (node.Element is IEventListener listener)
-                    _manager.Unsubscribe(listener);
+                UnsubscribeNodeListeners(node);
                 node.Parent = null;
                 node.Children.Clear();
             }
@@ -664,6 +714,7 @@ namespace UniDecl.Runtime.Core
             _allNodes.Clear();
             _elementToNode.Clear();
             _containerStateManagers.Clear();
+            _anchorToNode.Clear();
         }
     }
 
@@ -682,6 +733,11 @@ namespace UniDecl.Runtime.Core
         public new DOMNode<TRenderResult> GetNode(IElement element)
         {
             return base.GetNode(element) as DOMNode<TRenderResult>;
+        }
+
+        public new DOMNode<TRenderResult> GetNodeByAnchor(string anchorId)
+        {
+            return base.GetNodeByAnchor(anchorId) as DOMNode<TRenderResult>;
         }
     }
 }

@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using UniDecl.Runtime.Navigation;
+using UnityEngine;
 
 namespace UniDecl.Runtime.Core
 {
@@ -10,7 +12,7 @@ namespace UniDecl.Runtime.Core
     /// </summary>
     public abstract class ElementRenderHostBase : IElementRenderHostBase, IEventListener<ElementChangeEvent>, IEventListener<AutoRebuildRequestEvent>
     {
-        private readonly EventDispatcher _eventDispatcher = new EventDispatcher();
+        protected EventDispatcher _eventDispatcher;
         private readonly ContextStack _contextStack = new ContextStack();
         private readonly StateStack _stateStack = new StateStack();
         private readonly DOMTree _domTree = new DOMTree();
@@ -29,6 +31,23 @@ namespace UniDecl.Runtime.Core
         protected StateStack StateStack => _stateStack;
         protected virtual DOMTree ActiveDOMTree => _domTree;
         protected DOMTree DOMTree => ActiveDOMTree;
+
+        public virtual string HostName { get; }
+
+        // ---- Navigation ----
+
+        public virtual void NavigateTo(string anchorId) { }
+        public virtual void NavigateURL(string url) { }
+
+        protected ElementRenderHostBase()
+        {
+            if (!string.IsNullOrEmpty(HostName))
+                HostManager.Register(HostName, this);
+        }
+
+        // ---- EventDispatcher factory ----
+
+        protected virtual EventDispatcher CreateEventDispatcher() => new EventDispatcher();
 
         // ---- IEventDispatcher ----
 
@@ -72,7 +91,7 @@ namespace UniDecl.Runtime.Core
                     buildStart = Stopwatch.GetTimestamp();
                 }
 
-                ActiveDOMTree.Build(element, this, GetRendererForBuild, _contextStack, _stateStack);
+                ActiveDOMTree.Build(element, this, _contextStack, _stateStack);
 
                 if (EnableRebuildPerformanceMonitoring)
                 {
@@ -228,13 +247,13 @@ namespace UniDecl.Runtime.Core
             if (!_initialized)
             {
                 DiscoverRenderers();
+                _eventDispatcher = CreateEventDispatcher();
                 _eventDispatcher.Subscribe(this);
                 _initialized = true;
             }
         }
 
         protected abstract void DiscoverRenderers();
-        protected abstract IElementRender GetRendererForBuild(IElement element);
         protected virtual void OnRendererError(Exception ex, IElement element) { }
 
         protected virtual void OnRebuildPerformanceMeasured(RebuildPerformanceEvent @event)
@@ -337,11 +356,12 @@ namespace UniDecl.Runtime.Core
 
             try
             {
-                if (node.HasRenderer && node.Element != null)
+                var renderer = node.Element != null ? GetRenderer(node.Element) : null;
+                if (renderer != null && node.Element != null)
                 {
                     try
                     {
-                        node.Renderer.Render(node.Element, this, node.State);
+                        renderer.Render(node.Element, this, node.State);
                     }
                     catch (Exception ex)
                     {
@@ -384,8 +404,6 @@ namespace UniDecl.Runtime.Core
                 RenderNode(node);
         }
 
-        protected override IElementRender GetRendererForBuild(IElement element) => GetRenderer(element);
-
         protected override void ScheduleFlush() => FlushPendingRebuilds();
     }
 
@@ -403,6 +421,8 @@ namespace UniDecl.Runtime.Core
         private readonly Dictionary<IElement, (bool hasValue, TRenderResult value)> _preRebuildResults = new();
 
         protected override DOMTree ActiveDOMTree => _typedDomTree;
+
+        protected override EventDispatcher CreateEventDispatcher() => new EventDispatcher<TRenderResult>(GetTypedRenderer);
 
         /// <summary>
         /// 注册泛型渲染器
@@ -431,6 +451,14 @@ namespace UniDecl.Runtime.Core
             }
 
             return null;
+        }
+
+        /// <summary>
+        /// 根据锚点 ID 查找泛型 DOM 节点
+        /// </summary>
+        protected DOMNode<TRenderResult> GetTypedNodeByAnchor(string anchorId)
+        {
+            return _typedDomTree.GetNodeByAnchor(anchorId);
         }
 
         /// <summary>
@@ -506,8 +534,6 @@ namespace UniDecl.Runtime.Core
             }
         }
 
-        protected override IElementRender GetRendererForBuild(IElement element) => null;
-
         protected override void ScheduleFlush() => FlushPendingRebuilds();
 
         protected override void OnBeforeRebuild(IElement element)
@@ -558,6 +584,65 @@ namespace UniDecl.Runtime.Core
                 if (childVE != null)
                     add(childVE);
             }
+        }
+
+        // ---- Navigation ----
+
+        private List<DOMNode<TRenderResult>> CollectPathToRoot(DOMNode<TRenderResult> target)
+        {
+            var path = new List<DOMNode<TRenderResult>>();
+            var current = target;
+            while (current != null)
+            {
+                path.Add(current);
+                current = current.Parent as DOMNode<TRenderResult>;
+            }
+            path.Reverse();
+            return path;
+        }
+
+        public override void NavigateTo(string anchorId)
+        {
+            var targetNode = _typedDomTree.GetNodeByAnchor(anchorId);
+            if (targetNode == null) return;
+
+            var path = CollectPathToRoot(targetNode);
+            var dispatcher = _eventDispatcher as EventDispatcher<TRenderResult>;
+            if (dispatcher == null) return;
+
+            // 沿路径分发冒泡事件
+            dispatcher.DispatchAlongPath(
+                new NavigationEvent { AnchorId = anchorId, IsTarget = false }, path);
+
+            // 找到锚点节点下第一个有渲染器的后代作为目标
+            var renderableTarget = FindFirstRenderable(targetNode) ?? targetNode;
+            dispatcher.DispatchAlongPath(
+                new NavigationEvent { AnchorId = anchorId, IsTarget = true },
+                new[] { renderableTarget });
+        }
+
+        /// <summary>
+        /// 向下查找第一个有渲染器的后代节点（容器节点如 H1 会穿透到子 Label）
+        /// </summary>
+        private DOMNode<TRenderResult> FindFirstRenderable(DOMNode<TRenderResult> node)
+        {
+            if (node.Element != null && GetTypedRenderer(node.Element) != null)
+                return node;
+            if (node.Children != null)
+                foreach (var child in node.Children)
+                    if (child is DOMNode<TRenderResult> typedChild)
+                    {
+                        var found = FindFirstRenderable(typedChild);
+                        if (found != null) return found;
+                    }
+            return null;
+        }
+
+        public override void NavigateURL(string url)
+        {
+            var parsed = NavigationURL.Parse(url);
+            if (parsed?.Fragment == null) return;
+            NavigateTo(parsed.Fragment);
         }
     }
 }

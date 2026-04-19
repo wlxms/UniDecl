@@ -22,5 +22,10 @@ namespace UniDecl.Runtime.Widgets
             Value = value;
             Placeholder = placeholder;
         }
+        public TextField(string value = "", string placeholder = "", params IElementComponent[] components) : base(components)
+        {
+            Value = value;
+            Placeholder = placeholder;
+        }
     }
 }

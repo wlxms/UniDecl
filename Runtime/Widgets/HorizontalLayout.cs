@@ -16,5 +16,8 @@ namespace UniDecl.Runtime.Widgets
         {
             return null;
         }
+
+        public HorizontalLayout() { }
+        public HorizontalLayout(params IElementComponent[] components) : base(components) { }
     }
 }

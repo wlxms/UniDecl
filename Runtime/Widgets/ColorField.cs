@@ -15,5 +15,6 @@ namespace UniDecl.Runtime.Widgets
         public override IElement Render() => null;
 
         public ColorField(string label, Color value = default) { Label = label; Value = value; }
+        public ColorField(string label, Color value = default, params IElementComponent[] components) : base(components) { Label = label; Value = value; }
     }
 }

@@ -660,3 +660,17 @@
 .ud-md-table-row:hover {
     background-color: rgba(255, 255, 255, 0.03);
 }
+
+/* ============================================================
+   Navigation Ping Overlay — gold halo ring
+   ============================================================ */
+
+.ud-nav-ping-overlay {
+    border-width: 2px;
+    border-color: rgb(255, 200, 50);
+    background-color: rgba(255, 200, 50, 0.08);
+    border-radius: 4px;
+    transition: opacity 0.6s ease-out;
+}
+
+

@@ -17,6 +17,21 @@ namespace UniDecl.Runtime.Core
         /// 用于 StatefulElement 在 Render 时获取 State 引用
         /// </summary>
         object GetElementState(IElement element);
+
+        /// <summary>
+        /// 导航到指定锚点
+        /// </summary>
+        void NavigateTo(string anchorId);
+
+        /// <summary>
+        /// 导航到指定 URL
+        /// </summary>
+        void NavigateURL(string url);
+
+        /// <summary>
+        /// Host 名称，用于 HostManager 注册和 URL 路由
+        /// </summary>
+        string HostName { get; }
     }
 
     /// <summary>

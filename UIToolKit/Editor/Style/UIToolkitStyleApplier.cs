@@ -138,6 +138,9 @@ namespace UniDecl.Editor.UIToolKit.Style
                         if (!string.IsNullOrEmpty(cls))
                             ve.AddToClassList(cls);
             }
+
+            // Apply event components (OnClick, OnPointerEnter, OnEvent<T>, etc.)
+            ElementEventApplier.Apply(element, ve);
         }
 
         private static void ApplyInlineStyle(IInlineStyle style, VisualElement ve)

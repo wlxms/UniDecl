@@ -13,5 +13,6 @@ namespace UniDecl.Runtime.Widgets
 
         public Button(string text) { Text = text; }
         public Button(string text, Action onClick) { Text = text; OnClick = onClick; }
+        public Button(string text, params IElementComponent[] components) : base(components) { Text = text; }
     }
 }

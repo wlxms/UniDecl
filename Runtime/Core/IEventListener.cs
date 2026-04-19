@@ -8,4 +8,10 @@ namespace UniDecl.Runtime.Core
     {
         void OnEvent(T @event);
     }
+
+    public interface IRendererEventListener<TRenderResult, TEvent> : IEventListener
+        where TEvent : struct
+    {
+        void OnEvent(TEvent @event, DOMNode<TRenderResult> node);
+    }
 }

@@ -12,5 +12,6 @@ namespace UniDecl.Runtime.Widgets
         public override IElement Render() => null;
 
         public FloatField(float value = 0f) { Value = value; }
+        public FloatField(float value = 0f, params IElementComponent[] components) : base(components) { Value = value; }
     }
 }

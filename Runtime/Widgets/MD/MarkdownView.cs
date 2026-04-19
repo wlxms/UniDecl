@@ -1,7 +1,11 @@
 using System;
+using System.Collections.Generic;
+using System.Text;
+using System.Text.RegularExpressions;
 using UniDecl.Runtime.Components;
 using UniDecl.Runtime.Core;
 using UniDecl.Runtime.MD;
+using UniDecl.Runtime.Navigation;
 using UniDecl.Runtime.Widgets;
 
 namespace UniDecl.Runtime.Widgets.MD
@@ -134,15 +138,53 @@ namespace UniDecl.Runtime.Widgets.MD
 
         private static IElement HeadingElement(int level, string text)
         {
+            var slug = GenerateSlug(text, _usedSlugs);
+            IElement heading;
             switch (level)
             {
-                case 1: return new H1(text);
-                case 2: return new H2(text);
-                case 3: return new H3(text);
-                case 4: return new H4(text);
-                case 5: return new H5(text);
-                default: return new H6(text);
+                case 1: heading = new H1(text); break;
+                case 2: heading = new H2(text); break;
+                case 3: heading = new H3(text); break;
+                case 4: heading = new H4(text); break;
+                case 5: heading = new H5(text); break;
+                default: heading = new H6(text); break;
             }
+            if (!string.IsNullOrEmpty(slug))
+                heading.With(new Anchor(slug));
+            return heading;
+        }
+
+        private static readonly HashSet<string> _usedSlugs = new HashSet<string>();
+
+        private static string GenerateSlug(string text, HashSet<string> usedSlugs)
+        {
+            if (string.IsNullOrWhiteSpace(text)) return null;
+
+            var slug = new StringBuilder();
+            foreach (char c in text.ToLowerInvariant())
+            {
+                if (char.IsLetterOrDigit(c))
+                    slug.Append(c);
+                else if (c == ' ' || c == '-' || c == '_')
+                {
+                    if (slug.Length > 0 && slug[slug.Length - 1] != '-')
+                        slug.Append('-');
+                }
+            }
+
+            while (slug.Length > 0 && slug[slug.Length - 1] == '-')
+                slug.Length--;
+
+            if (slug.Length == 0) return null;
+
+            var baseSlug = slug.ToString();
+            var finalSlug = baseSlug;
+            int suffix = 2;
+            while (usedSlugs.Contains(finalSlug))
+                finalSlug = $"{baseSlug}-{suffix++}";
+
+            usedSlugs.Add(finalSlug);
+            return finalSlug;
         }
     }
 }

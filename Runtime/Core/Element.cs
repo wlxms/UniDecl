@@ -11,12 +11,20 @@ namespace UniDecl.Runtime.Core
         public string Key { get; private set; }
         public abstract IElement Render();
 
+        public IEnumerable<IElementComponent> Components => _components.Values;
+
         public Element WithKey(string key)
         {
             Key = key;
             return this;
         }
         public Element() { }
+        protected Element(params IElementComponent[] components)
+        {
+            if (components != null)
+                foreach (var c in components)
+                    _components[c.GetType()] = c;
+        }
         public void Initialize(int index, IElementRenderHostBase manager)
         {
             _manager = manager;
@@ -55,6 +63,8 @@ namespace UniDecl.Runtime.Core
     {
         public abstract IEnumerable<IElement> Children { get; }
         public abstract void Add(IElement element);
+
+        protected ContainerElement(params IElementComponent[] components) : base(components) { }
 
         public IEnumerator GetEnumerator()
         {

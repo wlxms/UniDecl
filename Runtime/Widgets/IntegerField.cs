@@ -12,5 +12,6 @@ namespace UniDecl.Runtime.Widgets
         public override IElement Render() => null;
 
         public IntegerField(int value = 0) { Value = value; }
+        public IntegerField(int value = 0, params IElementComponent[] components) : base(components) { Value = value; }
     }
 }

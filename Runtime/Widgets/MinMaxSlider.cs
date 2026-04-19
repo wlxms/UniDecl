@@ -23,5 +23,13 @@ namespace UniDecl.Runtime.Widgets
             LowLimit = lowLimit;
             HighLimit = highLimit;
         }
+        public MinMaxSlider(string label = "", float min = 0f, float max = 100f, float lowLimit = 0f, float highLimit = 100f, params IElementComponent[] components) : base(components)
+        {
+            Label = label;
+            MinValue = min;
+            MaxValue = max;
+            LowLimit = lowLimit;
+            HighLimit = highLimit;
+        }
     }
 }

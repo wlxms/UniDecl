@@ -12,5 +12,6 @@ namespace UniDecl.Runtime.Widgets
         public override IElement Render() => null;
 
         public Toggle(string label, bool value = false) { Label = label; Value = value; }
+        public Toggle(string label, bool value = false, params IElementComponent[] components) : base(components) { Label = label; Value = value; }
     }
 }

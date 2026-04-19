@@ -18,5 +18,11 @@ namespace UniDecl.Runtime.Widgets
             Choices = choices;
             Index = index;
         }
+        public Dropdown(string label, string[] choices, int index = 0, params IElementComponent[] components) : base(components)
+        {
+            Label = label;
+            Choices = choices;
+            Index = index;
+        }
     }
 }

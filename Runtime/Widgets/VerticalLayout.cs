@@ -16,5 +16,8 @@ namespace UniDecl.Runtime.Widgets
         {
             return null;
         }
+
+        public VerticalLayout() { }
+        public VerticalLayout(params IElementComponent[] components) : base(components) { }
     }
 }

@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using UniDecl.Runtime.Components;
+using UnityEngine;
 
 namespace UniDecl.Runtime.Core
 {
@@ -131,6 +133,44 @@ namespace UniDecl.Runtime.Core
 
             _eventTypeCache[listenerType] = types;
             return types;
+        }
+    }
+
+    public class EventDispatcher<TRenderResult> : EventDispatcher
+    {
+        private readonly Func<IElement, IElementRender<TRenderResult>> _rendererLookup;
+
+        /// <summary>
+        /// 通过注入 renderer 查找函数构造，使 DispatchAlongPath 能找到渲染器
+        /// </summary>
+        public EventDispatcher(Func<IElement, IElementRender<TRenderResult>> rendererLookup)
+        {
+            _rendererLookup = rendererLookup;
+        }
+
+        public EventDispatcher() { }
+
+        public void DispatchAlongPath<T>(T @event, IReadOnlyList<DOMNode<TRenderResult>> path) where T : struct
+        {
+            foreach (var node in path)
+            {
+                if (node.Element is IEventListener<T> el)
+                    el.OnEvent(@event);
+                if (node.Element is Element element)
+                    foreach (var comp in element.Components)
+                    {
+                        if (comp is IEventListener<T> cl)
+                            cl.OnEvent(@event);
+                        if (comp is OnEvent<T> onEvent)
+                            onEvent.Handler?.Invoke(@event);
+                    }
+                if (_rendererLookup != null && node.Element != null)
+                {
+                    var renderer = _rendererLookup(node.Element);
+                    if (renderer is IRendererEventListener<TRenderResult, T> r)
+                        r.OnEvent(@event, node);
+                }
+            }
         }
     }
 }

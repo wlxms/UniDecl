@@ -18,5 +18,11 @@ namespace UniDecl.Runtime.Widgets
             EnumType = enumType;
             Value = value;
         }
+        public EnumField(string label, Type enumType, int value = 0, params IElementComponent[] components) : base(components)
+        {
+            Label = label;
+            EnumType = enumType;
+            Value = value;
+        }
     }
 }

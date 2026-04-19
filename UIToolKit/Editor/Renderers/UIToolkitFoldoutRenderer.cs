@@ -1,12 +1,14 @@
 ﻿using UnityEngine.UIElements;
 using UniDecl.Runtime.Core;
+using UniDecl.Runtime.Navigation;
 using W = UniDecl.Runtime.Widgets;
 using UniDecl.Editor.UIToolKit.Style;
 using UITKStyle = UniDecl.UIToolKit.Runtime.UITKStyle;
 namespace UniDecl.Editor.UIToolKit.Renderers
 {
     public class UIToolkitFoldoutRenderer : IElementRenderer<W.Foldout, VisualElement>,
-        IElementUpdater<VisualElement>, IElementUpdater<W.Foldout, VisualElement>
+        IElementUpdater<VisualElement>, IElementUpdater<W.Foldout, VisualElement>,
+        IRendererEventListener<VisualElement, NavigationEvent>
     {
         public VisualElement Render(W.Foldout element, IElementRenderHost<VisualElement> manager, ElementState state)
         {
@@ -42,5 +44,13 @@ namespace UniDecl.Editor.UIToolKit.Renderers
 
         public bool TryUpdate(IElement element, VisualElement existing, IElementRenderHost<VisualElement> manager, ElementState state)
             => element is W.Foldout foldout && TryUpdate(foldout, existing, manager, state);
+
+        public void OnEvent(NavigationEvent @event, DOMNode<VisualElement> node)
+        {
+            if (@event.IsTarget) return;
+            var ve = node.RenderResult;
+            if (ve is UnityEngine.UIElements.Foldout foldout)
+                foldout.value = true;
+        }
     }
 }

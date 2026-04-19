@@ -13,5 +13,6 @@ namespace UniDecl.Runtime.Widgets
         public override IElement Render() => null;
 
         public Foldout(string text) { Text = text; }
+        public Foldout(string text, params IElementComponent[] components) : base(components) { Text = text; }
     }
 }
