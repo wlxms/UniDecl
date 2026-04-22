@@ -1,0 +1,25 @@
+{
+  "name": "com.wlxms.unidecl",
+  "version": "0.1.0",
+  "displayName": "UniDecl",
+  "description": "A React-style declarative GUI engine for Unity, supporting both IMGUI and UI Toolkit backends.",
+  "unity": "2021.2",
+  "type": "library",
+  "author": {
+    "name": "wlxms",
+    "url": "https://github.com/wlxms"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/wlxms/UniDecl.git"
+  },
+  "keywords": [
+    "ui",
+    "declarative",
+    "gui",
+    "uitoolkit",
+    "imgui",
+    "react"
+  ],
+  "license": "MIT"
+}
