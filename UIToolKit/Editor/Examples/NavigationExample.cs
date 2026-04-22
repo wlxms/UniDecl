@@ -1,8 +1,6 @@
-using System;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
-using UniDecl.Runtime.Components;
 using UniDecl.Runtime.Core;
 using UniDecl.Runtime.Navigation;
 using UniDecl.Runtime.Widgets;
@@ -15,37 +13,31 @@ namespace UniDecl.Editor.UIToolKit.Examples
     /// <summary>
     /// 导航系统演示窗口 — 展示 Anchor + NavigateTo + HostManager + URL 路由。
     /// 通过 Window → UniDecl Navigation 打开。
+    /// 继承 UIToolkitHostEditorWindow 自动获得 host 注册、ready replay、跨窗口导航能力。
     /// </summary>
-    public class NavigationExample : EditorWindow
+    [DeclHostWindow("nav-example")]
+    public class NavigationExample : UIToolkitHostEditorWindow<UIToolkitRenderManager>
     {
-        private UIToolkitRenderManager _manager;
-        private const string HostName = "nav-example";
-
         [MenuItem("Window/UniDecl Navigation")]
         public static void ShowWindow()
         {
             GetWindow<NavigationExample>("UniDecl Navigation");
         }
 
-        public void CreateGUI()
+        protected override string HostName => "nav-example";
+
+        protected override void LoadStyles(UIToolkitRenderManager manager)
         {
-            rootVisualElement.Clear();
+            manager.LoadStyleSheetFromResources("Themes/DefaultStyle");
+        }
 
-            _manager = new NavigationExampleManager();
-            _manager.LoadStyleSheetFromResources("Themes/DefaultStyle");
-
-            var root = new Panel
+        protected override IElement BuildContent()
+        {
+            return new HorizontalLayout
             {
-                new HorizontalLayout
-                {
-                    BuildSidebar(),
-                    BuildContent(),
-                }.With(new UITKStyle { FlexGrow = 1, MinHeight = 0 }),
-            };
-
-            var ve = _manager.RenderRoot(root);
-            if (ve != null)
-                rootVisualElement.Add(ve);
+                BuildSidebar(),
+                BuildMainContent(),
+            }.With(new UITKStyle { FlexGrow = 1, MinHeight = 0 });
         }
 
         private IElement BuildSidebar()
@@ -64,7 +56,7 @@ namespace UniDecl.Editor.UIToolKit.Examples
                 },
                 OnSelectionChanged = id =>
                 {
-                    _manager.NavigateTo(id);
+                    Manager.NavigateTo(id);
                 },
             };
 
@@ -88,7 +80,7 @@ namespace UniDecl.Editor.UIToolKit.Examples
             }.FlexColumn().AddClass("ud-panel").Padding(4));
         }
 
-        private IElement BuildContent()
+        private IElement BuildMainContent()
         {
             return new ScrollView
             {
@@ -116,11 +108,6 @@ namespace UniDecl.Editor.UIToolKit.Examples
                     new Label("Deep dive into navigation and event system."),
                 },
             };
-        }
-
-        private class NavigationExampleManager : UIToolkitRenderManager
-        {
-            public override string HostName => "nav-example";
         }
     }
 }

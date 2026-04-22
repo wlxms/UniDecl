@@ -1,11 +1,14 @@
 {
-    "name": "NewAssembly",
+    "name": "UniDecl.UIToolKit.Editor",
     "rootNamespace": "",
     "references": [
         "GUID:f1f5edea0f62d8c40bba66be90660835",
-        "GUID:edc4e07212f02c340ab84c8ed61f779a"
+        "GUID:edc4e07212f02c340ab84c8ed61f779a",
+        "GUID:cbf405f2ad869474899456f4fea4d0c1"
     ],
-    "includePlatforms": [],
+    "includePlatforms": [
+        "Editor"
+    ],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
     "overrideReferences": false,

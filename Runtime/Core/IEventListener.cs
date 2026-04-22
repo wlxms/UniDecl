@@ -12,6 +12,6 @@ namespace UniDecl.Runtime.Core
     public interface IRendererEventListener<TRenderResult, TEvent> : IEventListener
         where TEvent : struct
     {
-        void OnEvent(TEvent @event, DOMNode<TRenderResult> node);
+        void OnEvent(TEvent @event, DOMNode<TRenderResult> node, DOMTree<TRenderResult> tree);
     }
 }

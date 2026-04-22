@@ -45,7 +45,7 @@ namespace UniDecl.Editor.UIToolKit.Renderers
         public bool TryUpdate(IElement element, VisualElement existing, IElementRenderHost<VisualElement> manager, ElementState state)
             => element is W.Foldout foldout && TryUpdate(foldout, existing, manager, state);
 
-        public void OnEvent(NavigationEvent @event, DOMNode<VisualElement> node)
+        public void OnEvent(NavigationEvent @event, DOMNode<VisualElement> node, DOMTree<VisualElement> tree)
         {
             if (@event.IsTarget) return;
             var ve = node.RenderResult;

@@ -3,21 +3,18 @@ using UniDecl.Runtime.Navigation;
 
 namespace UniDecl.Runtime.Core
 {
-    public static class HostManager
+    public abstract class HostManager<TSingleton> where TSingleton : HostManager<TSingleton>, new()
     {
-        private static readonly Dictionary<string, IElementRenderHostBase> _hosts = new();
+        private static TSingleton _instance;
+        public static TSingleton Instance => _instance ??= new TSingleton();
 
-        public static void Register(string name, IElementRenderHostBase host) => _hosts[name] = host;
-        public static void Unregister(string name) => _hosts.Remove(name);
-        public static IElementRenderHostBase GetHost(string name) =>
+        protected readonly Dictionary<string, IElementRenderHostBase> _hosts = new();
+
+        public virtual void Register(string name, IElementRenderHostBase host) => _hosts[name] = host;
+        public virtual void Unregister(string name) => _hosts.Remove(name);
+        public virtual IElementRenderHostBase GetHost(string name) =>
             _hosts.TryGetValue(name, out var h) ? h : null;
 
-        public static void NavigateURL(string url)
-        {
-            var p = NavigationURL.Parse(url);
-            if (p?.Fragment == null) return;
-            var host = string.IsNullOrEmpty(p.Host) ? null : GetHost(p.Host);
-            host?.NavigateTo(p.Fragment);
-        }
+        public abstract void NavigateURL(string url);
     }
 }

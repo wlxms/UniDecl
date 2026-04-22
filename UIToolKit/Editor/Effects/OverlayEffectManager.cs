@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace UniDecl.Editor.UIToolKit.Navigation
+namespace UniDecl.Editor.UIToolKit.Effects
 {
     /// <summary>
     /// 叠加层生命周期句柄，管理单个 VE 从显示到回收的完整生命周期。
