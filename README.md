@@ -193,7 +193,58 @@ new VerticalLayout
 
 ### Stateful Elements
 
-For components that maintain state across rebuilds, use `Element<TState>`:
+UniDecl provides **three state management patterns** to suit different needs:
+
+#### 1. **ReactiveStateElement** (Recommended) - Auto-tracking with ReactiveValue
+
+```csharp
+public class Counter : ReactiveStateElement<Counter.CounterState>
+{
+    public class CounterState
+    {
+        public ReactiveValue<int> Count = new(0);
+    }
+
+    public override CounterState BuildState() => new CounterState();
+
+    public override IElement Render(CounterState state)
+    {
+        return new VerticalLayout
+        {
+            new Button($"Count: {state.Count.Value}", () =>
+            {
+                state.Count.Value++; // Auto-triggers UI update
+            }),
+            new Button("Reset", () => state.Count.Value = 0),
+        };
+    }
+}
+```
+
+**ReactiveValue** automatically detects changes and triggers UI rebuilds. Perfect for complex, frequently-updated state.
+
+#### 2. **StructStateElement** - Immutable state with SetState
+
+```csharp
+public class Counter : StructStateElement<Counter.CounterState>
+{
+    public struct CounterState { public int Count; }
+
+    public override CounterState BuildInitialState() => new CounterState();
+
+    public override IElement Render(CounterState state)
+    {
+        return new Button($"Count: {state.Count}", () =>
+        {
+            SetState(s => new CounterState { Count = s.Count + 1 });
+        });
+    }
+}
+```
+
+**Struct-based** state enforces immutability and guarantees every update creates a new state instance. Ideal for simple, small state objects.
+
+#### 3. **Element&lt;TState&gt;** - Traditional class-based (legacy)
 
 ```csharp
 public class Counter : Element<Counter.CounterState>
@@ -204,16 +255,20 @@ public class Counter : Element<Counter.CounterState>
 
     public override IElement Render(CounterState state)
     {
-        return new VerticalLayout
+        return new Button($"Count: {state.Count}", () =>
         {
-            new Button($"Count: {state.Count}", () => state.Count++),
-            new Button("Reset", () => state.Count = 0),
-        };
+            state.Count++;
+            NotifyChanged(); // Manual notification required
+        });
     }
 }
 ```
 
-The framework creates state via `BuildState()` on first encounter and preserves it across rebuilds. When an element triggers `Rebuild()` or `NotifyChanged()`, the same state instance is reused.
+The traditional approach where you manually call `NotifyChanged()` after state mutations. Use for backward compatibility.
+
+---
+
+**📖 For a comprehensive guide on choosing the right pattern, see [STATE_MANAGEMENT.md](STATE_MANAGEMENT.md)**
 
 ### Context System
 
