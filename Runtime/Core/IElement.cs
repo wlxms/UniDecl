@@ -24,7 +24,7 @@ namespace UniDecl.Runtime.Core
         public object BuildState();
     }
 
-    public interface IElement<TState> : IStatefulElement
+    public interface IElement<TState> : IStatefulElement where TState : struct
     {
         object IStatefulElement.BuildState() => BuildState();
 

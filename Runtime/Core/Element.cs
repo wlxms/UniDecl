@@ -73,42 +73,27 @@ namespace UniDecl.Runtime.Core
     }
 
     /// <summary>
-    /// 统一的状态化元素抽象基类
-    /// 支持 struct 和 class 两种状态类型
-    ///
-    /// - struct 状态：强制不可变，通过 SetState() 更新，自动触发重建
-    /// - class 状态：可变，需要手动调用 NotifyChanged() 触发重建
+    /// 状态化元素抽象基类（仅支持 struct 状态）
+    /// State 必须是 struct，强制不可变，通过 SetState() 更新，自动触发重建
     /// </summary>
-    /// <typeparam name="TState">状态类型（struct 或 class）</typeparam>
-    public abstract class Element<TState> : Element, IElement<TState>
+    /// <typeparam name="TState">状态类型（必须是 struct）</typeparam>
+    public abstract class Element<TState> : Element, IElement<TState> where TState : struct
     {
         private TState _state;
         private bool _stateInitialized;
-        private readonly bool _isValueType;
-
-        protected Element()
-        {
-            _isValueType = typeof(TState).IsValueType;
-        }
 
         public abstract TState BuildState();
         public abstract IElement Render(TState state);
 
         /// <summary>
-        /// 更新状态（仅当 TState 是 struct 时可用）
-        /// 使用 updater 函数接收旧状态并返回新状态
-        /// 如果新旧状态不同，会自动触发 UI 重建
+        /// 更新状态。使用 updater 函数接收旧状态并返回新状态。
+        /// 如果新旧状态不同，会自动触发 UI 重建。
         /// </summary>
         /// <param name="updater">状态更新函数</param>
         protected void SetState(Func<TState, TState> updater)
         {
             if (updater == null)
                 throw new ArgumentNullException(nameof(updater));
-
-            if (!_isValueType)
-                throw new InvalidOperationException(
-                    $"SetState() 只能用于 struct 状态。当前状态类型 {typeof(TState).Name} 是 class。" +
-                    "请使用 ReactiveStateElement 或直接修改状态后调用 NotifyChanged()。");
 
             var newState = updater(_state);
             if (!EqualityComparer<TState>.Default.Equals(_state, newState))
@@ -119,16 +104,11 @@ namespace UniDecl.Runtime.Core
         }
 
         /// <summary>
-        /// 直接设置新状态（仅当 TState 是 struct 时可用）
+        /// 直接设置新状态
         /// </summary>
         /// <param name="newState">新状态</param>
         protected void SetState(TState newState)
         {
-            if (!_isValueType)
-                throw new InvalidOperationException(
-                    $"SetState() 只能用于 struct 状态。当前状态类型 {typeof(TState).Name} 是 class。" +
-                    "请使用 ReactiveStateElement 或直接修改状态后调用 NotifyChanged()。");
-
             if (!EqualityComparer<TState>.Default.Equals(_state, newState))
             {
                 _state = newState;
@@ -137,9 +117,7 @@ namespace UniDecl.Runtime.Core
         }
 
         /// <summary>
-        /// 获取当前状态
-        /// - struct 状态：返回副本（不可变）
-        /// - class 状态：返回引用（可变，但需要手动调用 NotifyChanged）
+        /// 获取当前状态（返回副本，不可变）
         /// </summary>
         protected TState State => _state;
 
@@ -148,35 +126,12 @@ namespace UniDecl.Runtime.Core
         /// </summary>
         public sealed override IElement Render()
         {
-            if (_isValueType)
+            if (!_stateInitialized)
             {
-                // Struct 模式：自己管理状态
-                if (!_stateInitialized)
-                {
-                    _state = BuildState();
-                    _stateInitialized = true;
-                }
-                return Render(_state);
+                _state = BuildState();
+                _stateInitialized = true;
             }
-            else
-            {
-                // Class 模式：通过 Manager 管理状态（保持向后兼容）
-                var state = (TState)_manager.GetElementState(this);
-                if (state == null)
-                {
-                    if (!_stateInitialized)
-                    {
-                        _state = BuildState();
-                        _stateInitialized = true;
-                    }
-                    state = _state;
-                }
-                else
-                {
-                    _state = state;
-                }
-                return Render(state);
-            }
+            return Render(_state);
         }
     }
 }

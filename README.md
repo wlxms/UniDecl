@@ -193,11 +193,7 @@ new VerticalLayout
 
 ### Stateful Elements
 
-UniDecl provides a **unified state management pattern** in `Element<TState>` that intelligently adapts based on whether your state is a `struct` or `class`:
-
-#### **Element&lt;TState&gt;** - Unified state management
-
-**With struct (Recommended)** - Immutable state with SetState:
+UniDecl provides struct-based immutable state management through `Element<TState>`:
 
 ```csharp
 public class Counter : Element<Counter.CounterState>
@@ -219,31 +215,7 @@ public class Counter : Element<Counter.CounterState>
 
 **Struct-based** state enforces immutability and guarantees every update creates a new state instance. Use `SetState()` to update, which automatically triggers UI rebuild.
 
-**With class** - Mutable state with manual notification:
-
-```csharp
-public class Counter : Element<Counter.CounterState>
-{
-    public class CounterState { public int Count; }
-
-    public override CounterState BuildState() => new CounterState();
-
-    public override IElement Render(CounterState state)
-    {
-        return new Button($"Count: {state.Count}", () =>
-        {
-            state.Count++;
-            NotifyChanged(); // Manual notification required
-        });
-    }
-}
-```
-
-**Class-based** state is mutable. You must manually call `NotifyChanged()` after mutations.
-
----
-
-**For advanced reactive patterns, see [ReactiveStateElement](STATE_MANAGEMENT.md#reactivestateelement) with ReactiveValue<T>**
+For detailed state management patterns and best practices, see [STATE_MANAGEMENT.md](STATE_MANAGEMENT.md).
 
 ### Context System
 
