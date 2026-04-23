@@ -9,7 +9,8 @@ namespace UniDecl.Runtime.Widgets
     /// </summary>
     public class PaneOption
     {
-        public float? Width { get; set; }
+        /// <summary>初始固定尺寸（对应原生 TwoPaneSplitView 的 fixedPaneInitialDimension）</summary>
+        public float? InitialSize { get; set; }
         public float? MinWidth { get; set; }
         public float? MaxWidth { get; set; }
         public float? FlexGrow { get; set; }
@@ -26,7 +27,6 @@ namespace UniDecl.Runtime.Widgets
 
         public Direction SplitDirection { get; set; } = Direction.Horizontal;
         public List<PaneOption> PaneOptions { get; set; } = new List<PaneOption>();
-        public float DividerSize { get; set; } = 4f;
 
         private readonly List<IElement> _children = new List<IElement>();
 

@@ -22,13 +22,10 @@ namespace UniDecl.Editor.UIToolKit.Renderers
             // 单个子元素，直接渲染
             if (children.Count == 1)
             {
-                var single = manager.RenderElement(children[0]);
-                if (single != null)
-                {
-                    single.style.flexGrow = 1;
-                    ApplyPaneOption(single, element.PaneOptions, 0);
-                }
-                UIToolkitStyleApplier.ApplyElementStyles(element, single ?? new VisualElement());
+                var single = manager.RenderElement(children[0]) ?? new VisualElement();
+                single.style.flexGrow = 1;
+                ApplyPaneOption(single, element.PaneOptions, 0);
+                UIToolkitStyleApplier.ApplyElementStyles(element, single);
                 return single;
             }
 
@@ -82,7 +79,7 @@ namespace UniDecl.Editor.UIToolKit.Renderers
         private float GetInitialDimension(List<W.PaneOption> options, int index)
         {
             var opt = index < options.Count ? options[index] : null;
-            return opt?.Width ?? 200f;
+            return opt?.InitialSize ?? 200f;
         }
 
         private void ApplyPaneOption(VisualElement pane, List<W.PaneOption> options, int index)
@@ -94,11 +91,5 @@ namespace UniDecl.Editor.UIToolKit.Renderers
             if (opt.FlexGrow.HasValue) pane.style.flexGrow = opt.FlexGrow.Value;
             if (opt.FlexShrink.HasValue) pane.style.flexShrink = opt.FlexShrink.Value;
         }
-    }
-
-    public struct PaneSplitViewChangeEvent
-    {
-        public W.PaneSplitView Source { get; }
-        public PaneSplitViewChangeEvent(W.PaneSplitView source) { Source = source; }
     }
 }

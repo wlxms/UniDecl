@@ -86,6 +86,8 @@ namespace UniDecl.Editor.UIToolKit
             RegisterRenderer<MultiColumnListView>(new UIToolkitMultiColumnListViewRenderer());
             // P1-C: 布局/工具控件
             RegisterRenderer<PaneSplitView>(new UIToolkitPaneSplitViewRenderer());
+            RegisterRenderer<HorizontalPaneSplitView>(new UIToolkitPaneSplitViewRenderer());
+            RegisterRenderer<VerticalPaneSplitView>(new UIToolkitPaneSplitViewRenderer());
             RegisterRenderer<VisualSplitter>(new UIToolkitVisualSplitterRenderer());
             RegisterRenderer<IMGUIContainer>(new UIToolkitIMGUIContainerRenderer());
             RegisterRenderer<UniDecl.Runtime.Widgets.PopupWindow>(new UIToolkitPopupWindowRenderer());
