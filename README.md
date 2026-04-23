@@ -193,58 +193,33 @@ new VerticalLayout
 
 ### Stateful Elements
 
-UniDecl provides **three state management patterns** to suit different needs:
+UniDecl provides a **unified state management pattern** in `Element<TState>` that intelligently adapts based on whether your state is a `struct` or `class`:
 
-#### 1. **ReactiveStateElement** (Recommended) - Auto-tracking with ReactiveValue
+#### **Element&lt;TState&gt;** - Unified state management
 
-```csharp
-public class Counter : ReactiveStateElement<Counter.CounterState>
-{
-    public class CounterState
-    {
-        public ReactiveValue<int> Count = new(0);
-    }
-
-    public override CounterState BuildState() => new CounterState();
-
-    public override IElement Render(CounterState state)
-    {
-        return new VerticalLayout
-        {
-            new Button($"Count: {state.Count.Value}", () =>
-            {
-                state.Count.Value++; // Auto-triggers UI update
-            }),
-            new Button("Reset", () => state.Count.Value = 0),
-        };
-    }
-}
-```
-
-**ReactiveValue** automatically detects changes and triggers UI rebuilds. Perfect for complex, frequently-updated state.
-
-#### 2. **StructStateElement** - Immutable state with SetState
+**With struct (Recommended)** - Immutable state with SetState:
 
 ```csharp
-public class Counter : StructStateElement<Counter.CounterState>
+public class Counter : Element<Counter.CounterState>
 {
     public struct CounterState { public int Count; }
 
-    public override CounterState BuildInitialState() => new CounterState();
+    public override CounterState BuildState() => new CounterState();
 
     public override IElement Render(CounterState state)
     {
         return new Button($"Count: {state.Count}", () =>
         {
             SetState(s => new CounterState { Count = s.Count + 1 });
+            // SetState automatically triggers UI rebuild
         });
     }
 }
 ```
 
-**Struct-based** state enforces immutability and guarantees every update creates a new state instance. Ideal for simple, small state objects.
+**Struct-based** state enforces immutability and guarantees every update creates a new state instance. Use `SetState()` to update, which automatically triggers UI rebuild.
 
-#### 3. **Element&lt;TState&gt;** - Traditional class-based (legacy)
+**With class** - Mutable state with manual notification:
 
 ```csharp
 public class Counter : Element<Counter.CounterState>
@@ -264,11 +239,11 @@ public class Counter : Element<Counter.CounterState>
 }
 ```
 
-The traditional approach where you manually call `NotifyChanged()` after state mutations. Use for backward compatibility.
+**Class-based** state is mutable. You must manually call `NotifyChanged()` after mutations.
 
 ---
 
-**📖 For a comprehensive guide on choosing the right pattern, see [STATE_MANAGEMENT.md](STATE_MANAGEMENT.md)**
+**For advanced reactive patterns, see [ReactiveStateElement](STATE_MANAGEMENT.md#reactivestateelement) with ReactiveValue<T>**
 
 ### Context System
 

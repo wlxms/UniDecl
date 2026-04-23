@@ -8,7 +8,7 @@ namespace UniDecl.Editor.UIToolKit.Examples
 {
     /// <summary>
     /// Struct-based State 示例
-    /// 演示使用 StructStateElement 和 SetState 模式进行状态管理
+    /// 演示使用统一的 Element&lt;TState&gt; 和 SetState 模式进行状态管理
     /// </summary>
     public class StructStateExample : EditorWindow
     {
@@ -45,7 +45,7 @@ namespace UniDecl.Editor.UIToolKit.Examples
         /// <summary>
         /// 简单计数器示例
         /// </summary>
-        private class CounterExample : StructStateElement<CounterExample.CounterState>
+        private class CounterExample : Element<CounterExample.CounterState>
         {
             public struct CounterState
             {
@@ -53,7 +53,7 @@ namespace UniDecl.Editor.UIToolKit.Examples
                 public string Title;
             }
 
-            public override CounterState BuildInitialState() => new CounterState
+            public override CounterState BuildState() => new CounterState
             {
                 Count = 0,
                 Title = "计数器"
@@ -107,7 +107,7 @@ namespace UniDecl.Editor.UIToolKit.Examples
         /// <summary>
         /// TodoList 示例（使用 struct + array）
         /// </summary>
-        private class TodoListExample : StructStateElement<TodoListExample.TodoState>
+        private class TodoListExample : Element<TodoListExample.TodoState>
         {
             public struct TodoState
             {
@@ -115,7 +115,7 @@ namespace UniDecl.Editor.UIToolKit.Examples
                 public string Input;
             }
 
-            public override TodoState BuildInitialState() => new TodoState
+            public override TodoState BuildState() => new TodoState
             {
                 Items = new[] { "学习 UniDecl", "编写示例代码" },
                 Input = ""

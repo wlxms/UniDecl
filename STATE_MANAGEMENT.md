@@ -1,31 +1,112 @@
 # UniDecl State Management Patterns
 
-UniDecl 提供三种状态管理模式，适用于不同的场景和编程风格。
+UniDecl 提供两种状态管理模式，适用于不同的场景和编程风格。
 
-## 三种状态管理模式对比
+## 两种状态管理模式对比
 
-| 特性 | Element&lt;TState&gt;<br/>(Class-based) | StructStateElement&lt;TState&gt;<br/>(Struct + SetState) | ReactiveStateElement&lt;TState&gt;<br/>(ReactiveValue) |
+| 特性 | Element&lt;TState&gt;<br/>(Struct) | Element&lt;TState&gt;<br/>(Class) | ReactiveStateElement&lt;TState&gt;<br/>(ReactiveValue) |
 |------|------------------------|---------------------------|---------------------------|
-| **状态类型** | `class` | `struct` | `class` |
-| **更新方式** | 手动 `NotifyChanged()` | `SetState(updater)` | 自动（ReactiveValue） |
-| **不可变性** | ❌ 可变 | ✅ 强制不可变 | ❌ 可变 |
-| **代码简洁度** | 中等 | 较繁琐 | 简洁 |
-| **性能** | 一般（GC压力） | 优秀（栈分配） | 一般（反射初始化） |
-| **适用场景** | 向后兼容 | 小型不可变状态 | 复杂响应式状态 |
+| **状态类型** | `struct` | `class` | `class` |
+| **更新方式** | `SetState(updater)` | 手动 `NotifyChanged()` | 自动（ReactiveValue） |
+| **不可变性** | ✅ 强制不可变 | ❌ 可变 | ❌ 可变 |
+| **代码简洁度** | 中等 | 简单 | 简洁 |
+| **性能** | 优秀（栈分配） | 一般（GC压力） | 一般（反射初始化） |
+| **适用场景** | 小型不可变状态 | 简单状态管理 | 复杂响应式状态 |
 
 ---
 
-## 模式一：Element&lt;TState&gt; (Class-based)
+## 模式一：Element&lt;TState&gt; - 统一状态管理
 
 ### 概述
-传统的 class-based 状态模式，适用于需要向后兼容的场景。
+`Element<TState>` 是统一的状态化元素基类，根据 `TState` 是 `struct` 还是 `class` 自动采用不同的行为。
 
-### 特点
-- State 必须是 `class`
-- 状态变更后需要手动调用 `NotifyChanged()` 触发 UI 更新
+### 使用 Struct（推荐）
+
+#### 特点
+- State 是 `struct`，强制值语义和不可变性
+- 通过 `SetState()` 更新状态，自动触发 UI 重建
+- 类型安全，编译时保证
+- 小型状态性能优秀（栈分配）
+
+#### 示例
+
+```csharp
+public class Counter : Element<Counter.CounterState>
+{
+    public struct CounterState
+    {
+        public int Count;
+        public string Title;
+    }
+
+    public override CounterState BuildState() => new CounterState
+    {
+        Count = 0,
+        Title = "计数器"
+    };
+
+    public override IElement Render(CounterState state)
+    {
+        return new VerticalLayout
+        {
+            new Label(state.Title),
+            new Label($"Count: {state.Count}"),
+            new Button("Increment", () =>
+            {
+                SetState(s => new CounterState
+                {
+                    Count = s.Count + 1,
+                    Title = s.Title
+                });
+                // 自动触发 NotifyChanged()
+            })
+        };
+    }
+}
+```
+
+#### 高级用法
+
+**1. 直接设置新状态**
+
+```csharp
+SetState(new CounterState { Count = 100, Title = "Reset" });
+```
+
+**2. 读取当前状态**
+
+```csharp
+var currentCount = State.Count;
+```
+
+#### 优缺点
+
+**优点**：
+- ✅ 强制不可变性，避免意外修改
+- ✅ 类型安全，编译时保证
+- ✅ 小型状态性能优秀（栈分配）
+- ✅ 明确的更新路径
+- ✅ 自动触发更新
+
+**缺点**：
+- ❌ 更新代码较繁琐（需要重建整个 struct）
+- ❌ 嵌套结构更新复杂
+- ❌ 大型状态结构复制开销大
+
+**适用场景**：
+- 小型状态对象（< 100 bytes）
+- 需要强制不可变性的场景
+- 简单的表单、配置等
+
+### 使用 Class
+
+#### 特点
+- State 是 `class`，引用语义
+- 直接修改状态，需要手动调用 `NotifyChanged()` 触发 UI 更新
 - 灵活但容易忘记调用通知
+- 不能使用 `SetState()` 方法（会抛出异常）
 
-### 示例
+#### 示例
 
 ```csharp
 public class Counter : Element<Counter.CounterState>
@@ -52,104 +133,26 @@ public class Counter : Element<Counter.CounterState>
 }
 ```
 
-### 优缺点
+#### 优缺点
 
 **优点**：
-- 简单直观
-- 向后兼容现有代码
-- 无额外学习成本
+- ✅ 简单直观
+- ✅ 无额外学习成本
+- ✅ 适合复杂对象
 
 **缺点**：
-- 容易忘记调用 `NotifyChanged()`
-- State 可变，可能导致意外副作用
-- 无法强制不可变性
-
----
-
-## 模式二：StructStateElement&lt;TState&gt; (Struct + SetState)
-
-### 概述
-基于 `struct` 的不可变状态模式，通过 `SetState` 方法强制状态更新。
-
-### 特点
-- State 必须是 `struct`
-- 通过 `SetState(updater)` 方法更新状态
-- **强制不可变性** - 每次更新都创建新的 state 实例
-- 自动触发 UI 更新
-
-### 示例
-
-```csharp
-public class Counter : StructStateElement<Counter.CounterState>
-{
-    public struct CounterState
-    {
-        public int Count;
-        public string Title;
-    }
-
-    public override CounterState BuildInitialState() => new CounterState
-    {
-        Count = 0,
-        Title = "Counter"
-    };
-
-    public override IElement Render(CounterState state)
-    {
-        return new VerticalLayout
-        {
-            new Label(state.Title),
-            new Label($"Count: {state.Count}"),
-            new Button("Increment", () =>
-            {
-                SetState(s => new CounterState
-                {
-                    Count = s.Count + 1,
-                    Title = s.Title
-                });
-                // 自动触发 NotifyChanged()
-            })
-        };
-    }
-}
-```
-
-### 高级用法
-
-#### 1. 直接设置新状态
-
-```csharp
-SetState(new CounterState { Count = 100, Title = "Reset" });
-```
-
-#### 2. 读取当前状态
-
-```csharp
-var currentCount = State.Count;
-```
-
-### 优缺点
-
-**优点**：
-- ✅ 强制不可变性，避免意外修改
-- ✅ 类型安全，编译时保证
-- ✅ 小型状态性能优秀（栈分配）
-- ✅ 明确的更新路径
-- ✅ 自动触发更新
-
-**缺点**：
-- ❌ 更新代码较繁琐（需要重建整个 struct）
-- ❌ 嵌套结构更新复杂
-- ❌ 大型状态结构复制开销大
+- ❌ 容易忘记调用 `NotifyChanged()`
+- ❌ State 可变，可能导致意外副作用
+- ❌ 无法强制不可变性
 
 **适用场景**：
-- 小型状态对象（< 100 bytes）
-- 需要强制不可变性的场景
-- 简单的表单、配置等
+- 快速原型开发
+- 简单的状态管理
+- 不需要严格不可变性的场景
 
 ---
 
-## 模式三：ReactiveStateElement&lt;TState&gt; (ReactiveValue)
+## 模式二：ReactiveStateElement&lt;TState&gt; (ReactiveValue)
 
 ### 概述
 响应式状态模式，使用 `ReactiveValue<T>` 和 `ReactiveList<T>` 包装器，自动检测变更并触发 UI 更新。
@@ -267,38 +270,6 @@ public class Form : ReactiveStateElement<Form.FormState>
 }
 ```
 
-#### 3. 隐式转换
-
-`ReactiveValue<T>` 支持隐式转换为 `T`，便于读取：
-
-```csharp
-var state = new { Count = new ReactiveValue<int>(10) };
-
-// 读取时可以省略 .Value
-int value = state.Count; // 隐式转换
-
-// 写入必须使用 .Value
-state.Count.Value = 20;
-```
-
-### ReactiveList 常用方法
-
-```csharp
-var list = new ReactiveList<string>();
-
-// 基础操作（自动触发更新）
-list.Add("item");
-list.Remove("item");
-list.RemoveAt(0);
-list.Clear();
-list[0] = "new value";
-
-// 批量操作（只触发一次更新）
-list.AddRange(new[] { "a", "b", "c" });
-list.RemoveAll(x => x.StartsWith("a"));
-list.Sort();
-```
-
 ### 优缺点
 
 **优点**：
@@ -328,19 +299,11 @@ list.Sort();
 
 ```
 ┌─────────────────────────────┐
-│  是否需要向后兼容现有代码？  │
-└──────────┬──────────────────┘
-           │
-    Yes ───┴─→ Element<TState> (Class-based)
-           │
-    No     │
-           ▼
-┌─────────────────────────────┐
 │   状态是否小型且简单？      │
 │   (< 5 个字段，< 100 bytes) │
 └──────────┬──────────────────┘
            │
-    Yes ───┴─→ StructStateElement<TState>
+    Yes ───┴─→ Element<TState> (struct)
            │
     No     │
            ▼
@@ -352,20 +315,27 @@ list.Sort();
            │
     No     │
            ▼
-    StructStateElement 或 ReactiveStateElement
-    （根据个人偏好）
+┌─────────────────────────────┐
+│     是否需要严格不可变？    │
+└──────────┬──────────────────┘
+           │
+    Yes ───┴─→ Element<TState> (struct)
+           │
+    No     │
+           ▼
+    Element<TState> (class)
 ```
 
 ### 具体场景推荐
 
 | 场景 | 推荐模式 | 原因 |
 |------|---------|------|
-| 计数器 | StructStateElement | 状态简单，struct 性能好 |
+| 计数器 | Element&lt;struct&gt; | 状态简单，struct 性能好 |
 | TodoList | ReactiveStateElement | 需要动态列表 (ReactiveList) |
-| 表单（< 5 字段） | StructStateElement | 不可变性保证数据一致性 |
+| 表单（< 5 字段） | Element&lt;struct&gt; | 不可变性保证数据一致性 |
 | 表单（> 5 字段） | ReactiveStateElement | 更新代码更简洁 |
 | 配置面板 | ReactiveStateElement | 字段多，频繁交互 |
-| 向后兼容 | Element&lt;TState&gt; | 保持现有代码不变 |
+| 快速原型 | Element&lt;class&gt; | 最简单快速 |
 
 ---
 
@@ -375,31 +345,31 @@ list.Sort();
 
 | 模式 | 开销 | 说明 |
 |------|------|------|
-| Element&lt;TState&gt; | 低 | 直接实例化 class |
-| StructStateElement | 极低 | 栈分配 |
+| Element&lt;struct&gt; | 极低 | 栈分配 |
+| Element&lt;class&gt; | 低 | 直接实例化 class |
 | ReactiveStateElement | 中等 | 反射扫描绑定 ReactiveValue |
 
 ### 更新开销
 
 | 模式 | 开销 | 说明 |
 |------|------|------|
-| Element&lt;TState&gt; | 低 | 直接修改 + 手动通知 |
-| StructStateElement | 中等 | 复制 struct（取决于大小） |
+| Element&lt;struct&gt; | 中等 | 复制 struct（取决于大小） |
+| Element&lt;class&gt; | 低 | 直接修改 + 手动通知 |
 | ReactiveStateElement | 低 | 直接修改 + 自动通知 |
 
 ### 内存占用
 
 | 模式 | 占用 | 说明 |
 |------|------|------|
-| Element&lt;TState&gt; | 中等 | 堆分配 |
-| StructStateElement | 低 | 栈分配（小型 struct） |
+| Element&lt;struct&gt; | 低 | 栈分配（小型 struct） |
+| Element&lt;class&gt; | 中等 | 堆分配 |
 | ReactiveStateElement | 较高 | ReactiveValue 包装器开销 |
 
 ---
 
 ## 最佳实践
 
-### StructStateElement
+### Element&lt;struct&gt;
 
 ✅ **推荐**
 
@@ -460,7 +430,7 @@ BatchUpdate(s => s.Name.Value = "C");
 
 ## 迁移指南
 
-### 从 Element&lt;TState&gt; 迁移到 StructStateElement
+### 从旧的 Element&lt;TState&gt; (class only) 迁移到 struct
 
 **之前：**
 
@@ -488,14 +458,14 @@ public class Counter : Element<Counter.CounterState>
 **之后：**
 
 ```csharp
-public class Counter : StructStateElement<Counter.CounterState>
+public class Counter : Element<Counter.CounterState>
 {
     public struct CounterState // class → struct
     {
         public int Count;
     }
 
-    public override CounterState BuildInitialState() => new CounterState();
+    public override CounterState BuildState() => new CounterState();
 
     public override IElement Render(CounterState state)
     {
@@ -508,66 +478,19 @@ public class Counter : StructStateElement<Counter.CounterState>
 }
 ```
 
-### 从 Element&lt;TState&gt; 迁移到 ReactiveStateElement
-
-**之前：**
-
-```csharp
-public class Counter : Element<Counter.CounterState>
-{
-    public class CounterState
-    {
-        public int Count;
-        public List<string> Items = new();
-    }
-
-    public override CounterState BuildState() => new CounterState();
-
-    public override IElement Render(CounterState state)
-    {
-        return new Button("Add Item", () =>
-        {
-            state.Items.Add("Item");
-            NotifyChanged(); // 手动
-        });
-    }
-}
-```
-
-**之后：**
-
-```csharp
-public class Counter : ReactiveStateElement<Counter.CounterState>
-{
-    public class CounterState
-    {
-        public ReactiveValue<int> Count = new(0); // 包装
-        public ReactiveList<string> Items = new(); // ReactiveList
-    }
-
-    public override CounterState BuildState() => new CounterState();
-
-    public override IElement Render(CounterState state)
-    {
-        return new Button("Add Item", () =>
-        {
-            state.Items.Add("Item"); // 自动触发
-        });
-    }
-}
-```
-
 ---
 
 ## 总结
 
 | 需求 | 推荐模式 |
 |------|---------|
-| 向后兼容 | `Element<TState>` |
-| 强制不可变 | `StructStateElement<TState>` |
+| 简单状态 | `Element<struct>` |
+| 快速原型 | `Element<class>` |
+| 强制不可变 | `Element<struct>` |
 | 自动更新 | `ReactiveStateElement<TState>` |
-| 简单状态 | `StructStateElement<TState>` |
 | 复杂状态 | `ReactiveStateElement<TState>` |
 | 动态列表 | `ReactiveStateElement<TState>` + `ReactiveList<T>` |
 
-**默认推荐**：对于新项目，优先考虑 `ReactiveStateElement<TState>`，它提供了最佳的开发体验和可维护性。
+**默认推荐**：
+- **小型状态**：`Element<struct>` - 性能最佳，类型安全
+- **复杂状态**：`ReactiveStateElement<TState>` - 开发体验最佳
