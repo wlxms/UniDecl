@@ -18,8 +18,6 @@ namespace UniDecl.Editor.UIToolKit.Examples
     [DeclHostWindow("nav-example")]
     public class NavigationExample : UIToolkitHostEditorWindow<UIToolkitRenderManager>
     {
-        private UIToolkitRenderManager _manager;
-
         [MenuItem("Window/UniDecl/Navigation")]
         public static void ShowWindow()
         {
