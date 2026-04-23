@@ -73,32 +73,110 @@ namespace UniDecl.Runtime.Core
     }
 
     /// <summary>
-    /// 状态化元素抽象基类（Class-based State）
-    /// 用户继承此类，只需实现 BuildState() 和 Render(TState state) 两个方法
-    /// 框架自动通过 Manager 引用获取状态并传入 Render
+    /// 统一的状态化元素抽象基类
+    /// 支持 struct 和 class 两种状态类型
     ///
-    /// 注意：这是传统的 class-based 状态模式，状态变更需要手动调用 NotifyChanged()
-    ///
-    /// 推荐使用以下新模式：
-    /// - StructStateElement&lt;TState&gt; - Struct + SetState 模式，强制不可变状态
-    /// - ReactiveStateElement&lt;TState&gt; - ReactiveValue 模式，自动变更检测
+    /// - struct 状态：强制不可变，通过 SetState() 更新，自动触发重建
+    /// - class 状态：可变，需要手动调用 NotifyChanged() 触发重建
     /// </summary>
-    public abstract class Element<TState> : Element, IElement<TState> where TState : class
+    /// <typeparam name="TState">状态类型（struct 或 class）</typeparam>
+    public abstract class Element<TState> : Element, IElement<TState>
     {
-        private TState _cachedState;
+        private TState _state;
+        private bool _stateInitialized;
+        private readonly bool _isValueType;
+
+        protected Element()
+        {
+            _isValueType = typeof(TState).IsValueType;
+        }
 
         public abstract TState BuildState();
         public abstract IElement Render(TState state);
 
+        /// <summary>
+        /// 更新状态（仅当 TState 是 struct 时可用）
+        /// 使用 updater 函数接收旧状态并返回新状态
+        /// 如果新旧状态不同，会自动触发 UI 重建
+        /// </summary>
+        /// <param name="updater">状态更新函数</param>
+        protected void SetState(Func<TState, TState> updater)
+        {
+            if (updater == null)
+                throw new ArgumentNullException(nameof(updater));
+
+            if (!_isValueType)
+                throw new InvalidOperationException(
+                    $"SetState() 只能用于 struct 状态。当前状态类型 {typeof(TState).Name} 是 class。" +
+                    "请使用 ReactiveStateElement 或直接修改状态后调用 NotifyChanged()。");
+
+            var newState = updater(_state);
+            if (!EqualityComparer<TState>.Default.Equals(_state, newState))
+            {
+                _state = newState;
+                NotifyChanged();
+            }
+        }
+
+        /// <summary>
+        /// 直接设置新状态（仅当 TState 是 struct 时可用）
+        /// </summary>
+        /// <param name="newState">新状态</param>
+        protected void SetState(TState newState)
+        {
+            if (!_isValueType)
+                throw new InvalidOperationException(
+                    $"SetState() 只能用于 struct 状态。当前状态类型 {typeof(TState).Name} 是 class。" +
+                    "请使用 ReactiveStateElement 或直接修改状态后调用 NotifyChanged()。");
+
+            if (!EqualityComparer<TState>.Default.Equals(_state, newState))
+            {
+                _state = newState;
+                NotifyChanged();
+            }
+        }
+
+        /// <summary>
+        /// 获取当前状态
+        /// - struct 状态：返回副本（不可变）
+        /// - class 状态：返回引用（可变，但需要手动调用 NotifyChanged）
+        /// </summary>
+        protected TState State => _state;
+
+        /// <summary>
+        /// 框架调用的 Render 入口（密封，用户不应 override）
+        /// </summary>
         public sealed override IElement Render()
         {
-            var state = (TState)_manager.GetElementState(this);
-            if (state == null)
+            if (_isValueType)
             {
-                _cachedState ??= BuildState();
-                state = _cachedState;
+                // Struct 模式：自己管理状态
+                if (!_stateInitialized)
+                {
+                    _state = BuildState();
+                    _stateInitialized = true;
+                }
+                return Render(_state);
             }
-            return Render(state);
+            else
+            {
+                // Class 模式：通过 Manager 管理状态（保持向后兼容）
+                var state = (TState)_manager.GetElementState(this);
+                if (state == null)
+                {
+                    if (!_stateInitialized)
+                    {
+                        _state = BuildState();
+                        _stateInitialized = true;
+                    }
+                    state = _state;
+                }
+                else
+                {
+                    _state = state;
+                }
+                return Render(state);
+            }
         }
     }
 }
