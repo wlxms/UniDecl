@@ -20,25 +20,25 @@ namespace UniDecl.Editor.UIToolKit.Examples
         private static string _activeThemePath = UeThemePath;
         private UIToolkitRenderManager _manager;
 
-        [MenuItem("Window/UniDecl UE5 Style Example")]
+        [MenuItem("Window/UniDecl/UE5 Style Example")]
         public static void ShowWindow()
         {
             ShowWindowWithTheme(UeThemePath, "UniDecl Style");
         }
 
-        [MenuItem("Window/UniDecl Style Example/UE Theme")]
+        [MenuItem("Window/UniDecl/Style Example/UE Theme")]
         public static void ShowUeThemeWindow()
         {
             ShowWindowWithTheme(UeThemePath, "UniDecl Style (UE)");
         }
 
-        [MenuItem("Window/UniDecl Style Example/Default Theme")]
+        [MenuItem("Window/UniDecl/Style Example/Default Theme")]
         public static void ShowDefaultThemeWindow()
         {
             ShowWindowWithTheme(DefaultThemePath, "UniDecl Style (Default)");
         }
 
-        [MenuItem("Window/UniDecl Style Example/Unity UE Hybrid Theme")]
+        [MenuItem("Window/UniDecl/Style Example/Unity UE Hybrid Theme")]
         public static void ShowHybridThemeWindow()
         {
             ShowWindowWithTheme(HybridThemePath, "UniDecl Style (Hybrid)");

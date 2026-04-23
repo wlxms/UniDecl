@@ -85,7 +85,7 @@ namespace UniDecl.Editor.UIToolKit
             RegisterRenderer<TreeView>(new UIToolkitTreeViewRenderer());
             RegisterRenderer<MultiColumnListView>(new UIToolkitMultiColumnListViewRenderer());
             // P1-C: 布局/工具控件
-            RegisterRenderer<TwoPaneSplitView>(new UIToolkitTwoPaneSplitViewRenderer());
+            RegisterRenderer<PaneSplitView>(new UIToolkitPaneSplitViewRenderer());
             RegisterRenderer<VisualSplitter>(new UIToolkitVisualSplitterRenderer());
             RegisterRenderer<IMGUIContainer>(new UIToolkitIMGUIContainerRenderer());
             RegisterRenderer<UniDecl.Runtime.Widgets.PopupWindow>(new UIToolkitPopupWindowRenderer());

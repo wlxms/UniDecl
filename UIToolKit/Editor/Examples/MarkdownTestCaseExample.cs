@@ -27,7 +27,7 @@ namespace UniDecl.Editor.UIToolKit.Examples
         private UIToolkitRenderManager _manager;
         private static string _selectedNavId = "block-heading";
 
-        [MenuItem("Window/UniDecl MD Test Case")]
+        [MenuItem("Window/UniDecl/MD Test Case")]
         public static void ShowWindow()
         {
             GetWindow<MarkdownTestCaseExample>("UniDecl MD Test Case");

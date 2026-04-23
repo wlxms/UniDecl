@@ -395,8 +395,8 @@ namespace UniDecl.Editor.UIToolKit.Examples
                     new W.ToolbarMenu("更多选项"),
                 },
                 new Label(""),
-                new Label("--- TwoPaneSplitView ---"),
-                new W.TwoPaneSplitView(0, SplitViewOrientation.Horizontal, 200f)
+                new Label("--- PaneSplitView (replaces TwoPaneSplitView) ---"),
+                new W.HorizontalPaneSplitView()
                 {
                     new VerticalLayout
                     {
@@ -528,7 +528,7 @@ var mdView = new MarkdownView(markdownText)
                 $"After={@event.AfterRebuildMs:F3}ms, Total={@event.TotalMs:F3}ms");
         }
 
-        [MenuItem("Window/UniDecl UIToolkit Example")]
+        [MenuItem("Window/UniDecl/UIToolkit Example")]
         public static void ShowWindow()
         {
             GetWindow<UIToolkitExample>("UniDecl UIToolkit");

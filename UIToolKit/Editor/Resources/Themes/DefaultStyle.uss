@@ -5,9 +5,9 @@
    ============================================================ */
 
 .ud-root {
-    --unity-font: url("project://database/Assets/ThirdParty/UniDecl/UIToolKit/Editor/Resources/Fonts/msyh.ttc");
-    -unity-font: url("project://database/Assets/ThirdParty/UniDecl/UIToolKit/Editor/Resources/Fonts/msyh.ttc");
-    -unity-font-definition: url("project://database/Assets/ThirdParty/UniDecl/UIToolKit/Editor/Resources/Fonts/msyh.ttc");
+    --unity-font: resource("Fonts/msyh");
+    -unity-font: resource("Fonts/msyh");
+    -unity-font-definition: resource("Fonts/msyh");
     -unity-font-style: normal;
     padding: 8px;
     flex-direction: column;
