@@ -73,9 +73,15 @@ namespace UniDecl.Runtime.Core
     }
 
     /// <summary>
-    /// 状态化元素抽象基类
+    /// 状态化元素抽象基类（Class-based State）
     /// 用户继承此类，只需实现 BuildState() 和 Render(TState state) 两个方法
     /// 框架自动通过 Manager 引用获取状态并传入 Render
+    ///
+    /// 注意：这是传统的 class-based 状态模式，状态变更需要手动调用 NotifyChanged()
+    ///
+    /// 推荐使用以下新模式：
+    /// - StructStateElement&lt;TState&gt; - Struct + SetState 模式，强制不可变状态
+    /// - ReactiveStateElement&lt;TState&gt; - ReactiveValue 模式，自动变更检测
     /// </summary>
     public abstract class Element<TState> : Element, IElement<TState> where TState : class
     {
