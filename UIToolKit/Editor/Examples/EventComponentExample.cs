@@ -18,7 +18,7 @@ namespace UniDecl.Editor.UIToolKit.Examples
     {
         private UIToolkitRenderManager _manager;
 
-        [MenuItem("Window/UniDecl Event Test")]
+        [MenuItem("Window/UniDecl/Event Test")]
         public static void ShowWindow() => GetWindow<EventComponentExample>("UniDecl Event Test");
 
         public void CreateGUI()

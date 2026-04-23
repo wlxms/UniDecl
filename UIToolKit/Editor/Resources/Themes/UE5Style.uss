@@ -6,9 +6,9 @@
 /* === Root Container === */
 .ud-root,
 .ue5-root {
-    --unity-font: url("project://database/Assets/ThirdParty/UniDecl/UIToolKit/Editor/Resources/Fonts/msyh.ttc");
-    -unity-font: url("project://database/Assets/ThirdParty/UniDecl/UIToolKit/Editor/Resources/Fonts/msyh.ttc");
-    -unity-font-definition: url("project://database/Assets/ThirdParty/UniDecl/UIToolKit/Editor/Resources/Fonts/msyh.ttc");
+    --unity-font: resource("Fonts/msyh");
+    -unity-font: resource("Fonts/msyh");
+    -unity-font-definition: resource("Fonts/msyh");
     -unity-font-style: normal;
     background-color: #1B1B1B;
     color: #E0E0E0;
