@@ -14,6 +14,7 @@ namespace UniDecl.Editor.UIToolKit.Renderers.UE
 
             var container = new VisualElement();
             container.style.flexDirection = FlexDirection.Column;
+            container.style.alignItems = Align.Stretch;
 
             if (!string.IsNullOrEmpty(element.Title))
             {

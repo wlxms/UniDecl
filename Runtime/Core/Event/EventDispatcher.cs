@@ -150,7 +150,7 @@ namespace UniDecl.Runtime.Core
 
         public EventDispatcher() { }
 
-        public void DispatchAlongPath<T>(T @event, IReadOnlyList<DOMNode<TRenderResult>> path) where T : struct
+        public void DispatchAlongPath<T>(T @event, IReadOnlyList<DOMNode<TRenderResult>> path, DOMTree<TRenderResult> tree) where T : struct
         {
             foreach (var node in path)
             {
@@ -168,7 +168,7 @@ namespace UniDecl.Runtime.Core
                 {
                     var renderer = _rendererLookup(node.Element);
                     if (renderer is IRendererEventListener<TRenderResult, T> r)
-                        r.OnEvent(@event, node);
+                        r.OnEvent(@event, node, tree);
                 }
             }
         }

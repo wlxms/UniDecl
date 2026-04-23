@@ -32,8 +32,6 @@ namespace UniDecl.Runtime.Core
         protected virtual DOMTree ActiveDOMTree => _domTree;
         protected DOMTree DOMTree => ActiveDOMTree;
 
-        public virtual string HostName { get; }
-
         // ---- Navigation ----
 
         public virtual void NavigateTo(string anchorId) { }
@@ -41,8 +39,6 @@ namespace UniDecl.Runtime.Core
 
         protected ElementRenderHostBase()
         {
-            if (!string.IsNullOrEmpty(HostName))
-                HostManager.Register(HostName, this);
         }
 
         // ---- EventDispatcher factory ----
@@ -610,15 +606,17 @@ namespace UniDecl.Runtime.Core
             var dispatcher = _eventDispatcher as EventDispatcher<TRenderResult>;
             if (dispatcher == null) return;
 
-            // 沿路径分发冒泡事件
-            dispatcher.DispatchAlongPath(
-                new NavigationEvent { AnchorId = anchorId, IsTarget = false }, path);
-
             // 找到锚点节点下第一个有渲染器的后代作为目标
             var renderableTarget = FindFirstRenderable(targetNode) ?? targetNode;
+
+            // 沿路径分发冒泡事件（祖先可据此展开/滚动）
+            dispatcher.DispatchAlongPath(
+                new NavigationEvent { AnchorId = anchorId, IsTarget = false }, path, _typedDomTree);
+
+            // 目标节点收到 IsTarget=true 事件（高亮等）
             dispatcher.DispatchAlongPath(
                 new NavigationEvent { AnchorId = anchorId, IsTarget = true },
-                new[] { renderableTarget });
+                new[] { renderableTarget }, _typedDomTree);
         }
 
         /// <summary>

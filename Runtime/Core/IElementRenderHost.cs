@@ -27,11 +27,6 @@ namespace UniDecl.Runtime.Core
         /// 导航到指定 URL
         /// </summary>
         void NavigateURL(string url);
-
-        /// <summary>
-        /// Host 名称，用于 HostManager 注册和 URL 路由
-        /// </summary>
-        string HostName { get; }
     }
 
     /// <summary>

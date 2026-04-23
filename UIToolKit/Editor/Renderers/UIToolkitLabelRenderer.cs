@@ -3,7 +3,7 @@ using UnityEditor;
 using UnityEngine.UIElements;
 using UniDecl.Runtime.Core;
 using UniDecl.Runtime.Navigation;
-using UniDecl.Editor.UIToolKit.Navigation;
+using UniDecl.Editor.UIToolKit.Effects;
 using W = UniDecl.Runtime.Widgets;using UniDecl.Editor.UIToolKit.Style;
 namespace UniDecl.Editor.UIToolKit.Renderers
 {
@@ -40,7 +40,7 @@ namespace UniDecl.Editor.UIToolKit.Renderers
         public bool TryUpdate(IElement element, VisualElement existing, IElementRenderHost<VisualElement> manager, ElementState state)
             => element is W.Label label && TryUpdate(label, existing, manager, state);
 
-        public void OnEvent(NavigationEvent @event, DOMNode<VisualElement> node)
+        public void OnEvent(NavigationEvent @event, DOMNode<VisualElement> node, DOMTree<VisualElement> tree)
         {
             if (!@event.IsTarget) return;
             var ve = node.RenderResult;
