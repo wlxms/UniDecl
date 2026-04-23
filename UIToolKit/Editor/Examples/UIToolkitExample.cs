@@ -17,7 +17,7 @@ namespace UniDecl.Editor.UIToolKit.Examples
     /// </summary>
     public class CounterElement : Element<CounterElement.CounterState>
     {
-        public class CounterState
+        public struct CounterState
         {
             public int Count;
         }
@@ -32,11 +32,11 @@ namespace UniDecl.Editor.UIToolKit.Examples
                 {
                     new Button($"Add Element (Count: {state.Count})", () =>
                     {
-                        state.Count++;
+                        SetState(s => new CounterState { Count = s.Count + 1 });
                     }),
                     new Button("Reset", () =>
                     {
-                        state.Count = 0;
+                        SetState(s => new CounterState { Count = 0 });
                     }),
                 }
             };
@@ -53,14 +53,14 @@ namespace UniDecl.Editor.UIToolKit.Examples
     /// </summary>
     public class TabContentElement : Element<TabContentElement.TabState>
     {
-        public class TabState
+        public struct TabState
         {
             public int CurrentTab;
-            public string InputText = "默认文本";
-            public string PasswordText = string.Empty;
-            public string MultilineText = "多行\n输入";
-            public int IntegerValue = 42;
-            public float FloatValue = 3.14f;
+            public string InputText;
+            public string PasswordText;
+            public string MultilineText;
+            public int IntegerValue;
+            public float FloatValue;
             public int DropdownIndex;
             public int EnumValue;
         }
@@ -73,7 +73,14 @@ namespace UniDecl.Editor.UIToolKit.Examples
 
         private static readonly string[] DropdownChoices = { "选项 A", "选项 B", "选项 C", "选项 D" };
 
-        public override TabState BuildState() => new TabState();
+        public override TabState BuildState() => new TabState
+        {
+            InputText = "默认文本",
+            PasswordText = string.Empty,
+            MultilineText = "多行\n输入",
+            IntegerValue = 42,
+            FloatValue = 3.14f
+        };
 
         public override IElement Render(TabState state)
         {
@@ -84,7 +91,17 @@ namespace UniDecl.Editor.UIToolKit.Examples
                 var name = tabIndex == state.CurrentTab ? $">> {TabNames[tabIndex]} <<" : TabNames[tabIndex];
                 tabButtons.Add(new Button(name, () =>
                 {
-                    state.CurrentTab = tabIndex;
+                    SetState(s => new TabState
+                    {
+                        CurrentTab = tabIndex,
+                        InputText = s.InputText,
+                        PasswordText = s.PasswordText,
+                        MultilineText = s.MultilineText,
+                        IntegerValue = s.IntegerValue,
+                        FloatValue = s.FloatValue,
+                        DropdownIndex = s.DropdownIndex,
+                        EnumValue = s.EnumValue
+                    });
                 }));
             }
 
@@ -151,43 +168,134 @@ namespace UniDecl.Editor.UIToolKit.Examples
         }
 
         // === Tab 2: 输入控件 ===
-        private static Panel BuildInputControlsTab(TabState state)
+        private Panel BuildInputControlsTab(TabState state)
         {
             var textField = new TextField(state.InputText, "请输入...")
             {
-                OnValueChange = (next, _) => state.InputText = next,
+                OnValueChange = (next, _) =>
+                {
+                    SetState(s => new TabState
+                    {
+                        CurrentTab = s.CurrentTab,
+                        InputText = next,
+                        PasswordText = s.PasswordText,
+                        MultilineText = s.MultilineText,
+                        IntegerValue = s.IntegerValue,
+                        FloatValue = s.FloatValue,
+                        DropdownIndex = s.DropdownIndex,
+                        EnumValue = s.EnumValue
+                    });
+                },
             };
 
             var passwordField = new TextField(state.PasswordText, "密码框")
             {
                 IsPassword = true,
-                OnValueChange = (next, _) => state.PasswordText = next,
+                OnValueChange = (next, _) =>
+                {
+                    SetState(s => new TabState
+                    {
+                        CurrentTab = s.CurrentTab,
+                        InputText = s.InputText,
+                        PasswordText = next,
+                        MultilineText = s.MultilineText,
+                        IntegerValue = s.IntegerValue,
+                        FloatValue = s.FloatValue,
+                        DropdownIndex = s.DropdownIndex,
+                        EnumValue = s.EnumValue
+                    });
+                },
             };
 
             var multilineField = new TextField(state.MultilineText, "")
             {
                 IsMultiline = true,
-                OnValueChange = (next, _) => state.MultilineText = next,
+                OnValueChange = (next, _) =>
+                {
+                    SetState(s => new TabState
+                    {
+                        CurrentTab = s.CurrentTab,
+                        InputText = s.InputText,
+                        PasswordText = s.PasswordText,
+                        MultilineText = next,
+                        IntegerValue = s.IntegerValue,
+                        FloatValue = s.FloatValue,
+                        DropdownIndex = s.DropdownIndex,
+                        EnumValue = s.EnumValue
+                    });
+                },
             };
 
             var integerField = new IntegerField(state.IntegerValue)
             {
-                OnValueChanged = (next, _) => state.IntegerValue = next,
+                OnValueChanged = (next, _) =>
+                {
+                    SetState(s => new TabState
+                    {
+                        CurrentTab = s.CurrentTab,
+                        InputText = s.InputText,
+                        PasswordText = s.PasswordText,
+                        MultilineText = s.MultilineText,
+                        IntegerValue = next,
+                        FloatValue = s.FloatValue,
+                        DropdownIndex = s.DropdownIndex,
+                        EnumValue = s.EnumValue
+                    });
+                },
             };
 
             var floatField = new FloatField(state.FloatValue)
             {
-                OnValueChanged = (next, _) => state.FloatValue = next,
+                OnValueChanged = (next, _) =>
+                {
+                    SetState(s => new TabState
+                    {
+                        CurrentTab = s.CurrentTab,
+                        InputText = s.InputText,
+                        PasswordText = s.PasswordText,
+                        MultilineText = s.MultilineText,
+                        IntegerValue = s.IntegerValue,
+                        FloatValue = next,
+                        DropdownIndex = s.DropdownIndex,
+                        EnumValue = s.EnumValue
+                    });
+                },
             };
 
             var dropdown = new W.Dropdown("选择项目", DropdownChoices, state.DropdownIndex)
             {
-                OnSelectionChanged = idx => state.DropdownIndex = idx,
+                OnSelectionChanged = idx =>
+                {
+                    SetState(s => new TabState
+                    {
+                        CurrentTab = s.CurrentTab,
+                        InputText = s.InputText,
+                        PasswordText = s.PasswordText,
+                        MultilineText = s.MultilineText,
+                        IntegerValue = s.IntegerValue,
+                        FloatValue = s.FloatValue,
+                        DropdownIndex = idx,
+                        EnumValue = s.EnumValue
+                    });
+                },
             };
 
             var enumField = new W.EnumField("日志级别", typeof(LogType), state.EnumValue)
             {
-                OnValueChanged = value => state.EnumValue = value,
+                OnValueChanged = value =>
+                {
+                    SetState(s => new TabState
+                    {
+                        CurrentTab = s.CurrentTab,
+                        InputText = s.InputText,
+                        PasswordText = s.PasswordText,
+                        MultilineText = s.MultilineText,
+                        IntegerValue = s.IntegerValue,
+                        FloatValue = s.FloatValue,
+                        DropdownIndex = s.DropdownIndex,
+                        EnumValue = value
+                    });
+                },
             };
 
             return new Panel
