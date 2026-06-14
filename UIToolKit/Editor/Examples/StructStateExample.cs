@@ -29,7 +29,7 @@ namespace UniDecl.Editor.UIToolKit.Examples
                 new VerticalLayout
                 {
                     new Label("Struct State + SetState 模式示例")
-                        .With(new UIToolKit.Runtime.UITKStyle { FontSize = 16, UnityFontStyleAndWeight = FontStyle.Bold }),
+                        .With(new UniDecl.UIToolKit.Runtime.UITKStyle { FontSize = 16, UnityFontStyleAndWeight = FontStyle.Bold }),
                     new Label(""),
                     new CounterExample(),
                     new Label(""),

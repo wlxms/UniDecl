@@ -6,11 +6,14 @@ using W = UniDecl.Runtime.Widgets;
 
 namespace UniDecl.Editor.UIToolKit.Renderers
 {
-    public class UIToolkitResizableTextAreaRenderer : IElementRenderer<W.ResizableTextArea, VisualElement>
+    public class UIToolkitResizableTextAreaRenderer : IElementRenderer<W.ResizableTextArea, VisualElement>,
+        IElementUpdater<W.ResizableTextArea, VisualElement>
     {
         public VisualElement Render(W.ResizableTextArea element, IElementRenderHost<VisualElement> manager, ElementState state)
         {
             if (element == null) return null;
+
+            UnityEngine.Debug.Log($"[Undo] ResizableTextArea.Render: element.Value='{element.Value}', element.Label='{element.Label}'");
 
             // ResizableTextArea doesn't exist in this Unity version; fallback to multiline TextField
             var field = new TextField(element.Label) {
@@ -37,6 +40,20 @@ namespace UniDecl.Editor.UIToolKit.Renderers
             UIToolkitStyleApplier.ApplyElementStyles(element, field);
             return field;
         }
+
+        public bool TryUpdate(W.ResizableTextArea element, VisualElement existing, IElementRenderHost<VisualElement> manager, ElementState state)
+        {
+            if (existing is TextField textField)
+            {
+                UnityEngine.Debug.Log($"[Undo] ResizableTextArea.TryUpdate: element.Value='{element.Value}', textField.value='{textField.value}', textField.text='{textField.text}'");
+                textField.SetValueWithoutNotify(element.Value ?? "");
+                return true;
+            }
+            return false;
+        }
+
+        bool IElementUpdater<VisualElement>.TryUpdate(IElement element, VisualElement existing, IElementRenderHost<VisualElement> manager, ElementState state)
+            => element is W.ResizableTextArea rta && TryUpdate(rta, existing, manager, state);
     }
 
     public struct ResizableTextAreaChangeEvent

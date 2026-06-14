@@ -1,0 +1,14 @@
+{
+    "name": "UniDecl.Inspector.Runtime",
+    "rootNamespace": "UniDecl.Inspector.Runtime",
+    "references": [],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

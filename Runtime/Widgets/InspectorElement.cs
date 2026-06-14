@@ -5,13 +5,20 @@ namespace UniDecl.Runtime.Widgets
 {
     public class InspectorElement : Element
     {
-        public UnityEngine.Object Target { get; set; }
+        public object Target { get; set; }
+
+        /// <summary>
+        /// 宿主 Unity 对象——用于 Undo 系统注册撤销点
+        /// 通常是持有此 InspectorElement 的 EditorWindow 或 Editor
+        /// </summary>
+        public UnityEngine.Object HostObject { get; set; }
 
         public override IElement Render() => null;
 
-        public InspectorElement(UnityEngine.Object target)
+        public InspectorElement(object target, UnityEngine.Object hostObject = null)
         {
             Target = target;
+            HostObject = hostObject;
         }
     }
 }

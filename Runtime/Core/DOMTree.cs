@@ -19,6 +19,7 @@ namespace UniDecl.Runtime.Core
         private IElementRenderHostBase _manager;
         private ContextStack _contextStack;
         private StateStack _stateStack;
+        private IElement _rootElement;
 
         /// <summary>
         /// 根节点
@@ -96,6 +97,7 @@ namespace UniDecl.Runtime.Core
             Clear();
             if (element == null) return;
 
+            _rootElement = element;
             Root = CreateRootNode();
             BuildElement(element, Root);
         }
@@ -152,6 +154,9 @@ namespace UniDecl.Runtime.Core
                 RestoreOrBuildState(sf, elementState);
                 node.State = elementState;
             }
+
+            if (TryBuildExpandedElement(element, node))
+                return;
 
             switch (element)
             {
@@ -253,6 +258,21 @@ namespace UniDecl.Runtime.Core
             }
         }
 
+        private bool TryBuildExpandedElement(IElement element, DOMNode node)
+        {
+            if (!TryExpandElement(element, node, out var expanded))
+                return false;
+
+            BuildElement(expanded, node);
+            return true;
+        }
+
+        private bool TryExpandElement(IElement element, DOMNode node, out IElement expanded)
+        {
+            var didExpand = ElementDomExpanderRegistry.TryExpand(element, _manager, out expanded);
+            return didExpand;
+        }
+
         // ==== 节点创建 ====
 
         /// <summary>
@@ -351,7 +371,7 @@ namespace UniDecl.Runtime.Core
                 }
 
                 // 获取新子元素并 diff
-                var newChildren = GetChildren(element);
+                var newChildren = GetChildren(element, node);
                 DiffChildren(node, newChildren);
             }
             finally
@@ -420,10 +440,14 @@ namespace UniDecl.Runtime.Core
         }
 
         /// <summary>
-        /// 沿父链向上查找自动重建的目标元素
-        /// 跳过结构性节点（IContextProvider / IContextConsumer / IContainerElement），返回第一个非结构性节点
+        /// 沿父链向上查找自动重建的目标元素。
+        /// 跳过结构性节点（IContextProvider / IContextConsumer / IContainerElement），
+        /// 以及携带渲染器的非根节点。
+        /// 始终找不到合适的节点时，回退到根元素。
         /// </summary>
-        public IElement FindRebuildTarget(DOMNode node)
+        /// <param name="node">起始节点</param>
+        /// <param name="hasRenderer">可选回调，用于判断元素是否已注册渲染器</param>
+        public IElement FindRebuildTarget(DOMNode node, Func<IElement, bool> hasRenderer = null)
         {
             var current = node.Parent;
             while (current != null)
@@ -434,12 +458,19 @@ namespace UniDecl.Runtime.Core
                     || current.Element is IContextConsumer
                     || current.Element is IContainerElement;
 
-                if (!isStructural)
-                    return current.Element;
+                if (isStructural) { current = current.Parent; continue; }
 
-                current = current.Parent;
+                // 非结构节点但携带渲染器 → 继续向上找（除非已经是根）
+                if (hasRenderer != null && hasRenderer(current.Element))
+                {
+                    current = current.Parent;
+                    continue;
+                }
+
+                return current.Element;
             }
-            return Root?.Element;
+
+            return _rootElement;
         }
 
         /// <summary>
@@ -601,7 +632,7 @@ namespace UniDecl.Runtime.Core
                 }
 
                 // 递归 diff 子节点
-                var newChildren = GetChildren(newElement);
+                var newChildren = GetChildren(newElement, node);
                 DiffChildren(node, newChildren);
             }
         }
@@ -666,8 +697,11 @@ namespace UniDecl.Runtime.Core
         /// <summary>
         /// 获取元素的子元素列表
         /// </summary>
-        private static List<IElement> GetChildren(IElement element)
+        private List<IElement> GetChildren(IElement element, DOMNode node = null)
         {
+            if (TryExpandElement(element, node, out var expanded))
+                return new List<IElement> { expanded };
+
             switch (element)
             {
                 case IContainerElement container:

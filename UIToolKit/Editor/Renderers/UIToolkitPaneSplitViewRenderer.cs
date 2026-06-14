@@ -10,7 +10,10 @@ namespace UniDecl.Editor.UIToolKit.Renderers
     /// PaneSplitView 渲染器——递归嵌套原生 TwoPaneSplitView 实现多栏可拖拽布局。
     /// N 个 children → 嵌套 N-1 个原生 TwoPaneSplitView，拖拽由原生控件处理。
     /// </summary>
-    public class UIToolkitPaneSplitViewRenderer : IElementRenderer<W.PaneSplitView, VisualElement>
+    public class UIToolkitPaneSplitViewRenderer :
+        IElementRenderer<W.PaneSplitView, VisualElement>,
+        IElementRenderer<W.HorizontalPaneSplitView, VisualElement>,
+        IElementRenderer<W.VerticalPaneSplitView, VisualElement>
     {
         public VisualElement Render(W.PaneSplitView element, IElementRenderHost<VisualElement> manager, ElementState state)
         {
@@ -91,5 +94,14 @@ namespace UniDecl.Editor.UIToolKit.Renderers
             if (opt.FlexGrow.HasValue) pane.style.flexGrow = opt.FlexGrow.Value;
             if (opt.FlexShrink.HasValue) pane.style.flexShrink = opt.FlexShrink.Value;
         }
+
+        VisualElement IElementRender<VisualElement>.Render(IElement element, IElementRenderHost<VisualElement> manager, ElementState state)
+            => Render((W.PaneSplitView)element, manager, state);
+
+        VisualElement IElementRenderer<W.HorizontalPaneSplitView, VisualElement>.Render(W.HorizontalPaneSplitView element, IElementRenderHost<VisualElement> manager, ElementState state)
+            => Render(element, manager, state);
+
+        VisualElement IElementRenderer<W.VerticalPaneSplitView, VisualElement>.Render(W.VerticalPaneSplitView element, IElementRenderHost<VisualElement> manager, ElementState state)
+            => Render(element, manager, state);
     }
 }
