@@ -16,6 +16,11 @@ namespace UniDecl.Editor.UIToolKit
     {
         private readonly List<UnityEngine.UIElements.StyleSheet> _styleSheets = new List<UnityEngine.UIElements.StyleSheet>();
 
+        public UIToolkitRenderManager()
+        {
+            LoadStyleSheetFromResources("Themes/DefaultStyle");
+        }
+
         public void RegisterStyleSheet(UnityEngine.UIElements.StyleSheet sheet)
         {
             if (sheet != null) _styleSheets.Add(sheet);
@@ -57,7 +62,6 @@ namespace UniDecl.Editor.UIToolKit
             // P0-A: 引用/资源字段
             RegisterRenderer<ObjectField>(new UIToolkitObjectFieldRenderer());
             RegisterRenderer<PropertyField>(new UIToolkitPropertyFieldRenderer());
-            RegisterRenderer<InspectorElement>(new UIToolkitInspectorElementRenderer());
             RegisterRenderer<TagField>(new UIToolkitTagFieldRenderer());
             RegisterRenderer<LayerField>(new UIToolkitLayerFieldRenderer());
             RegisterRenderer<MaskField>(new UIToolkitMaskFieldRenderer());
@@ -114,8 +118,11 @@ namespace UniDecl.Editor.UIToolKit
             BuildDOM(rootElement);
             var root = RenderElement(rootElement);
             if (root != null)
+            {
+                root.AddToClassList("ud-root");
                 foreach (var ss in _styleSheets)
                     root.styleSheets.Add(ss);
+            }
             return root;
         }
 
@@ -132,12 +139,10 @@ namespace UniDecl.Editor.UIToolKit
             var parentVE = oldVE.parent;
             if (parentVE == null) return;
 
-            int index = parentVE.IndexOf(oldVE);
+            // ScrollView 的子元素存在 contentContainer 里，不是直接子元素
+            // 用 Remove + Add 确保正确替换
             parentVE.Remove(oldVE);
-            if (index >= 0 && index < parentVE.childCount)
-                parentVE.Insert(index, newVE);
-            else
-                parentVE.Add(newVE);
+            parentVE.Add(newVE);
         }
     }
 }

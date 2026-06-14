@@ -6,11 +6,14 @@ using W = UniDecl.Runtime.Widgets;
 
 namespace UniDecl.Editor.UIToolKit.Renderers
 {
-    public class UIToolkitTextFieldRenderer : IElementRenderer<W.TextField, VisualElement>
+    public class UIToolkitTextFieldRenderer : IElementRenderer<W.TextField, VisualElement>,
+        IElementUpdater<W.TextField, VisualElement>
     {
         public VisualElement Render(W.TextField element, IElementRenderHost<VisualElement> manager, ElementState state)
         {
             if (element == null) return null;
+
+            UnityEngine.Debug.Log($"[Undo] TextField.Render: element.Value='{element.Value}'");
 
             var textField = new TextField(element.Placeholder ?? "")
             {
@@ -61,6 +64,20 @@ namespace UniDecl.Editor.UIToolKit.Renderers
             UIToolkitStyleApplier.ApplyElementStyles(element, textField);
             return textField;
         }
+
+        public bool TryUpdate(W.TextField element, VisualElement existing, IElementRenderHost<VisualElement> manager, ElementState state)
+        {
+            if (existing is TextField textField)
+            {
+                UnityEngine.Debug.Log($"[Undo] TextField.TryUpdate: element.Value='{element.Value}', textField.value='{textField.value}'");
+                textField.SetValueWithoutNotify(element.Value ?? "");
+                return true;
+            }
+            return false;
+        }
+
+        bool IElementUpdater<VisualElement>.TryUpdate(IElement element, VisualElement existing, IElementRenderHost<VisualElement> manager, ElementState state)
+            => element is W.TextField tf && TryUpdate(tf, existing, manager, state);
     }
 
     public struct TextFieldChangeEvent

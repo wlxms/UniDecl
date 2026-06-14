@@ -21,6 +21,7 @@ namespace UniDecl.Runtime.Core
         private readonly HashSet<IElement> _pendingRebuilds = new HashSet<IElement>();
         private readonly HashSet<IElement> _rebuiltThisFlush = new HashSet<IElement>();
         private bool _flushScheduled;
+        private IElement _rootElement;
 
         /// <summary>
         /// 重建性能监控开关。开启后会在关键重建路径分发 RebuildPerformanceEvent。
@@ -65,6 +66,7 @@ namespace UniDecl.Runtime.Core
         {
             EnsureInitialized();
             if (element == null) return;
+            _rootElement = element;
 
             long totalStart = 0;
             long buildStart = 0;
@@ -124,6 +126,47 @@ namespace UniDecl.Runtime.Core
         /// </summary>
         protected virtual void OnBuildDOMComplete() { }
 
+        // ==== Host.Refresh(): 基于 Diff 的全树增量重建 ====
+
+        /// <summary>
+        /// 从根元素增量重建整棵 DOM 树。
+        /// 与 BuildDOM 不同：不 Clear() 后重建，而是走 RebuildNode → DiffChildren，
+        /// 类型相同、Key 匹配的 DOMNode 被复用，VE 通过 TryUpdate 保留。
+        /// </summary>
+        public void Refresh()
+        {
+            if (_rootElement == null) return;
+
+            try
+            {
+                EnsureRootStateManager();
+                BeginBuildFrame();
+                PushRootState();
+
+                RebuildWithProfiling(_rootElement, RebuildTrigger.FullRebuild);
+
+                OnBuildDOMComplete();
+            }
+            finally
+            {
+                PopRootState();
+                EndBuildFrame();
+            }
+        }
+
+        /// <summary>
+        /// 判断元素是否已注册渲染器。
+        /// 供 DOMTree.FindRebuildTarget 使用，跳过带渲染器的节点。
+        /// 泛型子类应 override 此方法使用 GetTypedRenderer。
+        /// </summary>
+        protected virtual bool ElementHasRenderer(IElement element)
+        {
+            if (element == null) return false;
+            if (this is IElementRenderHost h && h.GetRenderer(element) != null)
+                return true;
+            return false;
+        }
+
         // ==== Context 管理（Render 阶段使用）====
 
         /// <summary>
@@ -170,7 +213,7 @@ namespace UniDecl.Runtime.Core
             if (@event.Element == null) return;
             var node = ActiveDOMTree.GetNode(@event.Element);
             if (node == null) return;
-            var target = ActiveDOMTree.FindRebuildTarget(node);
+            var target = ActiveDOMTree.FindRebuildTarget(node, ElementHasRenderer);
             if (target == null) return;
 
             _pendingRebuilds.Add(target);
@@ -449,6 +492,13 @@ namespace UniDecl.Runtime.Core
             return null;
         }
 
+        /// <inheritdoc cref="ElementRenderHostBase.ElementHasRenderer"/>
+        protected override bool ElementHasRenderer(IElement element)
+        {
+            if (element == null) return false;
+            return GetTypedRenderer(element) != null;
+        }
+
         /// <summary>
         /// 根据锚点 ID 查找泛型 DOM 节点
         /// </summary>
@@ -479,9 +529,12 @@ namespace UniDecl.Runtime.Core
                         && typedRenderer is IElementUpdater<TRenderResult> updater
                         && updater.TryUpdate(element, node.RenderResult, this, node.State))
                     {
+                        var keyStr = (element is Element el) ? el.Key : "?";
+                        UnityEngine.Debug.Log($"[Undo] RenderElement.TryUpdate SUCCESS: element={element.GetType().Name}, key={keyStr}");
                         return node.RenderResult;
                     }
 
+                    UnityEngine.Debug.Log($"[Undo] RenderElement.FullRender: element={element.GetType().Name}, hasCache={node.HasRenderResult}, isUpdater={typedRenderer is IElementUpdater<TRenderResult>}");
                     // 完全渲染
                     var result = typedRenderer.Render(element, this, node.State);
                     node.RenderResult = result;
