@@ -2,15 +2,15 @@ using System;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
-using UniDecl.Runtime.Core;
-using UniDecl.Runtime.Widgets;
-using UniDecl.Runtime.Widgets.MD;
+using UniDecl.BuiltIn.Runtime.Core;
+using UniDecl.BuiltIn.Runtime.Widgets;
+using UniDecl.BuiltIn.Runtime.Widgets.MD;
 using UniDecl.Editor.UIToolKit;
 using UITKStyle = UniDecl.UIToolKit.Runtime.UITKStyle;
 
 namespace UniDecl.Editor.UIToolKit.Examples
 {
-    using WM = UniDecl.Runtime.Widgets.MD;
+    using WM = UniDecl.BuiltIn.Runtime.Widgets.MD;
 
     /// <summary>
     /// Markdown 渲染能力全量测试用例 — 模拟真实 MD 文档浏览器布局。
@@ -509,15 +509,15 @@ URL：https://github.com/wlxms/UniDecl
 
         private static IElement BuildWidgetRichQuoteContent()
         {
-            var inlines = new List<UniDecl.Runtime.MD.MdInline>
+            var inlines = new List<UniDecl.BuiltIn.Runtime.MD.MdInline>
             {
-                UniDecl.Runtime.MD.MdInline.PlainText("普通文本 "),
-                UniDecl.Runtime.MD.MdInline.Bold("粗体文本 "),
-                UniDecl.Runtime.MD.MdInline.Italic("斜体文本 "),
-                UniDecl.Runtime.MD.MdInline.BoldItalic("粗斜体文本 "),
-                UniDecl.Runtime.MD.MdInline.Code("inline code"),
-                UniDecl.Runtime.MD.MdInline.LineBreak(),
-                UniDecl.Runtime.MD.MdInline.Link("可点击链接", "https://github.com/wlxms/UniDecl"),
+                UniDecl.BuiltIn.Runtime.MD.MdInline.PlainText("普通文本 "),
+                UniDecl.BuiltIn.Runtime.MD.MdInline.Bold("粗体文本 "),
+                UniDecl.BuiltIn.Runtime.MD.MdInline.Italic("斜体文本 "),
+                UniDecl.BuiltIn.Runtime.MD.MdInline.BoldItalic("粗斜体文本 "),
+                UniDecl.BuiltIn.Runtime.MD.MdInline.Code("inline code"),
+                UniDecl.BuiltIn.Runtime.MD.MdInline.LineBreak(),
+                UniDecl.BuiltIn.Runtime.MD.MdInline.Link("可点击链接", "https://github.com/wlxms/UniDecl"),
             };
 
             return new Panel

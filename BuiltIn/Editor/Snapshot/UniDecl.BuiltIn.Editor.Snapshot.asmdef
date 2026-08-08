@@ -1,0 +1,20 @@
+{
+    "name": "UniDecl.BuiltIn.Editor.Snapshot",
+    "rootNamespace": "UniDecl.BuiltIn.Editor.Snapshot",
+    "references": [
+        "UniDecl.BuiltIn.Runtime",
+        "UniDecl.BuiltIn.Runtime.Snapshot",
+        "UniDecl.UIToolKit.Editor"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

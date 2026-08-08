@@ -1,0 +1,25 @@
+using UniDecl.BuiltIn.Runtime.Core;
+
+namespace UniDecl.BuiltIn.Runtime.Widgets
+{
+    public enum HelpBoxMessageType { None, Info, Warning, Error }
+
+    public class HelpBox : Element
+    {
+        public string Text { get; set; }
+        public HelpBoxMessageType MessageType { get; set; } = HelpBoxMessageType.Info;
+
+        public override IElement Render() => null;
+
+        public HelpBox(string text, HelpBoxMessageType type = HelpBoxMessageType.Info)
+        {
+            Text = text;
+            MessageType = type;
+        }
+        public HelpBox(string text, HelpBoxMessageType type = HelpBoxMessageType.Info, params IElementComponent[] components) : base(components)
+        {
+            Text = text;
+            MessageType = type;
+        }
+    }
+}

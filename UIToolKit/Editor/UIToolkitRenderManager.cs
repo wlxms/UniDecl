@@ -1,11 +1,11 @@
 using System.Collections.Generic;
 using UnityEditor;
 using VisualElement = UnityEngine.UIElements.VisualElement;
-using UniDecl.Runtime.Contexts;
-using UniDecl.Runtime.Core;
-using UniDecl.Runtime.Widgets;
-using UniDecl.Runtime.Widgets.MD;
-using UniDecl.Runtime.Widgets.UE;
+using UniDecl.BuiltIn.Runtime.Contexts;
+using UniDecl.BuiltIn.Runtime.Core;
+using UniDecl.BuiltIn.Runtime.Widgets;
+using UniDecl.BuiltIn.Runtime.Widgets.MD;
+using UniDecl.BuiltIn.Runtime.Widgets.UE;
 using UniDecl.Editor.UIToolKit.Renderers;
 using UniDecl.Editor.UIToolKit.Renderers.UE;
 using UniDecl.Editor.UIToolKit.Renderers.MD;
@@ -61,7 +61,7 @@ namespace UniDecl.Editor.UIToolKit
             RegisterRenderer<ProgressBar>(new UIToolkitProgressBarRenderer());
             // P0-A: 引用/资源字段
             RegisterRenderer<ObjectField>(new UIToolkitObjectFieldRenderer());
-            RegisterRenderer<PropertyField>(new UIToolkitPropertyFieldRenderer());
+            // PropertyField 由外源程序集通过 ElementRendererRegistry 注册（PropertyGrid 的 Odin 模式）
             RegisterRenderer<TagField>(new UIToolkitTagFieldRenderer());
             RegisterRenderer<LayerField>(new UIToolkitLayerFieldRenderer());
             RegisterRenderer<MaskField>(new UIToolkitMaskFieldRenderer());
@@ -94,7 +94,7 @@ namespace UniDecl.Editor.UIToolKit
             RegisterRenderer<VerticalPaneSplitView>(new UIToolkitPaneSplitViewRenderer());
             RegisterRenderer<VisualSplitter>(new UIToolkitVisualSplitterRenderer());
             RegisterRenderer<IMGUIContainer>(new UIToolkitIMGUIContainerRenderer());
-            RegisterRenderer<UniDecl.Runtime.Widgets.PopupWindow>(new UIToolkitPopupWindowRenderer());
+            RegisterRenderer<UniDecl.BuiltIn.Runtime.Widgets.PopupWindow>(new UIToolkitPopupWindowRenderer());
             RegisterRenderer<ResizableTextArea>(new UIToolkitResizableTextAreaRenderer());
             RegisterRenderer<UeCard>(new UIToolkitUeCardRenderer());
             // P1-D: 数值字段扩展
@@ -110,6 +110,8 @@ namespace UniDecl.Editor.UIToolKit
             RegisterRenderer<Divider>(new UIToolkitDividerRenderer());
             RegisterRenderer<MdTable>(new UIToolkitMdTableRenderer());
             RegisterRenderer<CodeBlock>(new UIToolkitCodeBlockRenderer());
+
+            // 外源程序集通过 [RenderHostPlugin] 注册自定义渲染器（如 PropertyGrid 的 PropertyFieldRenderer）
         }
 
         public VisualElement RenderRoot(IElement rootElement)
@@ -131,7 +133,7 @@ namespace UniDecl.Editor.UIToolKit
             EditorApplication.delayCall += FlushPendingRebuilds;
         }
 
-        protected override void OnRenderResultChanged(IElement element, VisualElement oldVE, VisualElement newVE)
+        protected override void OnRenderResultChanged(IElement element, VisualElement oldVE, VisualElement newVE, int insertIndex)
         {
             if (oldVE == null || newVE == null) return;
             if (ReferenceEquals(oldVE, newVE)) return;
@@ -140,9 +142,16 @@ namespace UniDecl.Editor.UIToolKit
             if (parentVE == null) return;
 
             // ScrollView 的子元素存在 contentContainer 里，不是直接子元素
-            // 用 Remove + Add 确保正确替换
+            // 记录的实际位置与 DOM 记录的 index 不一致时（复合渲染器场景）以实际位置为准
+            var actualIndex = parentVE.IndexOf(oldVE);
+            var index = (insertIndex >= 0 && insertIndex == actualIndex) ? insertIndex : actualIndex;
+
+            // Remove + Insert：重建的 VE 插回原位而不是追加到末尾
             parentVE.Remove(oldVE);
-            parentVE.Add(newVE);
+            if (index >= 0 && index <= parentVE.childCount)
+                parentVE.Insert(index, newVE);
+            else
+                parentVE.Add(newVE);
         }
     }
 }

@@ -358,7 +358,7 @@ Toolbar, ToolbarButton, ToolbarToggle, ToolbarSearchField, ToolbarMenu
 Vector2Field, Vector3Field, Vector4Field, Vector2IntField, Vector3IntField, RectField, RectIntField, BoundsField, BoundsIntField
 
 ### 特殊
-InspectorElement, UeCard
+UeCard
 
 ## 快速开始（UI Toolkit）
 

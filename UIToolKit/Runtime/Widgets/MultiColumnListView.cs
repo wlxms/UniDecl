@@ -2,7 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine.UIElements;
-using UniDecl.Runtime.Core;
+using UniDecl.BuiltIn.Runtime.Core;
 
 namespace UniDecl.Editor.UIToolKit
 {

@@ -1,6 +1,6 @@
 using UnityEngine.UIElements;
-using UniDecl.Runtime.Components;
-using UniDecl.Runtime.Core;
+using UniDecl.BuiltIn.Runtime.Components;
+using UniDecl.BuiltIn.Runtime.Core;
 
 namespace UniDecl.Editor.UIToolKit
 {
@@ -8,7 +8,7 @@ namespace UniDecl.Editor.UIToolKit
     {
         public static void Apply(IElement element, VisualElement ve)
         {
-            if (!(element is UniDecl.Runtime.Core.Element e) || ve == null) return;
+            if (!(element is UniDecl.BuiltIn.Runtime.Core.Element e) || ve == null) return;
             foreach (var comp in e.Components)
             {
                 if (comp is IUITKEventComponent evt)

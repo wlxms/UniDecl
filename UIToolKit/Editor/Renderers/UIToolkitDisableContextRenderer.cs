@@ -1,6 +1,6 @@
-﻿using UnityEngine.UIElements;
-using UniDecl.Runtime.Contexts;
-using UniDecl.Runtime.Core;
+using UnityEngine.UIElements;
+using UniDecl.BuiltIn.Runtime.Contexts;
+using UniDecl.BuiltIn.Runtime.Core;
 using UniDecl.Editor.UIToolKit.Style;
 using UITKStyle = UniDecl.UIToolKit.Runtime.UITKStyle;
 

@@ -1,6 +1,6 @@
 using UnityEngine.UIElements;
-using UniDecl.Runtime.Core;
-using W = UniDecl.Runtime.Widgets;
+using UniDecl.BuiltIn.Runtime.Core;
+using W = UniDecl.BuiltIn.Runtime.Widgets;
 using UniDecl.Editor.UIToolKit.Style;
 
 namespace UniDecl.Editor.UIToolKit.Renderers
@@ -13,8 +13,14 @@ namespace UniDecl.Editor.UIToolKit.Renderers
             if (element == null) return null;
 
             var toggle = new UnityEngine.UIElements.Toggle(element.Label) { value = element.Value };
+
+            // Snapshot 绑定——瞬时选择型，ChangeEvent 即提交
+            var binding = new SnapshotBinding<bool>(state?.Scope, element.Key, element.Value,
+                () => element.Value,
+                v => { toggle.SetValueWithoutNotify(v); element.Value = v; });
+
             UIToolkitStyleApplier.ApplyElementStyles(element, toggle);
-            RegisterToggleCallbacks(toggle, element, manager);
+            RegisterToggleCallbacks(toggle, element, manager, binding);
             return toggle;
         }
 
@@ -22,8 +28,8 @@ namespace UniDecl.Editor.UIToolKit.Renderers
         {
             if (existing is UnityEngine.UIElements.Toggle ve)
             {
-                ve.value = element.Value;
-                // Callback 在 Render 时一次性注册，Update 不重复注册
+                // SetValueWithoutNotify 避免触发 ChangeEvent 导致误 Commit（外部更新不应进 Undo 栈）
+                ve.SetValueWithoutNotify(element.Value);
                 return true;
             }
             return false;
@@ -32,13 +38,14 @@ namespace UniDecl.Editor.UIToolKit.Renderers
         public bool TryUpdate(IElement element, VisualElement existing, IElementRenderHost<VisualElement> manager, ElementState state)
             => element is W.Toggle toggle && TryUpdate(toggle, existing, manager, state);
 
-        private static void RegisterToggleCallbacks(UnityEngine.UIElements.Toggle toggle, W.Toggle element, IElementRenderHost<VisualElement> manager)
+        private static void RegisterToggleCallbacks(UnityEngine.UIElements.Toggle toggle, W.Toggle element, IElementRenderHost<VisualElement> manager, SnapshotBinding<bool> binding)
         {
             toggle.RegisterValueChangedCallback(evt =>
             {
                 element.Value = evt.newValue;
                 element.OnValueChanged?.Invoke(evt.newValue);
                 manager.Dispatch(new ToggleChangeEvent(element, evt.newValue));
+                binding.Commit();  // 瞬时型：ChangeEvent 即提交
                 element.NotifyChanged();
             });
         }

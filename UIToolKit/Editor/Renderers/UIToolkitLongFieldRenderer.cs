@@ -1,18 +1,25 @@
 using UnityEngine;
 using UnityEngine.UIElements;
-using UniDecl.Runtime.Core;
+using UniDecl.BuiltIn.Runtime.Core;
 using UniDecl.Editor.UIToolKit.Style;
-using W = UniDecl.Runtime.Widgets;
+using W = UniDecl.BuiltIn.Runtime.Widgets;
 
 namespace UniDecl.Editor.UIToolKit.Renderers
 {
-    public class UIToolkitLongFieldRenderer : IElementRenderer<W.LongField, VisualElement>
+    public class UIToolkitLongFieldRenderer : IElementRenderer<W.LongField, VisualElement>,
+        IElementUpdater<VisualElement>, IElementUpdater<W.LongField, VisualElement>
     {
         public VisualElement Render(W.LongField element, IElementRenderHost<VisualElement> manager, ElementState state)
         {
             if (element == null) return null;
 
             var field = new LongField { value = element.Value };
+
+            // Snapshot 绑定——Register setter + 提供 Commit() 方法
+            var binding = new SnapshotBinding<long>(state?.Scope, element.Key, element.Value,
+                () => element.Value,
+                v => { field.SetValueWithoutNotify(v); element.Value = v; });
+
             field.RegisterValueChangedCallback(evt =>
             {
                 element.Value = evt.newValue;
@@ -22,6 +29,7 @@ namespace UniDecl.Editor.UIToolKit.Renderers
 
             field.RegisterCallback<BlurEvent>(_ =>
             {
+                binding.Commit();
                 element.OnCommit?.Invoke(element.Value);
                 element.NotifyChanged();
             });
@@ -30,6 +38,7 @@ namespace UniDecl.Editor.UIToolKit.Renderers
             {
                 if (e.keyCode == KeyCode.Return || e.keyCode == KeyCode.KeypadEnter)
                 {
+                    binding.Commit();
                     element.OnCommit?.Invoke(element.Value);
                     element.NotifyChanged();
                 }
@@ -38,6 +47,19 @@ namespace UniDecl.Editor.UIToolKit.Renderers
             UIToolkitStyleApplier.ApplyElementStyles(element, field);
             return field;
         }
+
+        public bool TryUpdate(W.LongField element, VisualElement existing, IElementRenderHost<VisualElement> manager, ElementState state)
+        {
+            if (existing is LongField field)
+            {
+                field.SetValueWithoutNotify(element.Value);
+                return true;
+            }
+            return false;
+        }
+
+        bool IElementUpdater<VisualElement>.TryUpdate(IElement element, VisualElement existing, IElementRenderHost<VisualElement> manager, ElementState state)
+            => element is W.LongField f && TryUpdate(f, existing, manager, state);
     }
 
     public struct LongFieldChangeEvent

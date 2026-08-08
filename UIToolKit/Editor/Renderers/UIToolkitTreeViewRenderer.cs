@@ -1,7 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine.UIElements;
-using UniDecl.Runtime.Core;
+using UniDecl.BuiltIn.Runtime.Core;
 using UniDecl.Editor.UIToolKit.Style;
 using TV = UniDecl.Editor.UIToolKit.TreeView;
 

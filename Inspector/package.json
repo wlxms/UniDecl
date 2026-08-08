@@ -1,8 +1,0 @@
-{
-    "name": "com.unidecl.inspector",
-    "version": "0.1.0",
-    "displayName": "UniDecl Inspector",
-    "description": "Self-declarative Inspector system for UniDecl - attribute-driven property editing for any [Serializable] class.",
-    "unity": "2021.3",
-    "dependencies": {}
-}

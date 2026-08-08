@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine.UIElements;
-using UniDecl.Runtime.Core;
-using UniDecl.Runtime.Widgets;
+using UniDecl.BuiltIn.Runtime.Core;
+using UniDecl.BuiltIn.Runtime.Widgets;
 using UniDecl.Editor.UIToolKit.Style;
 
 namespace UniDecl.Editor.UIToolKit.Renderers

@@ -1,8 +1,8 @@
 using UnityEngine;
 using UnityEngine.UIElements;
-using UniDecl.Runtime.Core;
+using UniDecl.BuiltIn.Runtime.Core;
 using UniDecl.Editor.UIToolKit.Style;
-using W = UniDecl.Runtime.Widgets;
+using W = UniDecl.BuiltIn.Runtime.Widgets;
 
 namespace UniDecl.Editor.UIToolKit.Renderers
 {
@@ -12,8 +12,6 @@ namespace UniDecl.Editor.UIToolKit.Renderers
         public VisualElement Render(W.TextField element, IElementRenderHost<VisualElement> manager, ElementState state)
         {
             if (element == null) return null;
-
-            UnityEngine.Debug.Log($"[Undo] TextField.Render: element.Value='{element.Value}'");
 
             var textField = new TextField(element.Placeholder ?? "")
             {
@@ -26,6 +24,11 @@ namespace UniDecl.Editor.UIToolKit.Renderers
 
             if (element.MaxLength >= 0)
                 textField.maxLength = element.MaxLength;
+
+            // Snapshot 绑定——Register setter + 提供 Commit() 方法
+            var binding = new SnapshotBinding<string>(state?.Scope, element.Key, element.Value ?? string.Empty,
+                () => element.Value,
+                v => { textField.SetValueWithoutNotify(v ?? string.Empty); element.Value = v; });
 
             textField.RegisterCallback<ChangeEvent<string>>(evt =>
             {
@@ -40,6 +43,7 @@ namespace UniDecl.Editor.UIToolKit.Renderers
 
             textField.RegisterCallback<BlurEvent>(_ =>
             {
+                binding.Commit();
                 element.OnCommit?.Invoke(element.Value);
 
                 // delayed 模式下沿用提交触发重建
@@ -53,6 +57,7 @@ namespace UniDecl.Editor.UIToolKit.Renderers
                 {
                     if (e.keyCode == KeyCode.Return || e.keyCode == KeyCode.KeypadEnter)
                     {
+                        binding.Commit();
                         element.OnCommit?.Invoke(element.Value);
 
                         if (element.IsDelayed)
@@ -69,7 +74,6 @@ namespace UniDecl.Editor.UIToolKit.Renderers
         {
             if (existing is TextField textField)
             {
-                UnityEngine.Debug.Log($"[Undo] TextField.TryUpdate: element.Value='{element.Value}', textField.value='{textField.value}'");
                 textField.SetValueWithoutNotify(element.Value ?? "");
                 return true;
             }

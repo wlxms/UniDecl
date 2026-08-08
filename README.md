@@ -360,7 +360,7 @@ Toolbar, ToolbarButton, ToolbarToggle, ToolbarSearchField, ToolbarMenu
 Vector2Field, Vector3Field, Vector4Field, Vector2IntField, Vector3IntField, RectField, RectIntField, BoundsField, BoundsIntField
 
 ### Special
-InspectorElement, UeCard
+UeCard
 
 ## Quick Start (UI Toolkit)
 

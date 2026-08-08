@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEditor.UIElements;
 using UnityEngine.UIElements;
-using UniDecl.Runtime.Core;
+using UniDecl.BuiltIn.Runtime.Core;
 using UniDecl.Editor.UIToolKit.Style;
 using MCLV = UniDecl.Editor.UIToolKit.MultiColumnListView;
 using UTKMCLV = UnityEngine.UIElements.MultiColumnListView;

@@ -1,6 +1,6 @@
 using System;
 using UnityEngine.UIElements;
-using UniDecl.Runtime.Components;
+using UniDecl.BuiltIn.Runtime.Components;
 
 namespace UniDecl.Editor.UIToolKit
 {
