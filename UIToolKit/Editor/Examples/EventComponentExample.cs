@@ -1,9 +1,9 @@
 using System;
 using UnityEditor;
 using UnityEngine;
-using UniDecl.Runtime.Components;
-using UniDecl.Runtime.Core;
-using UniDecl.Runtime.Widgets;
+using UniDecl.BuiltIn.Runtime.Components;
+using UniDecl.BuiltIn.Runtime.Core;
+using UniDecl.BuiltIn.Runtime.Widgets;
 using UniDecl.UIToolKit.Runtime;
 using UITKStyle = UniDecl.UIToolKit.Runtime.UITKStyle;
 

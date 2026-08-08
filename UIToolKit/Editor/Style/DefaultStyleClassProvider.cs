@@ -1,10 +1,10 @@
 using System;
 using System.Collections.Generic;
-using UniDecl.Runtime.Contexts;
-using UniDecl.Runtime.Core;
-using UniDecl.Runtime.Widgets;
-using UniDecl.Runtime.Widgets.MD;
-using UniDecl.Runtime.Widgets.UE;
+using UniDecl.BuiltIn.Runtime.Contexts;
+using UniDecl.BuiltIn.Runtime.Core;
+using UniDecl.BuiltIn.Runtime.Widgets;
+using UniDecl.BuiltIn.Runtime.Widgets.MD;
+using UniDecl.BuiltIn.Runtime.Widgets.UE;
 
 namespace UniDecl.Editor.UIToolKit.Style
 {
@@ -19,6 +19,13 @@ namespace UniDecl.Editor.UIToolKit.Style
 
             if (element is ContainerElement)
                 yield return "ud-container";
+
+            // 所有"字段型"原子控件统一加 ud-field class。
+            // USS 中通过 .ud-field 集中定义字段共通样式（如 flex-grow=1 / flex-shrink=1），
+            // 让字段在 Hor{label, value} 布局中默认占满剩余空间且允许压缩。
+            // 用户通过 UITKStyle 内联设置 flexGrow/flexShrink 优先级高于 USS，可覆盖。
+            if (IsFieldWidget(element))
+                yield return "ud-field";
 
             switch (element)
             {
@@ -139,6 +146,50 @@ namespace UniDecl.Editor.UIToolKit.Style
             {
                 if (!string.IsNullOrEmpty(cls) && !ve.ClassListContains(cls))
                     ve.AddToClassList(cls);
+            }
+        }
+
+        /// <summary>
+        /// 判断 Widget 是否为"字段型"原子控件——即渲染为 Unity BaseField&lt;T&gt; 派生类的控件。
+        /// 这些控件在 PropertyGrid 的 Hor{label, value} 布局中需要默认占满 value 槽。
+        /// 包含：数值字段、文本、枚举、颜色、向量、Rect/Bounds、Curve/Gradient、Layer/Mask/Tag、Object、Slider 系列、Dropdown、Toggle。
+        /// </summary>
+        static bool IsFieldWidget(IElement element)
+        {
+            switch (element)
+            {
+                case IntegerField:
+                case FloatField:
+                case DoubleField:
+                case LongField:
+                case TextField:
+                case Toggle:
+                case EnumField:
+                case EnumFlagsField:
+                case ColorField:
+                case Vector2Field:
+                case Vector3Field:
+                case Vector4Field:
+                case Vector2IntField:
+                case Vector3IntField:
+                case RectField:
+                case RectIntField:
+                case BoundsField:
+                case BoundsIntField:
+                case CurveField:
+                case GradientField:
+                case LayerField:
+                case MaskField:
+                case TagField:
+                case ObjectField:
+                case Slider:
+                case SliderInt:
+                case MinMaxSlider:
+                case Dropdown:
+                case ResizableTextArea:
+                    return true;
+                default:
+                    return false;
             }
         }
     }

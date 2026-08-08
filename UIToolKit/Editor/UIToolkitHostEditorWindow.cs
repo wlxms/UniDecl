@@ -1,6 +1,6 @@
-using UniDecl.Editor;
+using UniDecl.BuiltIn.Editor;
 using UniDecl.Editor.UIToolKit;
-using UniDecl.Runtime.Core;
+using UniDecl.BuiltIn.Runtime.Core;
 using UnityEditor;
 using UnityEngine.UIElements;
 

@@ -1,0 +1,8 @@
+{
+    "name": "com.unidecl.propertygrid",
+    "version": "0.1.0",
+    "displayName": "UniDecl PropertyGrid",
+    "description": "Self-declarative PropertyGrid system for UniDecl - attribute-driven property editing for any [Serializable] class.",
+    "unity": "2021.3",
+    "dependencies": {}
+}

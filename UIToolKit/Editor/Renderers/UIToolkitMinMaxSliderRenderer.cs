@@ -1,11 +1,13 @@
+using UnityEngine;
 using UnityEngine.UIElements;
-using UniDecl.Runtime.Core;
-using W = UniDecl.Runtime.Widgets;
+using UniDecl.BuiltIn.Runtime.Core;
+using W = UniDecl.BuiltIn.Runtime.Widgets;
 using UniDecl.Editor.UIToolKit.Style;
 
 namespace UniDecl.Editor.UIToolKit.Renderers
 {
-    public class UIToolkitMinMaxSliderRenderer : IElementRenderer<W.MinMaxSlider, VisualElement>
+    public class UIToolkitMinMaxSliderRenderer : IElementRenderer<W.MinMaxSlider, VisualElement>,
+        IElementUpdater<VisualElement>, IElementUpdater<W.MinMaxSlider, VisualElement>
     {
         public VisualElement Render(W.MinMaxSlider element, IElementRenderHost<VisualElement> manager, ElementState state)
         {
@@ -18,6 +20,13 @@ namespace UniDecl.Editor.UIToolKit.Renderers
                 container.Add(new Label(element.Label));
 
             var slider = new MinMaxSlider(element.MinValue, element.MaxValue, element.LowLimit, element.HighLimit);
+
+            // Snapshot 绑定——值类型用 Vector2（UITK 原生），setter 里拆分到 MinValue/MaxValue
+            var binding = new SnapshotBinding<Vector2>(state?.Scope, element.Key,
+                new Vector2(element.MinValue, element.MaxValue),
+                () => new Vector2(element.MinValue, element.MaxValue),
+                v => { slider.SetValueWithoutNotify(v); element.MinValue = v.x; element.MaxValue = v.y; });
+
             slider.RegisterValueChangedCallback(evt =>
             {
                 element.MinValue = evt.newValue.x;
@@ -28,12 +37,14 @@ namespace UniDecl.Editor.UIToolKit.Renderers
 
             slider.RegisterCallback<PointerUpEvent>(_ =>
             {
+                binding.Commit();
                 element.OnCommit?.Invoke(element.MinValue, element.MaxValue);
                 element.NotifyChanged();
             });
 
             slider.RegisterCallback<PointerCaptureOutEvent>(_ =>
             {
+                binding.Commit();
                 element.OnCommit?.Invoke(element.MinValue, element.MaxValue);
                 element.NotifyChanged();
             });
@@ -42,6 +53,19 @@ namespace UniDecl.Editor.UIToolKit.Renderers
             UIToolkitStyleApplier.ApplyElementStyles(element, container);
             return container;
         }
+
+        public bool TryUpdate(W.MinMaxSlider element, VisualElement existing, IElementRenderHost<VisualElement> manager, ElementState state)
+        {
+            if (existing is VisualElement ve && ve.Q<MinMaxSlider>() is var slider && slider != null)
+            {
+                slider.SetValueWithoutNotify(new Vector2(element.MinValue, element.MaxValue));
+                return true;
+            }
+            return false;
+        }
+
+        public bool TryUpdate(IElement element, VisualElement existing, IElementRenderHost<VisualElement> manager, ElementState state)
+            => element is W.MinMaxSlider f && TryUpdate(f, existing, manager, state);
     }
 
     public struct MinMaxSliderChangeEvent

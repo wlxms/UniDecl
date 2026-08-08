@@ -1,0 +1,16 @@
+using UniDecl.BuiltIn.Runtime.Core;
+
+namespace UniDecl.BuiltIn.Runtime.Widgets
+{
+    public class Label : Element
+    {
+        public string Text { get; set; }
+        public bool EnableRichText { get; set; } = true;
+        public bool ParseEscapeSequences { get; set; } = true;
+
+        public override IElement Render() => null;
+
+        public Label(string text) { Text = text; }
+        public Label(string text, params IElementComponent[] components) : base(components) { Text = text; }
+    }
+}

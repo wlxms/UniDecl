@@ -1,10 +1,10 @@
 using UnityEngine;
 using UnityEditor;
 using UnityEngine.UIElements;
-using UniDecl.Runtime.Core;
-using UniDecl.Runtime.Navigation;
+using UniDecl.BuiltIn.Runtime.Core;
+using UniDecl.BuiltIn.Runtime.Navigation;
 using UniDecl.Editor.UIToolKit.Effects;
-using W = UniDecl.Runtime.Widgets;using UniDecl.Editor.UIToolKit.Style;
+using W = UniDecl.BuiltIn.Runtime.Widgets;using UniDecl.Editor.UIToolKit.Style;
 namespace UniDecl.Editor.UIToolKit.Renderers
 {
     public class UIToolkitLabelRenderer : IElementRenderer<W.Label, VisualElement>,

@@ -1,8 +1,8 @@
-﻿using UnityEngine.UIElements;
-using UniDecl.Runtime.Core;
+using UnityEngine.UIElements;
+using UniDecl.BuiltIn.Runtime.Core;
 using UniDecl.Editor.UIToolKit.Style;
 using UITKStyle = UniDecl.UIToolKit.Runtime.UITKStyle;
-using WUE = UniDecl.Runtime.Widgets.UE;
+using WUE = UniDecl.BuiltIn.Runtime.Widgets.UE;
 
 namespace UniDecl.Editor.UIToolKit.Renderers.UE
 {

@@ -47,6 +47,14 @@
     font-size: 12px;
 }
 
+/* 字段型原子控件的基础 flex 行为——占满剩余空间且允许压缩。
+   适用于 PropertyGrid 的 Hor{label, value} 布局：label 列固定宽度，value 列（Field）占满剩余。
+   用户通过 UITKStyle 内联设置 flexGrow/flexShrink 优先级高于 USS，可覆盖此默认值。 */
+.ud-field {
+    flex-grow: 1;
+    flex-shrink: 1;
+}
+
 .ud-label--heading {
     font-size: 16px;
     -unity-font-style: bold;

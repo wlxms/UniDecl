@@ -1,6 +1,6 @@
 using UnityEngine.UIElements;
-using UniDecl.Runtime.Core;
-using W = UniDecl.Runtime.Widgets;
+using UniDecl.BuiltIn.Runtime.Core;
+using W = UniDecl.BuiltIn.Runtime.Widgets;
 using UniDecl.Editor.UIToolKit.Style;
 
 namespace UniDecl.Editor.UIToolKit.Renderers

@@ -1,0 +1,17 @@
+{
+    "name": "UniDecl.PropertyGrid.Runtime",
+    "rootNamespace": "UniDecl.PropertyGrid.Runtime",
+    "references": [
+        "UniDecl.BuiltIn.Runtime",
+        "UniDecl.BuiltIn.Runtime.Snapshot"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

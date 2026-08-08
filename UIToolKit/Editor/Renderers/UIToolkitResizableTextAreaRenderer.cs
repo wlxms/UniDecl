@@ -1,8 +1,8 @@
 using UnityEngine;
 using UnityEngine.UIElements;
-using UniDecl.Runtime.Core;
+using UniDecl.BuiltIn.Runtime.Core;
 using UniDecl.Editor.UIToolKit.Style;
-using W = UniDecl.Runtime.Widgets;
+using W = UniDecl.BuiltIn.Runtime.Widgets;
 
 namespace UniDecl.Editor.UIToolKit.Renderers
 {
@@ -13,13 +13,16 @@ namespace UniDecl.Editor.UIToolKit.Renderers
         {
             if (element == null) return null;
 
-            UnityEngine.Debug.Log($"[Undo] ResizableTextArea.Render: element.Value='{element.Value}', element.Label='{element.Label}'");
-
             // ResizableTextArea doesn't exist in this Unity version; fallback to multiline TextField
             var field = new TextField(element.Label) {
                 value = element.Value ?? "",
                 multiline = true
             };
+
+            // Snapshot 绑定——Register setter + 提供 Commit() 方法
+            var binding = new SnapshotBinding<string>(state?.Scope, element.Key, element.Value ?? "",
+                () => element.Value,
+                v => { field.SetValueWithoutNotify(v ?? ""); element.Value = v; });
 
             field.RegisterValueChangedCallback(evt =>
             {
@@ -33,6 +36,7 @@ namespace UniDecl.Editor.UIToolKit.Renderers
 
             field.RegisterCallback<BlurEvent>(_ =>
             {
+                binding.Commit();
                 element.OnCommit?.Invoke(element.Value ?? "");
                 element.NotifyChanged();
             });
@@ -45,7 +49,6 @@ namespace UniDecl.Editor.UIToolKit.Renderers
         {
             if (existing is TextField textField)
             {
-                UnityEngine.Debug.Log($"[Undo] ResizableTextArea.TryUpdate: element.Value='{element.Value}', textField.value='{textField.value}', textField.text='{textField.text}'");
                 textField.SetValueWithoutNotify(element.Value ?? "");
                 return true;
             }

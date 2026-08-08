@@ -1,0 +1,24 @@
+{
+    "name": "UniDecl.PropertyGrid.Editor",
+    "rootNamespace": "UniDecl.PropertyGrid.Editor",
+    "references": [
+        "UniDecl.PropertyGrid.Runtime",
+        "UniDecl.BuiltIn.Runtime",
+        "UniDecl.UIToolKit",
+        "UniDecl.UIToolKit.Editor",
+        "UniDecl.BuiltIn.Editor",
+        "UniDecl.BuiltIn.Runtime.Snapshot",
+        "UniDecl.BuiltIn.Editor.Snapshot"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

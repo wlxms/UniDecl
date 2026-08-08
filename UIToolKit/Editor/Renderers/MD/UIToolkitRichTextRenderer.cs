@@ -4,10 +4,10 @@ using System.Text;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
-using UniDecl.Runtime.Core;
-using UniDecl.Runtime.MD;
+using UniDecl.BuiltIn.Runtime.Core;
+using UniDecl.BuiltIn.Runtime.MD;
 using UniDecl.Editor.UIToolKit.Style;
-using W = UniDecl.Runtime.Widgets.MD;
+using W = UniDecl.BuiltIn.Runtime.Widgets.MD;
 
 namespace UniDecl.Editor.UIToolKit.Renderers.MD
 {

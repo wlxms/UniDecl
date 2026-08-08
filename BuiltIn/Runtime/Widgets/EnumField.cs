@@ -1,0 +1,28 @@
+using System;
+using UniDecl.BuiltIn.Runtime.Core;
+
+namespace UniDecl.BuiltIn.Runtime.Widgets
+{
+    public class EnumField : Element
+    {
+        public string Label { get; set; }
+        public Type EnumType { get; set; }
+        public int Value { get; set; }
+        public Action<int> OnValueChanged { get; set; }
+
+        public override IElement Render() => null;
+
+        public EnumField(string label, Type enumType, int value = 0)
+        {
+            Label = label;
+            EnumType = enumType;
+            Value = value;
+        }
+        public EnumField(string label, Type enumType, int value = 0, params IElementComponent[] components) : base(components)
+        {
+            Label = label;
+            EnumType = enumType;
+            Value = value;
+        }
+    }
+}

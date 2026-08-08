@@ -1,10 +1,10 @@
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
-using UniDecl.Runtime.Core;
-using UniDecl.Runtime.Navigation;
-using UniDecl.Runtime.Widgets;
-using UniDecl.Runtime.Widgets.MD;
+using UniDecl.BuiltIn.Runtime.Core;
+using UniDecl.BuiltIn.Runtime.Navigation;
+using UniDecl.BuiltIn.Runtime.Widgets;
+using UniDecl.BuiltIn.Runtime.Widgets.MD;
 using UniDecl.Editor.UIToolKit;
 using UITKStyle = UniDecl.UIToolKit.Runtime.UITKStyle;
 

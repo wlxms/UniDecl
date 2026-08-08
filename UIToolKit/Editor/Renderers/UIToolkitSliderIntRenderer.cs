@@ -1,12 +1,13 @@
 using UnityEngine;
 using UnityEngine.UIElements;
-using UniDecl.Runtime.Core;
-using W = UniDecl.Runtime.Widgets;
+using UniDecl.BuiltIn.Runtime.Core;
+using W = UniDecl.BuiltIn.Runtime.Widgets;
 using UniDecl.Editor.UIToolKit.Style;
 
 namespace UniDecl.Editor.UIToolKit.Renderers
 {
-    public class UIToolkitSliderIntRenderer : IElementRenderer<W.SliderInt, VisualElement>
+    public class UIToolkitSliderIntRenderer : IElementRenderer<W.SliderInt, VisualElement>,
+        IElementUpdater<VisualElement>, IElementUpdater<W.SliderInt, VisualElement>
     {
         public VisualElement Render(W.SliderInt element, IElementRenderHost<VisualElement> manager, ElementState state)
         {
@@ -23,6 +24,11 @@ namespace UniDecl.Editor.UIToolKit.Renderers
                 value = element.Value
             };
 
+            // Snapshot 绑定——Register setter + 提供 Commit() 方法
+            var binding = new SnapshotBinding<int>(state?.Scope, element.Key, element.Value,
+                () => element.Value,
+                v => { slider.SetValueWithoutNotify(v); element.Value = v; });
+
             slider.RegisterValueChangedCallback(evt =>
             {
                 element.Value = evt.newValue;
@@ -32,12 +38,14 @@ namespace UniDecl.Editor.UIToolKit.Renderers
 
             slider.RegisterCallback<PointerUpEvent>(_ =>
             {
+                binding.Commit();
                 element.OnCommit?.Invoke(element.Value);
                 element.NotifyChanged();
             });
 
             slider.RegisterCallback<PointerCaptureOutEvent>(_ =>
             {
+                binding.Commit();
                 element.OnCommit?.Invoke(element.Value);
                 element.NotifyChanged();
             });
@@ -46,6 +54,19 @@ namespace UniDecl.Editor.UIToolKit.Renderers
             UIToolkitStyleApplier.ApplyElementStyles(element, container);
             return container;
         }
+
+        public bool TryUpdate(W.SliderInt element, VisualElement existing, IElementRenderHost<VisualElement> manager, ElementState state)
+        {
+            if (existing is VisualElement ve && ve.Q<UnityEngine.UIElements.SliderInt>() is var slider && slider != null)
+            {
+                slider.SetValueWithoutNotify(element.Value);
+                return true;
+            }
+            return false;
+        }
+
+        public bool TryUpdate(IElement element, VisualElement existing, IElementRenderHost<VisualElement> manager, ElementState state)
+            => element is W.SliderInt f && TryUpdate(f, existing, manager, state);
     }
 
     public struct SliderIntChangeEvent

@@ -1,29 +1,50 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEngine.UIElements;
 using UnityEditor.UIElements;
-using UniDecl.Runtime.Core;
+using UniDecl.BuiltIn.Runtime.Core;
 using UniDecl.Editor.UIToolKit.Style;
 using UITKStyle = UniDecl.UIToolKit.Runtime.UITKStyle;
-using W = UniDecl.Runtime.Widgets;
+using W = UniDecl.BuiltIn.Runtime.Widgets;
 
 namespace UniDecl.Editor.UIToolKit.Renderers
 {
-    public class UIToolkitCurveFieldRenderer : IElementRenderer<W.CurveField, VisualElement>
+    public class UIToolkitCurveFieldRenderer : IElementRenderer<W.CurveField, VisualElement>,
+        IElementUpdater<VisualElement>, IElementUpdater<W.CurveField, VisualElement>
     {
         public VisualElement Render(W.CurveField element, IElementRenderHost<VisualElement> manager, ElementState state)
         {
             if (element == null) return null;
             var field = new CurveField(element.Label) { value = element.Value };
+
+            // Snapshot 绑定——瞬时选择型，ChangeEvent 即提交
+            var binding = new SnapshotBinding<AnimationCurve>(state?.Scope, element.Key, element.Value,
+                () => element.Value,
+                v => { field.SetValueWithoutNotify(v); element.Value = v; });
+
             field.RegisterValueChangedCallback(evt =>
             {
                 element.Value = evt.newValue;
                 element.OnValueChanged?.Invoke(evt.newValue);
                 manager.Dispatch(new CurveFieldChangeEvent(element, evt.newValue, evt.previousValue));
+                binding.Commit();  // 瞬时型：ChangeEvent 即提交
                 element.NotifyChanged();
             });
             UIToolkitStyleApplier.ApplyElementStyles(element, field);
             return field;
         }
+
+        public bool TryUpdate(W.CurveField element, VisualElement existing, IElementRenderHost<VisualElement> manager, ElementState state)
+        {
+            if (existing is CurveField field)
+            {
+                field.SetValueWithoutNotify(element.Value);
+                return true;
+            }
+            return false;
+        }
+
+        public bool TryUpdate(IElement element, VisualElement existing, IElementRenderHost<VisualElement> manager, ElementState state)
+            => element is W.CurveField f && TryUpdate(f, existing, manager, state);
     }
 
     public struct CurveFieldChangeEvent

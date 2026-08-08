@@ -1,15 +1,15 @@
 using UnityEditor;
 using UnityEngine;
-using UniDecl.Runtime.Contexts;
-using UniDecl.Runtime.Core;
-using UniDecl.Runtime.Widgets;
-using UniDecl.Runtime.Widgets.MD;
+using UniDecl.BuiltIn.Runtime.Contexts;
+using UniDecl.BuiltIn.Runtime.Core;
+using UniDecl.BuiltIn.Runtime.Widgets;
+using UniDecl.BuiltIn.Runtime.Widgets.MD;
 using UniDecl.Editor.UIToolKit;
 using UITKStyle = UniDecl.UIToolKit.Runtime.UITKStyle;
 
 namespace UniDecl.Editor.UIToolKit.Examples
 {
-    using W = UniDecl.Runtime.Widgets;
+    using W = UniDecl.BuiltIn.Runtime.Widgets;
 
     public class UE5StyleExample : EditorWindow
     {

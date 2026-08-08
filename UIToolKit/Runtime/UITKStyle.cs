@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
-using UniDecl.Runtime.Components;
+using UniDecl.BuiltIn.Runtime.Components;
 using UnityEngine;
 using UnityEngine.UIElements;
 
