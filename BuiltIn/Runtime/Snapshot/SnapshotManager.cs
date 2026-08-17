@@ -4,52 +4,45 @@ using System.Collections.Generic;
 namespace UniDecl.BuiltIn.Runtime.Snapshot
 {
     /// <summary>
-    /// UniSnap 核心——通用 Undo/Redo 管理器
-    /// 支持值类型快照、对象深拷贝 diff、事务分组、步骤合并、Scope 生命周期管理
+    /// UniSnap 核心——单轨 Undo/Redo 管理器。
+    /// 绑定树（SnapshotBinding）统一注册（弱引用）/提交/撤销，step 统一为 SnapshotStep。
+    /// 防重入：Undo/Redo 期间 IsRestoring=true，此时 Commit 抛异常。
+    /// 惰性清理：每次操作扫描失效弱引用（视图销毁的 binding），自动反注册并清理其历史。
     /// </summary>
     public class SnapshotManager : ISnapshotManager
     {
         private const int DefaultMaxSteps = 50;
         private const long DefaultMergeWindowMs = 500;
 
-        // Scope 注册表
         private int _nextScopeId = 1;
         private readonly Dictionary<int, ScopeInfo> _scopes = new();
+        // 绑定强引用持有——生命周期由显式 Dispose/DisposeScope 清理。
+        // 不用弱引用：Renderer 创建的 binding 无强引用会被过早 GC，导致 step 无法定位而 undo 失效。
+        private readonly Dictionary<Guid, ISnapshotBinding> _bindings = new();
+        private readonly Dictionary<string, ISnapshotBinding> _bindingsByPath = new(); // Path → 当代 binding（换代覆盖）
+        private readonly Dictionary<int, HashSet<Guid>> _scopeBindings = new();
 
-        private readonly Dictionary<string, SetterEntry> _setters = new();
         private readonly List<IStep> _undoStack = new();
         private readonly List<IStep> _redoStack = new();
         private readonly Stack<List<IStep>> _groupStack = new();
         private readonly List<IStep> _pendingSteps = new();
-        private readonly Dictionary<string, long> _lastRecordTime = new();
+        private readonly Dictionary<Guid, long> _lastRecordTime = new();
+        private readonly Dictionary<string, long> _mergeBreakTimes = new(); // "scopeId:path" → 手势打断时刻
+
+        private bool _restoring;
 
         public int MaxSteps { get; set; } = DefaultMaxSteps;
         public bool EnableMerge { get; set; } = true;
         public long MergeWindowMs { get; set; } = DefaultMergeWindowMs;
+        public bool IsRestoring => _restoring;
 
-        // ─── 事件（供外部宿主订阅，如 EditorSnapshotManager 与 Unity Undo 同步） ───
+        // ─── 事件 ───
 
-        /// <summary>
-        /// 新 step 入栈时触发。step.Key 可作为宿主侧的撤销点描述。
-        /// 合并或 pending 为空时不会触发。
-        /// </summary>
         public event Action<IStep> StepCommitted;
-
-        /// <summary>
-        /// Undo 执行完成时触发，参数为反向生成的 redo step。
-        /// </summary>
         public event Action<IStep> StepUndone;
-
-        /// <summary>
-        /// Redo 执行完成时触发，参数为反向生成的 undo step。
-        /// </summary>
         public event Action<IStep> StepRedone;
-
-        /// <summary>
-        /// Scope 被 Dispose 时触发，参数为 scopeId。
-        /// 宿主可据此感知栈结构变化（部分 steps 被移除）。
-        /// </summary>
         public event Action<int> ScopeDisposed;
+        public event Action<ChangeSet> OnUndoRedoPerformed;
 
         public int UndoCount
         {
@@ -66,10 +59,6 @@ namespace UniDecl.BuiltIn.Runtime.Snapshot
 
         // ─── Scope 管理 ───
 
-        /// <summary>
-        /// 创建一个新的 UndoScope，返回 scopeId。
-        /// parentScopeId=0 表示顶层 Scope。
-        /// </summary>
         public int CreateScope(int parentScopeId = 0)
         {
             var id = _nextScopeId++;
@@ -85,13 +74,12 @@ namespace UniDecl.BuiltIn.Runtime.Snapshot
         }
 
         /// <summary>
-        /// Dispose Scope：移除该 Scope 下所有 steps + setters，级联移除子 Scope。
-        /// 先移除 steps（此时 setter 仍可用），再移除 setters（引用计数）。
+        /// Dispose Scope：移除其下所有绑定注册 + steps，级联子 Scope。
         /// </summary>
         public void DisposeScope(int scopeId)
         {
             if (!_scopes.TryGetValue(scopeId, out var scope)) return;
-            _scopes.Remove(scopeId); // 防止重入
+            _scopes.Remove(scopeId); // 防重入
 
             // 级联 Dispose 子 Scope
             foreach (var childId in scope.Children.ToArray())
@@ -101,91 +89,57 @@ namespace UniDecl.BuiltIn.Runtime.Snapshot
             if (scope.ParentId > 0 && _scopes.TryGetValue(scope.ParentId, out var parent))
                 parent.Children.Remove(scopeId);
 
-            // 先移除 steps（此时 setter 仍可用）
-            FilterStepsByScopePrefix(scopeId);
-
-            // 再移除 setters
-            RemoveSettersByScope(scopeId);
+            // 移除该 scope 下所有绑定注册（历史保留：跨结构 rebuild 的 undo 靠 Path 兜底）
+            if (_scopeBindings.TryGetValue(scopeId, out var ids))
+            {
+                foreach (var id in ids)
+                {
+                    if (_bindings.TryGetValue(id, out var b) &&
+                        _bindingsByPath.TryGetValue(b.Path, out var cur) && ReferenceEquals(cur, b))
+                        _bindingsByPath.Remove(b.Path);
+                    _bindings.Remove(id);
+                    _lastRecordTime.Remove(id);
+                }
+                _scopeBindings.Remove(scopeId);
+            }
 
             ScopeDisposed?.Invoke(scopeId);
         }
 
-        // ─── Register / Record ───
+        // ─── 绑定注册（SnapshotBinding 调用）───
 
-        /// <summary>
-        /// 注册一个 key 的 setter 回调。setter 接收新值，返回被覆盖的旧值。
-        /// 内部使用 $scopeId:userKey 作为存储 key，不同 Scope 的同名 userKey 天然隔离。
-        /// </summary>
-        public void Register<T>(string key, Func<T, T> setter, int scopeId = 0)
+        public void RegisterBinding(ISnapshotBinding binding)
         {
-            var scopedKey = ScopedKey(key, scopeId);
-            _setters[scopedKey] = new SetterEntry
-            {
-                ValueType = typeof(T),
-                BoxedSetter = boxed => setter((T)boxed),
-                OwnerScopeId = scopeId
-            };
+            _bindings[binding.Id] = binding;
+            _bindingsByPath[binding.Path] = binding; // 换代覆盖：step 恢复按 Path 找当代 binding
+            if (!_scopeBindings.TryGetValue(binding.ScopeId, out var ids))
+                _scopeBindings[binding.ScopeId] = ids = new HashSet<Guid>();
+            ids.Add(binding.Id);
         }
 
         /// <summary>
-        /// 检查 key 是否已注册，未注册抛出异常
+        /// 反注册绑定：移除注册与 merge 时间戳。历史 steps 保留——
+        /// 结构 rebuild（条件显隐等）会让行容器 dispose scope，但 undo 需要跨重建的历史；
+        /// 失效 step 的 Guid 找不到时 ApplyStep 按 Path 兜底到当代 binding。
         /// </summary>
-        private void EnsureRegistered(string key)
+        public void UnregisterBinding(Guid bindingId)
         {
-            if (!_setters.ContainsKey(key))
-                throw new InvalidOperationException(
-                    $"Key '{key}' has not been registered. Call Register() before Record().");
+            if (_bindings.TryGetValue(bindingId, out var b) &&
+                _bindingsByPath.TryGetValue(b.Path, out var cur) && ReferenceEquals(cur, b))
+                _bindingsByPath.Remove(b.Path);
+            _bindings.Remove(bindingId);
+            _lastRecordTime.Remove(bindingId);
         }
 
-        /// <summary>
-        /// 记录一次值变更（创建 ValueStep）。合并仅在当前 buffer 内生效。
-        /// scopeId 用于隔离不同 Scope 的同名 key。
-        /// </summary>
-        public void Record(object oldValue, string key, int scopeId = 0)
+        /// <summary>记录一次值变更（创建 SnapshotStep）。合并按 Path+时间窗（可被 BreakMerge 打断）。</summary>
+        public void RecordValue(object oldValue, Guid bindingId, string path, int scopeId)
         {
-            var scopedKey = ScopedKey(key, scopeId);
-            EnsureRegistered(scopedKey);
-
-            if (EnableMerge && TryMergeValueStep(scopedKey))
+            if (EnableMerge && TryMergeValueStep(bindingId, path, scopeId))
                 return;
 
-            var step = new ValueStep(scopedKey, oldValue);
+            var step = new SnapshotStep(bindingId, path, oldValue, scopeId);
             AddToCurrentBuffer(step);
             ClearRedo();
-        }
-
-        /// <summary>
-        /// 记录一次对象变更（创建 ObjectDiffStep，深拷贝字段快照）。
-        /// </summary>
-        public void RecordObject(object target, string key, int scopeId = 0)
-        {
-            var scopedKey = ScopedKey(key, scopeId);
-            var snapshots = DeepCopyUtility.SnapshotFields(target);
-            var step = new ObjectDiffStep(scopedKey, target, snapshots);
-            AddToCurrentBuffer(step);
-            ClearRedo();
-        }
-
-        /// <summary>
-        /// 反注册指定 key：移除其 setter、merge 时间戳，以及 undo/redo/pending/group 栈中所有相关 steps。
-        /// 用于单个 Widget 销毁时清理自身历史，不影响同 Scope 下其他 key。
-        /// 注意：调用后 Unity Undo 栈长度可能大于 SnapshotManager 栈长度，
-        /// 但 EditorSnapshotManager 的 Version 差值循环逻辑能容忍多余 Undo（返回 false 不影响状态）。
-        /// </summary>
-        public void Unregister(string key, int scopeId = 0)
-        {
-            var scopedKey = ScopedKey(key, scopeId);
-
-            // 1. 移除 setter 与 merge 时间戳
-            _setters.Remove(scopedKey);
-            _lastRecordTime.Remove(scopedKey);
-
-            // 2. 移除所有 buffer 中该 key 的 steps（精确匹配，非前缀）
-            FilterStepsByExactKey(_undoStack, scopedKey);
-            FilterStepsByExactKey(_redoStack, scopedKey);
-            FilterStepsByExactKey(_pendingSteps, scopedKey);
-            foreach (var buffer in _groupStack)
-                FilterStepsByExactKey(buffer, scopedKey);
         }
 
         // ─── Group ───
@@ -205,22 +159,11 @@ namespace UniDecl.BuiltIn.Runtime.Snapshot
         }
 
         /// <summary>
-        /// 提交 pending steps。先处理未关闭的 group，再提交到 undoStack。
-        /// 未关闭 group 从外层到内层收集，保持 Record 时间顺序。
-        /// 返回 true 表示有新 step 提交到 undoStack；false 表示 pending 为空（如 Record 被 Merge）。
+        /// 提交 pending steps。手动组由 BeginGroup/EndGroup 显式闭合（EndGroup 时组入 pending）。
+        /// 返回 true 表示有新 step 提交；false 表示 pending 为空（如 Record 被 Merge）。
         /// </summary>
         public bool CommitPending()
         {
-            // 收集所有未关闭 group 的 steps，保持 Record 时间顺序
-            var groups = new List<List<IStep>>();
-            while (_groupStack.Count > 0)
-                groups.Add(_groupStack.Pop());
-            for (int i = groups.Count - 1; i >= 0; i--)
-            {
-                if (groups[i].Count > 0)
-                    _pendingSteps.AddRange(groups[i]);
-            }
-
             if (_pendingSteps.Count == 0) return false;
             IStep committed = _pendingSteps.Count == 1
                 ? _pendingSteps[0]
@@ -239,48 +182,70 @@ namespace UniDecl.BuiltIn.Runtime.Snapshot
             CommitPending();
             if (_undoStack.Count == 0) return false;
             var step = PopLast(_undoStack);
-            var redoStep = ApplyStep(step);
-            if (redoStep != null) _redoStack.Add(redoStep);
-            StepUndone?.Invoke(redoStep);
+
+            _restoring = true;
+            try
+            {
+                var changes = new ChangeSet();
+                var redoStep = ApplyStep(step, changes);
+                if (redoStep != null) _redoStack.Add(redoStep);
+                StepUndone?.Invoke(redoStep);
+                OnUndoRedoPerformed?.Invoke(changes);
+            }
+            finally
+            {
+                _restoring = false;
+            }
             return true;
         }
 
         public bool Redo()
         {
             if (_redoStack.Count == 0) return false;
-            var step = PopLast(_redoStack);
-            var undoStep = ApplyStep(step);
-            if (undoStep != null)
+
+            _restoring = true;
+            try
             {
-                _undoStack.Add(undoStep);
-                TrimStack(_undoStack);
+                var step = PopLast(_redoStack);
+                var changes = new ChangeSet();
+                var undoStep = ApplyStep(step, changes);
+                if (undoStep != null)
+                {
+                    _undoStack.Add(undoStep);
+                    TrimStack(_undoStack);
+                }
+                StepRedone?.Invoke(undoStep);
+                OnUndoRedoPerformed?.Invoke(changes);
             }
-            StepRedone?.Invoke(undoStep);
+            finally
+            {
+                _restoring = false;
+            }
             return true;
         }
 
-        // ─── 内部方法 ───
-
-        private IStep ApplyStep(IStep step)
+        /// <summary>
+        /// 执行一个 step，聚合变更清单，返回反向 step。
+        /// binding 已失效（视图销毁）时跳过。
+        /// </summary>
+        private IStep ApplyStep(IStep step, ChangeSet changes)
         {
             switch (step)
             {
-                case ValueStep vs:
-                    if (!_setters.TryGetValue(vs.Key, out var entry))
-                        return null; // setter 已被 Scope Dispose 移除，跳过
-                    var currentVal = entry.BoxedSetter(vs.Value);
-                    return new ValueStep(vs.Key, currentVal);
-
-                case ObjectDiffStep ods:
-                    var currentSnap = DeepCopyUtility.SnapshotFields(ods.Target);
-                    DeepCopyUtility.RestoreFields(ods.Target, ods.FieldSnapshots);
-                    return new ObjectDiffStep(ods.Key, ods.Target, currentSnap);
+                case SnapshotStep ss:
+                    // Guid 命中当代 binding；换代/重建后 Guid 失效 → 按 Path 兜底到当代 binding
+                    // （条件显隐等结构 rebuild 不再断 undo 链）
+                    if (!_bindings.TryGetValue(ss.BindingId, out var binding) &&
+                        !_bindingsByPath.TryGetValue(ss.Path, out binding))
+                        return null; // 无当代 binding（面板已销毁），跳过
+                    var current = binding.Restore(ss.Value, changes);
+                    return new SnapshotStep(binding.Id, ss.Path, current, ss.ScopeId);
 
                 case GroupStep gs:
                     var redoSteps = new List<IStep>();
                     for (int i = gs.Steps.Count - 1; i >= 0; i--)
                     {
-                        var redoStep = ApplyStep(gs.Steps[i]);
+                        var redoStep = ApplyStep(gs.Steps[i], changes);
                         if (redoStep != null) redoSteps.Insert(0, redoStep);
                     }
                     return redoSteps.Count > 0 ? new GroupStep(gs.Key, redoSteps) : null;
@@ -289,24 +254,48 @@ namespace UniDecl.BuiltIn.Runtime.Snapshot
             }
         }
 
+        // ─── 合并 / buffer / stack ───
+
         /// <summary>
-        /// 合并检查：仅在当前 buffer 内（pending 或 group）检查末尾同 key ValueStep。
-        /// 合并 = 保留最早旧值（vs.Value 不变），本次 oldValue 被丢弃，不创建新 step。
-        /// 时间窗口：同 key 两次 Record 间隔超过 MergeWindowMs 则不合并。
+        /// 合并检查：当前 buffer 末尾或（buffer 空）栈顶，同 Path+Scope 的 SnapshotStep（按 Path 匹配，
+        /// 拖动中 rebuild 换代 binding 也不受影响）。时间窗内且栈顶 step 属于当前手势
+        /// （晚于最近一次 BreakMerge）才合并——手势间隔离，手势内聚合。
         /// </summary>
-        private bool TryMergeValueStep(string key)
+        private bool TryMergeValueStep(Guid bindingId, string path, int scopeId)
         {
             var buffer = CurrentBuffer;
-            if (buffer.Count == 0) return false;
-            var last = buffer[buffer.Count - 1];
-            if (last is not ValueStep vs || vs.Key != key) return false;
+            SnapshotStep last = null;
+            if (buffer.Count > 0 && buffer[buffer.Count - 1] is SnapshotStep s1)
+                last = s1;
+            else if (buffer.Count == 0 && _undoStack.Count > 0 && _undoStack[_undoStack.Count - 1] is SnapshotStep s2)
+                last = s2; // 栈顶合并：连续事件流（拖动/拾色）窗口内聚合为起终点；显式提交点由 Renderer 调 BreakMerge 隔离
+            if (last == null || last.Path != path)
+                return false; // 只按 Path 匹配（insp_字段名 跨 rebuild 稳定；换代会换 binding Guid 与 ScopeId）
 
-            var now = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-            if (_lastRecordTime.TryGetValue(key, out var lastTime) && now - lastTime > MergeWindowMs)
+            if (!_lastRecordTime.TryGetValue(last.BindingId, out var lastStepTime))
                 return false;
-            _lastRecordTime[key] = now;
+            var now = NowTicks();
+            if ((now - lastStepTime) * TicksToMs > MergeWindowMs)
+                return false; // 时间窗外
+
+            // 手势隔离：栈顶 step 产生于最近一次 BreakMerge 之前 → 属于上一手势，不合并
+            if (_mergeBreakTimes.TryGetValue(scopeId + ":" + path, out var breakTime) && lastStepTime <= breakTime)
+                return false;
+
+            _lastRecordTime[bindingId] = now;
             return true; // 保留最早旧值，不做任何修改
         }
+
+        /// <summary>打断合并链（新手势开始，如 Slider PointerDown）：时间窗内后续记录不与已有 step 合并</summary>
+        public void BreakMerge(string path, int scopeId)
+        {
+            _mergeBreakTimes[scopeId + ":" + path] = NowTicks();
+        }
+
+        // 高分辨率时间戳（Stopwatch/QPC 纳秒级）——DateTime.UtcNow 在 Windows 粒度 ~10ms，
+        // 无法区分手势内 Down→Change 的先后边界
+        private static long NowTicks() => System.Diagnostics.Stopwatch.GetTimestamp();
+        private static readonly double TicksToMs = 1000.0 / System.Diagnostics.Stopwatch.Frequency;
 
         private List<IStep> CurrentBuffer =>
             _groupStack.Count > 0 ? _groupStack.Peek() : _pendingSteps;
@@ -314,7 +303,8 @@ namespace UniDecl.BuiltIn.Runtime.Snapshot
         private void AddToCurrentBuffer(IStep step)
         {
             CurrentBuffer.Add(step);
-            _lastRecordTime[step.Key] = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+            if (step is SnapshotStep ss)
+                _lastRecordTime[ss.BindingId] = NowTicks();
         }
 
         private void TrimStack(List<IStep> stack)
@@ -329,52 +319,20 @@ namespace UniDecl.BuiltIn.Runtime.Snapshot
             return step;
         }
 
-        // ─── Scoped Key 隔离 ───
+        // ─── step 过滤 ───
 
-        /// <summary>
-        /// 将用户可见的 key 与 scopeId 组合为内部存储 key。
-        /// scopeId > 0 时格式为 "$scopeId:userKey"，scopeId=0 为全局注册直接返回 userKey。
-        /// </summary>
-        private static string ScopedKey(string key, int scopeId) =>
-            scopeId > 0 ? $"${scopeId}:{key}" : key;
+        private static bool MatchBinding(IStep step, Guid bindingId) =>
+            step is SnapshotStep ss && ss.BindingId == bindingId;
 
-        /// <summary>
-        /// 按 scopeId 前缀过滤所有 buffer 中的 steps（Dispose 时调用）
-        /// </summary>
-        private void FilterStepsByScopePrefix(int scopeId)
-        {
-            var prefix = $"${scopeId}:";
-            FilterByPrefix(_undoStack, prefix);
-            FilterByPrefix(_redoStack, prefix);
-            FilterByPrefix(_pendingSteps, prefix);
-            foreach (var buffer in _groupStack)
-                FilterByPrefix(buffer, prefix);
-        }
+        private static bool MatchScope(IStep step, int scopeId) =>
+            step is SnapshotStep ss && ss.ScopeId == scopeId;
 
-        /// <summary>
-        /// 按 scopeId 前缀移除所有 setter 和 merge 时间戳（Dispose 时调用）
-        /// </summary>
-        private void RemoveSettersByScope(int scopeId)
-        {
-            var prefix = $"${scopeId}:";
-            var keysToRemove = new List<string>();
-            foreach (var kvp in _setters)
-            {
-                if (kvp.Key.StartsWith(prefix))
-                    keysToRemove.Add(kvp.Key);
-            }
-            foreach (var key in keysToRemove)
-            {
-                _setters.Remove(key);
-                _lastRecordTime.Remove(key);
-            }
-        }
-
-        private static void FilterByPrefix(List<IStep> steps, string prefix)
+        /// <summary>按谓词过滤 steps（GroupStep 递归，剩余为空则整体移除）</summary>
+        private static void FilterSteps(List<IStep> steps, Func<IStep, bool> remove)
         {
             for (int i = steps.Count - 1; i >= 0; i--)
             {
-                var filtered = FilterStepByPrefix(steps[i], prefix);
+                var filtered = FilterStep(steps[i], remove);
                 if (filtered == null)
                     steps.RemoveAt(i);
                 else if (!ReferenceEquals(filtered, steps[i]))
@@ -382,61 +340,15 @@ namespace UniDecl.BuiltIn.Runtime.Snapshot
             }
         }
 
-        private static IStep FilterStepByPrefix(IStep step, string prefix)
+        private static IStep FilterStep(IStep step, Func<IStep, bool> remove)
         {
-            return step switch
-            {
-                ValueStep vs => vs.Key.StartsWith(prefix) ? null : vs,
-                ObjectDiffStep ods => ods.Key.StartsWith(prefix) ? null : ods,
-                GroupStep gs => FilterGroupByPrefix(gs, prefix),
-                _ => step
-            };
-        }
+            if (step is not GroupStep gs)
+                return remove(step) ? null : step;
 
-        private static IStep FilterGroupByPrefix(GroupStep gs, string prefix)
-        {
             var remaining = new List<IStep>();
             foreach (var child in gs.Steps)
             {
-                var filtered = FilterStepByPrefix(child, prefix);
-                if (filtered != null) remaining.Add(filtered);
-            }
-            if (remaining.Count == 0) return null;
-            if (remaining.Count == gs.Steps.Count) return gs; // 无变化，保留原引用
-            return new GroupStep(gs.Key, remaining);
-        }
-
-        // ─── 按 key 精确过滤（Unregister 使用）───
-
-        private static void FilterStepsByExactKey(List<IStep> steps, string key)
-        {
-            for (int i = steps.Count - 1; i >= 0; i--)
-            {
-                var filtered = FilterStepByExactKey(steps[i], key);
-                if (filtered == null)
-                    steps.RemoveAt(i);
-                else if (!ReferenceEquals(filtered, steps[i]))
-                    steps[i] = filtered;
-            }
-        }
-
-        private static IStep FilterStepByExactKey(IStep step, string key)
-        {
-            return step switch
-            {
-                ValueStep vs => vs.Key == key ? null : vs,
-                ObjectDiffStep ods => ods.Key == key ? null : ods,
-                GroupStep gs => FilterGroupByExactKey(gs, key),
-                _ => step
-            };
-        }
-
-        private static IStep FilterGroupByExactKey(GroupStep gs, string key)
-        {
-            var remaining = new List<IStep>();
-            foreach (var child in gs.Steps)
-            {
-                var filtered = FilterStepByExactKey(child, key);
+                var filtered = FilterStep(child, remove);
                 if (filtered != null) remaining.Add(filtered);
             }
             if (remaining.Count == 0) return null;
@@ -461,13 +373,6 @@ namespace UniDecl.BuiltIn.Runtime.Snapshot
         }
 
         // ─── 内部类型 ───
-
-        internal struct SetterEntry
-        {
-            public Type ValueType;
-            public Func<object, object> BoxedSetter;
-            public int OwnerScopeId; // 注册此 key 的 scopeId（0 表示全局）
-        }
 
         private class ScopeInfo
         {

@@ -9,8 +9,9 @@ using W = UniDecl.BuiltIn.Runtime.Widgets;
 namespace UniDecl.BuiltIn.Editor.Snapshot.Examples
 {
     /// <summary>
-    /// PoC 测试窗口——验证 ContainerElement（VerticalLayout）作为 IScopeProvider，
-    /// 让子 Widget 的 Renderer 通过 ElementState.Scope 接入 Undo/Redo。
+    /// PoC 测试窗口——验证 Host 注入 SnapshotManager 后，
+    /// ContainerElement（VerticalLayout）作为 IScopeProvider 标记，
+    /// 子 Widget 的 Renderer 通过 ElementState.Scope 自动接入 Undo/Redo。
     ///
     /// 不依赖 PropertyGridModule/PropertyGridElement，纯声明式 Element 树。
     /// 菜单: Window > UniDecl > Snapshot PoC
@@ -27,18 +28,16 @@ namespace UniDecl.BuiltIn.Editor.Snapshot.Examples
         public static void ShowWindow() => GetWindow<SnapshotPoCWindow>("Snapshot PoC");
 
         private EditorSnapshotManager _snapshotManager;
-        private UndoScope _scope;
         private W.FloatField _floatField;
+
+        protected override UIToolkitRenderManager CreateManager()
+        {
+            _snapshotManager = new EditorSnapshotManager(new SnapshotManager());
+            return new UIToolkitRenderManager(_snapshotManager);
+        }
 
         protected override IElement BuildContent()
         {
-            // 创建 Snapshot 基础设施
-            _snapshotManager = new EditorSnapshotManager(new SnapshotManager());
-            // Undo/Redo 后由 Renderer 的 setter 自动回写 VE（SetValueWithoutNotify）
-            // 无需重建子树
-
-            _scope = new UndoScope(_snapshotManager);
-
             // 测试用数据
             var data = new PoCData { value = 42f };
 
@@ -50,22 +49,21 @@ namespace UniDecl.BuiltIn.Editor.Snapshot.Examples
                 data.value = newVal;
             };
 
-            // VerticalLayout 作为 IScopeProvider——设置 Scope 后，
-            // DOMTree 展开 Children 时自动 Push，子元素 ElementState 携带此 Scope。
-            var layout = new W.VerticalLayout
+            // VerticalLayout 作为 IScopeProvider 标记——Host 自动为它创建
+            // UndoScope 并注入 ElementState.Scope，子树 Widget 自动获得。
+            return new W.Panel
             {
-                new W.Label("Snapshot PoC — FloatField Undo/Redo"),
-                new W.Label("修改下方数值后按 Ctrl+Z/Ctrl+Y 验证 Undo/Redo"),
-                _floatField,
+                new W.VerticalLayout
+                {
+                    new W.Label("Snapshot PoC — FloatField Undo/Redo"),
+                    new W.Label("修改下方数值后按 Ctrl+Z/Ctrl+Y 验证 Undo/Redo"),
+                    _floatField,
+                },
             };
-            layout.Scope = _scope;
-
-            return new W.Panel { layout };
         }
 
         private void OnDestroy()
         {
-            _scope?.Dispose();
             _snapshotManager?.Dispose();
         }
 

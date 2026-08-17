@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using UniDecl.BuiltIn.Runtime.Navigation;
+using UniDecl.BuiltIn.Runtime.Snapshot;
 using UnityEngine;
 
 namespace UniDecl.BuiltIn.Runtime.Core
@@ -23,6 +24,18 @@ namespace UniDecl.BuiltIn.Runtime.Core
         private bool _flushScheduled;
         private IElement _rootElement;
 
+        // ---- Snapshot（可选注入：不注入则失去快照能力） ----
+
+        /// <summary>
+        /// 快照管理器（Undo/Redo）。构造时可选注入；为 null 时 Host 不提供快照能力。
+        /// 注入后：自动为每个 IScopeProvider 标记元素创建子 UndoScope
+        /// （写入 ElementState.Scope，经 DOMTree 链路注入其子树），
+        /// 节点移除时自动 Dispose；Undo/Redo 执行后自动 Refresh。
+        /// </summary>
+        protected readonly ISnapshotManager _snapshotManager;
+        private UndoScope _rootScope;
+        private readonly Dictionary<DOMNode, UndoScope> _containerScopes = new();
+
         /// <summary>
         /// 重建性能监控开关。开启后会在关键重建路径分发 RebuildPerformanceEvent。
         /// </summary>
@@ -38,8 +51,10 @@ namespace UniDecl.BuiltIn.Runtime.Core
         public virtual void NavigateTo(string anchorId) { }
         public virtual void NavigateURL(string url) { }
 
-        protected ElementRenderHostBase()
+        /// <param name="snapshotManager">可选注入的 Undo/Redo 管理器，null 则无快照能力</param>
+        protected ElementRenderHostBase(ISnapshotManager snapshotManager = null)
         {
+            _snapshotManager = snapshotManager;
         }
 
         // ---- EventDispatcher factory ----
@@ -131,7 +146,7 @@ namespace UniDecl.BuiltIn.Runtime.Core
         /// <summary>
         /// 从根元素增量重建整棵 DOM 树。
         /// 与 BuildDOM 不同：不 Clear() 后重建，而是走 RebuildNode → DiffChildren，
-        /// 类型相同、Key 匹配的 DOMNode 被复用，VE 通过 TryUpdate 保留。
+        /// 类型相同、Key 匹配的 DOMNode 被复用，VE 通过 existing 复用路径保留。
         /// </summary>
         public void Refresh()
         {
@@ -289,8 +304,61 @@ namespace UniDecl.BuiltIn.Runtime.Core
                 _eventDispatcher = CreateEventDispatcher();
                 _eventDispatcher.Subscribe(this);
                 SetupPlugins();
+                SetupSnapshot();
                 _initialized = true;
             }
+        }
+
+        // ==== Snapshot：容器 Scope 自动注入 + Undo/Redo 后刷新 ====
+
+        private void SetupSnapshot()
+        {
+            if (_snapshotManager == null) return;
+
+            _rootScope = new UndoScope(_snapshotManager);
+
+            // Undo/Redo 后 Refresh：binding setter 已写回值；Refresh 令条件显隐（ShowIf）等
+            // 结构联动回退。scope dispose 不再清 undo 历史（Path 兜底），此刷新安全。
+            _snapshotManager.StepUndone += _ => Refresh();
+            _snapshotManager.StepRedone += _ => Refresh();
+
+            var tree = ActiveDOMTree;
+            tree.NodeCreated += OnNodeCreated;
+            tree.NodeRemoved += OnNodeRemoved;
+        }
+
+        // Scope 提供者节点进入树：创建子 Scope（挂到父链 Scope 或根 Scope），注入 ElementState.Scope
+        private void OnNodeCreated(DOMNode node)
+        {
+            if (node.Element is not IScopeProvider) return;
+            var state = node.State;
+            if (state == null || state.Scope != null) return; // 手动注入优先
+            var scope = new UndoScope(FindParentScope(node) ?? _rootScope);
+            _containerScopes[node] = scope;
+            state.Scope = scope;
+        }
+
+        // Scope 提供者节点移除：Dispose 其 Scope，级联清理子树 Undo 历史与 setters。
+        // 恢复（Undo/Redo 触发 Refresh）期间跳过：diff 的 remove+create 是重建抖动而非真实销毁，
+        // 此时清历史会导致"第一次编辑无法撤销"；重建后新节点会建新 Scope 接管。
+        private void OnNodeRemoved(DOMNode node)
+        {
+            if (node.Element is not IScopeProvider) return;
+            if (_snapshotManager.IsRestoring) return;
+            if (_containerScopes.Remove(node, out var scope))
+                scope.Dispose();
+        }
+
+        private UndoScope FindParentScope(DOMNode node)
+        {
+            var current = node.Parent;
+            while (current != null)
+            {
+                if (current.State?.Scope is { } scope)
+                    return scope;
+                current = current.Parent;
+            }
+            return null;
         }
 
         /// <summary>
@@ -363,6 +431,8 @@ namespace UniDecl.BuiltIn.Runtime.Core
     public abstract class ElementRenderHost : ElementRenderHostBase, IElementRenderHost
     {
         private readonly Dictionary<Type, IElementRender> _renderers = new Dictionary<Type, IElementRender>();
+
+        protected ElementRenderHost(ISnapshotManager snapshotManager = null) : base(snapshotManager) { }
 
         // ---- 渲染器注册 ----
 
@@ -476,6 +546,8 @@ namespace UniDecl.BuiltIn.Runtime.Core
         private readonly DOMTree<TRenderResult> _typedDomTree = new DOMTree<TRenderResult>();
         private readonly Dictionary<IElement, (bool hasValue, TRenderResult value)> _preRebuildResults = new();
 
+        protected ElementRenderHost(ISnapshotManager snapshotManager = null) : base(snapshotManager) { }
+
         protected override DOMTree ActiveDOMTree => _typedDomTree;
 
         protected override EventDispatcher CreateEventDispatcher() => new EventDispatcher<TRenderResult>(GetTypedRenderer);
@@ -526,7 +598,7 @@ namespace UniDecl.BuiltIn.Runtime.Core
 
         /// <summary>
         /// 渲染指定元素，返回 TRenderResult（供泛型渲染器回调，递归渲染子节点）
-        /// diff 模式下：优先尝试 IElementUpdater.TryUpdate 增量更新，失败则完全渲染
+        /// 渲染器收到 existing 后自行决定原地复用或新建
         /// </summary>
         public TRenderResult RenderElement(IElement element)
         {
@@ -541,18 +613,12 @@ namespace UniDecl.BuiltIn.Runtime.Core
                 var typedRenderer = GetTypedRenderer(element);
                 if (typedRenderer != null)
                 {
-                    // 复用路径：节点缓存 + 尝试 TryUpdate
-                    if (node.HasRenderResult
-                        && typedRenderer is IElementUpdater<TRenderResult> updater
-                        && updater.TryUpdate(element, node.RenderResult, this, node.State))
-                    {
-                        return node.RenderResult;
-                    }
+                    var existing = node.HasRenderResult ? node.RenderResult : default;
+                    var result = typedRenderer.Render(element, existing, this, node.State);
 
-                    // 完全渲染
-                    var result = typedRenderer.Render(element, this, node.State);
-                    node.RenderResult = result;
-                    RecordRenderIndex(node);
+                    // 返回新对象才算替换；复用 existing 时缓存与位置不变
+                    if (!EqualityComparer<TRenderResult>.Default.Equals(result, existing))
+                        node.RenderResult = result;
                     return result;
                 }
 
@@ -561,7 +627,6 @@ namespace UniDecl.BuiltIn.Runtime.Core
                 {
                     var result = RenderElement(node.Children[0].Element);
                     node.RenderResult = result;
-                    RecordRenderIndex(node);
                     return result;
                 }
 
@@ -631,16 +696,24 @@ namespace UniDecl.BuiltIn.Runtime.Core
         }
 
         /// <summary>
-        /// 记录节点渲染结果在父容器 VE 中的顺序 index。
-        /// 统计前置已产生非空渲染结果的兄弟节点数（结构节点穿透也计入 1 个 VE）。
+        /// 解析重建后新渲染结果应插入父容器 VE 的 index。
+        /// 沿穿透链向上（父节点复用同一渲染结果时）取最外层持有该结果节点的位置，
+        /// 实时统计该节点之前产生非空渲染结果的兄弟数——顺序始终由当前 DOM 树推导。
         /// </summary>
-        private static void RecordRenderIndex(DOMNode<TRenderResult> node)
+        private int ResolveInsertIndex(IElement element, TRenderResult oldResult)
         {
-            if (node.Parent == null)
+            var node = _typedDomTree.GetNode(element);
+
+            // 穿透链向上：父节点复用同一渲染结果（结构穿透）时取最外层持有该结果的节点
+            while (node is DOMNode<TRenderResult> typed
+                && typed.Parent is DOMNode<TRenderResult> parent
+                && parent.HasRenderResult
+                && EqualityComparer<TRenderResult>.Default.Equals(parent.RenderResult, oldResult))
             {
-                node.RenderIndex = 0;
-                return;
+                node = parent;
             }
+
+            if (node?.Parent == null) return -1;
 
             int index = 0;
             foreach (var sibling in node.Parent.Children)
@@ -648,27 +721,6 @@ namespace UniDecl.BuiltIn.Runtime.Core
                 if (ReferenceEquals(sibling, node)) break;
                 if (sibling is DOMNode<TRenderResult> s && s.HasRenderResult && s.RenderResult != null)
                     index++;
-            }
-            node.RenderIndex = index;
-        }
-
-        /// <summary>
-        /// 解析重建后新渲染结果应插入父容器 VE 的 index。
-        /// 沿穿透链向上（父节点复用同一渲染结果时），取最外层持有该结果节点的 index。
-        /// 找不到有效记录时返回 -1，由后端回退到实际位置。
-        /// </summary>
-        private int ResolveInsertIndex(IElement element, TRenderResult oldResult)
-        {
-            var node = _typedDomTree.GetNode(element);
-            int index = -1;
-            while (node is DOMNode<TRenderResult> typed)
-            {
-                index = typed.RenderIndex;
-                var parent = typed.Parent as DOMNode<TRenderResult>;
-                if (parent == null || !parent.HasRenderResult
-                    || !EqualityComparer<TRenderResult>.Default.Equals(parent.RenderResult, oldResult))
-                    break;
-                node = parent;
             }
             return index;
         }

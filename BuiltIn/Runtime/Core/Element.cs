@@ -80,21 +80,13 @@ namespace UniDecl.BuiltIn.Runtime.Core
 
     /// <summary>
     /// 容器元素抽象基类。
-    /// 实现 IScopeProvider：子类或调用方可设置 Scope 属性，
-    /// DOMTree 展开 Children 时会自动 Push，让所有子元素的 ElementState 携带此 Scope。
-    /// 默认 Scope=null（不提供），不影响现有行为。
+    /// 通过 IContainerElement 继承 IScopeProvider 标记（子树需要 Undo/Redo 作用域），
+    /// 实际 Scope 由 Host（注入 SnapshotManager 后）写入 ElementState.Scope。
     /// </summary>
-    public abstract class ContainerElement : Element, IContainerElement, IScopeProvider
+    public abstract class ContainerElement : Element, IContainerElement
     {
         public abstract IEnumerable<IElement> Children { get; }
         public abstract void Add(IElement element);
-
-        /// <summary>
-        /// 为子元素提供的 Undo/Redo 作用域。
-        /// 设置后，DOMTree 展开 Children 时会自动 Push 到 ScopeStack。
-        /// 默认 null——不提供 Scope，行为与之前一致。
-        /// </summary>
-        public UndoScope Scope { get; set; }
 
         protected ContainerElement(params IElementComponent[] components) : base(components) { }
 

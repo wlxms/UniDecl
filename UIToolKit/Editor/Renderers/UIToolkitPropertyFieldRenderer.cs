@@ -8,7 +8,7 @@ namespace UniDecl.Editor.UIToolKit.Renderers
 {
     public class UIToolkitPropertyFieldRenderer : IElementRenderer<W.PropertyField, VisualElement>
     {
-        public VisualElement Render(W.PropertyField element, IElementRenderHost<VisualElement> manager, ElementState state)
+        public VisualElement Render(W.PropertyField element, VisualElement existing, IElementRenderHost<VisualElement> manager, ElementState state)
         {
             if (element == null) return null;
 

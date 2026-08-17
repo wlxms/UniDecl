@@ -26,9 +26,8 @@ namespace UniDecl.PropertyGrid.Editor.Examples
 
         private TestData _data;
         private EditorSnapshotManager _mgr;
+        private SnapshotBinding _binding;
         private TextField _field;
-
-        private const string Key = "text";
 
         public void CreateGUI()
         {
@@ -36,13 +35,10 @@ namespace UniDecl.PropertyGrid.Editor.Examples
             _mgr = new EditorSnapshotManager(new SnapshotManager());
             _mgr.OnUndoRedoPerformed += RebuildField;
 
-            // Register setter：接收新值恢复，返回被覆盖的旧值
-            _mgr.Register<string>(Key, v =>
-            {
-                var old = _data.text;
-                _data.text = v;
-                return old;
-            });
+            // 单轨叶子绑定：getter/setter 统一入口，Commit 时基线对比（变更才记录）
+            _binding = new SnapshotBinding(_mgr, 0, "text",
+                () => _data.text,
+                (restore, current, changes) => _data.text = (string)restore);
 
             rootVisualElement.Clear();
             var container = new VisualElement();
@@ -53,9 +49,8 @@ namespace UniDecl.PropertyGrid.Editor.Examples
             _field = new TextField("Text") { value = _data.text };
             _field.RegisterValueChangedCallback(evt =>
             {
-                _mgr.Record(evt.previousValue, Key);
                 _data.text = evt.newValue;
-                _mgr.CommitPending();
+                _binding.Commit();
             });
 
             container.Add(_field);
@@ -70,7 +65,7 @@ namespace UniDecl.PropertyGrid.Editor.Examples
             rootVisualElement.Add(container);
         }
 
-        private void RebuildField()
+        private void RebuildField(ChangeSet changes)
         {
             if (_field != null)
                 _field.SetValueWithoutNotify(_data.text);
@@ -78,7 +73,10 @@ namespace UniDecl.PropertyGrid.Editor.Examples
 
         private void OnDestroy()
         {
+            _binding?.Dispose();
             _mgr?.Dispose();
+            _binding = null;
+            _mgr = null;
         }
     }
 }

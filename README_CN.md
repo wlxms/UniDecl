@@ -274,28 +274,31 @@ new Label("UITK 样式标签")
 2. **位置回退** —— 如果没有 Key 匹配，尝试同位置复用
 3. **类型检查** —— 如果复用节点的类型一致，递归 Diff；否则整体替换
 
-### 更新器接口（UI Toolkit）
+### 渲染器投影接口（UI Toolkit）
 
-在 UI Toolkit 下，渲染器可以同时实现 `IElementUpdater<TRenderResult>` 和 `IElementRenderer`：
+在 UI Toolkit 下，渲染器只需实现 `IElementRenderer<TElement, VisualElement>` 的单个 `Render` 方法。
+`existing` 参数是该元素上次的渲染结果（首次为 null），可复用时原地更新并**返回 existing 本身**，
+返回新对象则宿主替换缓存并触发渲染结果变更：
 
 ```csharp
-public class MyLabelRenderer : IElementRenderer<Label, VisualElement>,
-                               IElementUpdater<Label, VisualElement>
+public class MyLabelRenderer : IElementRenderer<Label, VisualElement>
 {
-    public VisualElement Render(Label element, ...) => ...;
-
-    // 当同一 Label 元素因属性变化被重新渲染时调用。
-    // 返回 true 可跳过完整的 Render()，复用已有的 VisualElement。
-    public bool TryUpdate(Label element, VisualElement existing,
-                          IElementRenderHost<VisualElement> manager, ElementState state)
+    public VisualElement Render(Label element, VisualElement existing,
+                                IElementRenderHost<VisualElement> manager, ElementState state)
     {
-        existing.text = element.Text;
-        return true;
+        // 复用路径：原地更新并返回 existing，跳过整树重建
+        if (existing is Label ve)
+        {
+            ve.text = element.Text;
+            return ve;
+        }
+        // 新建路径
+        return new Label(element.Text);
     }
 }
 ```
 
-如果 `TryUpdate` 返回 false 或未实现，框架会回退到完整的 `Render()`。
+复用 existing 时渲染结果引用不变，框架不会触发 VE 替换；返回新对象时框架会替换缓存并插回原位。
 
 ### 自动重建与合并
 

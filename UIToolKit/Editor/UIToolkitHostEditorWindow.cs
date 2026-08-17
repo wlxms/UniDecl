@@ -15,6 +15,11 @@ namespace UniDecl.Editor.UIToolKit
 
         protected abstract IElement BuildContent();
 
+        /// <summary>
+        /// 创建渲染管理器。子类可重写以注入 SnapshotManager（如 EditorSnapshotManager）。
+        /// </summary>
+        protected virtual TManager CreateManager() => new TManager();
+
         protected virtual string HostName => GetType().Name;
 
         protected virtual void LoadStyles(TManager manager) { }
@@ -23,7 +28,7 @@ namespace UniDecl.Editor.UIToolKit
         {
             rootVisualElement.Clear();
 
-            Manager = new TManager();
+            Manager = CreateManager();
             LoadStyles(Manager);
 
             var root = BuildContent();

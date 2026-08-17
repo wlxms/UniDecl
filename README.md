@@ -276,28 +276,32 @@ During subtree rebuild, UniDecl diffs old and new children by **key first, posit
 2. **Positional fallback** — if no key match, try same-index reuse
 3. **Type check** — if reused node's type matches, recursively diff; otherwise replace entirely
 
-### Updater Interface (UI Toolkit)
+### Renderer Projection Interface (UI Toolkit)
 
-For UI Toolkit, renderers can implement `IElementUpdater<TRenderResult>` alongside `IElementRenderer`:
+For UI Toolkit, a renderer implements the single `Render` method of `IElementRenderer<TElement, VisualElement>`.
+The `existing` parameter is the element's previous render result (null on first render). Update it in place and
+**return `existing` itself** to reuse it; return a new object to replace the cached result:
 
 ```csharp
-public class MyLabelRenderer : IElementRenderer<Label, VisualElement>,
-                               IElementUpdater<Label, VisualElement>
+public class MyLabelRenderer : IElementRenderer<Label, VisualElement>
 {
-    public VisualElement Render(Label element, ...) => ...;
-
-    // Called when the same Label element is re-rendered with new properties.
-    // Return true to skip full Render(), keeping the existing VisualElement.
-    public bool TryUpdate(Label element, VisualElement existing,
-                          IElementRenderHost<VisualElement> manager, ElementState state)
+    public VisualElement Render(Label element, VisualElement existing,
+                                IElementRenderHost<VisualElement> manager, ElementState state)
     {
-        existing.text = element.Text;
-        return true;
+        // Reuse path: update in place and return existing, skipping a full rebuild
+        if (existing is Label ve)
+        {
+            ve.text = element.Text;
+            return ve;
+        }
+        // Create path
+        return new Label(element.Text);
     }
 }
 ```
 
-If `TryUpdate` returns false or is not implemented, the framework falls back to full `Render()`.
+Reusing `existing` keeps the same render-result reference (no VE replacement); returning a new object
+replaces the cached result and re-inserts it at its original position.
 
 ### Auto-Rebuild with Coalescing
 

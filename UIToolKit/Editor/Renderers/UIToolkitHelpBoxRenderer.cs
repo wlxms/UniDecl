@@ -2,12 +2,13 @@ using UnityEngine.UIElements;
 using UniDecl.BuiltIn.Runtime.Core;
 using W = UniDecl.BuiltIn.Runtime.Widgets;
 using UniDecl.Editor.UIToolKit.Style;
+using UniDecl.BuiltIn.Runtime.Snapshot;
 using UITKStyle = UniDecl.UIToolKit.Runtime.UITKStyle;
 namespace UniDecl.Editor.UIToolKit.Renderers
 {
     public class UIToolkitHelpBoxRenderer : IElementRenderer<W.HelpBox, VisualElement>
     {
-        public VisualElement Render(W.HelpBox element, IElementRenderHost<VisualElement> manager, ElementState state)
+        public VisualElement Render(W.HelpBox element, VisualElement existing, IElementRenderHost<VisualElement> manager, ElementState state)
         {
             if (element == null) return null;
 

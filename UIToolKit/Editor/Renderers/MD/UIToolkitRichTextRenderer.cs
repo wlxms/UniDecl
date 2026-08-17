@@ -23,7 +23,7 @@ namespace UniDecl.Editor.UIToolKit.Renderers.MD
     {
         private const string InlineCodeColor = "#c0392b";
 
-        public VisualElement Render(W.RichText element, IElementRenderHost<VisualElement> manager, ElementState state)
+        public VisualElement Render(W.RichText element, VisualElement existing, IElementRenderHost<VisualElement> manager, ElementState state)
         {
             if (element == null) return null;
 

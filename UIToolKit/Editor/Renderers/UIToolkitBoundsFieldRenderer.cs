@@ -1,24 +1,37 @@
+using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
 using UniDecl.BuiltIn.Runtime.Core;
 using UniDecl.Editor.UIToolKit.Style;
+using UniDecl.BuiltIn.Runtime.Snapshot;
 using UITKStyle = UniDecl.UIToolKit.Runtime.UITKStyle;
 using W = UniDecl.BuiltIn.Runtime.Widgets;
 
 namespace UniDecl.Editor.UIToolKit.Renderers
 {
-    public class UIToolkitBoundsFieldRenderer : IElementRenderer<W.BoundsField, VisualElement>,
-        IElementUpdater<VisualElement>, IElementUpdater<W.BoundsField, VisualElement>
+    public class UIToolkitBoundsFieldRenderer : IElementRenderer<W.BoundsField, VisualElement>
     {
-        public VisualElement Render(W.BoundsField element, IElementRenderHost<VisualElement> manager, ElementState state)
+        public VisualElement Render(W.BoundsField element, VisualElement existing, IElementRenderHost<VisualElement> manager, ElementState state)
         {
             if (element == null) return null;
+
+            if (existing is BoundsField reused)
+            {
+                reused.SetValueWithoutNotify(element.Value);
+                return reused;
+            }
+
             var field = new BoundsField(element.Label) { value = element.Value };
 
-            // Snapshot 绑定——瞬时选择型，Commit 在 ChangeEvent 回调里调用
-            var binding = new SnapshotBinding<Bounds>(state?.Scope, element.Key, element.Value,
+            // Snapshot 绑定——瞬时型，ChangeEvent 即提交
+            var binding = new SnapshotBinding(state?.Scope, element.Key,
                 () => element.Value,
-                v => { field.SetValueWithoutNotify(v); element.Value = v; });
+                (restore, current, changes) =>
+                {
+                    field.SetValueWithoutNotify((Bounds)restore);
+                    element.Value = (Bounds)restore;
+                    element.OnValueChanged?.Invoke((Bounds)restore);
+                });
 
             field.RegisterValueChangedCallback(evt =>
             {
@@ -31,19 +44,6 @@ namespace UniDecl.Editor.UIToolKit.Renderers
             UIToolkitStyleApplier.ApplyElementStyles(element, field);
             return field;
         }
-
-        public bool TryUpdate(W.BoundsField element, VisualElement existing, IElementRenderHost<VisualElement> manager, ElementState state)
-        {
-            if (existing is BoundsField field)
-            {
-                field.SetValueWithoutNotify(element.Value);
-                return true;
-            }
-            return false;
-        }
-
-        public bool TryUpdate(IElement element, VisualElement existing, IElementRenderHost<VisualElement> manager, ElementState state)
-            => element is W.BoundsField f && TryUpdate(f, existing, manager, state);
     }
 
     public struct BoundsFieldChangeEvent

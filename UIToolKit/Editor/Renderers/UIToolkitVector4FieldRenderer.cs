@@ -1,23 +1,37 @@
+using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
 using UniDecl.BuiltIn.Runtime.Core;
 using UniDecl.Editor.UIToolKit.Style;
+using UniDecl.BuiltIn.Runtime.Snapshot;
+using UITKStyle = UniDecl.UIToolKit.Runtime.UITKStyle;
 using W = UniDecl.BuiltIn.Runtime.Widgets;
 
 namespace UniDecl.Editor.UIToolKit.Renderers
 {
-    public class UIToolkitVector4FieldRenderer : IElementRenderer<W.Vector4Field, VisualElement>,
-        IElementUpdater<VisualElement>, IElementUpdater<W.Vector4Field, VisualElement>
+    public class UIToolkitVector4FieldRenderer : IElementRenderer<W.Vector4Field, VisualElement>
     {
-        public VisualElement Render(W.Vector4Field element, IElementRenderHost<VisualElement> manager, ElementState state)
+        public VisualElement Render(W.Vector4Field element, VisualElement existing, IElementRenderHost<VisualElement> manager, ElementState state)
         {
             if (element == null) return null;
+
+            if (existing is Vector4Field reused)
+            {
+                reused.SetValueWithoutNotify(element.Value);
+                return reused;
+            }
+
             var field = new Vector4Field(element.Label) { value = element.Value };
 
-            // Snapshot 绑定——瞬时选择型，Commit 在 ChangeEvent 回调里调用
-            var binding = new SnapshotBinding<Vector4>(state?.Scope, element.Key, element.Value,
+            // Snapshot 绑定——瞬时型，ChangeEvent 即提交
+            var binding = new SnapshotBinding(state?.Scope, element.Key,
                 () => element.Value,
-                v => { field.SetValueWithoutNotify(v); element.Value = v; });
+                (restore, current, changes) =>
+                {
+                    field.SetValueWithoutNotify((Vector4)restore);
+                    element.Value = (Vector4)restore;
+                    element.OnValueChanged?.Invoke((Vector4)restore);
+                });
 
             field.RegisterValueChangedCallback(evt =>
             {
@@ -30,19 +44,6 @@ namespace UniDecl.Editor.UIToolKit.Renderers
             UIToolkitStyleApplier.ApplyElementStyles(element, field);
             return field;
         }
-
-        public bool TryUpdate(W.Vector4Field element, VisualElement existing, IElementRenderHost<VisualElement> manager, ElementState state)
-        {
-            if (existing is Vector4Field field)
-            {
-                field.SetValueWithoutNotify(element.Value);
-                return true;
-            }
-            return false;
-        }
-
-        public bool TryUpdate(IElement element, VisualElement existing, IElementRenderHost<VisualElement> manager, ElementState state)
-            => element is W.Vector4Field f && TryUpdate(f, existing, manager, state);
     }
 
     public struct Vector4FieldChangeEvent

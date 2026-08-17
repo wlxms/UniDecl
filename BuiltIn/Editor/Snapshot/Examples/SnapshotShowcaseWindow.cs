@@ -20,34 +20,36 @@ namespace UniDecl.BuiltIn.Editor.Snapshot.Examples
         public static void ShowWindow() => GetWindow<SnapshotShowcaseWindow>("Snapshot Showcase");
 
         private EditorSnapshotManager _snapshotManager;
-        private UndoScope _scope;
         private W.Label _statusLabel;
+
+        protected override UIToolkitRenderManager CreateManager()
+        {
+            _snapshotManager = new EditorSnapshotManager(new SnapshotManager());
+            return new UIToolkitRenderManager(_snapshotManager);
+        }
 
         protected override IElement BuildContent()
         {
-            _snapshotManager = new EditorSnapshotManager(new SnapshotManager());
-            _scope = new UndoScope(_snapshotManager);
-
             _statusLabel = new W.Label("Undo: 0 | Redo: 0 | 按下 Ctrl+Z/Ctrl+Y 测试");
             _statusLabel.WithKey("status");
 
-            var layout = new W.VerticalLayout
+            return new W.Panel
             {
-                new W.Label("Snapshot Showcase — 全类型 Undo/Redo 验证"),
-                _statusLabel,
-                new W.Label("— 连续输入型（Blur/Enter 提交）—"),
-                CreateFloatFields(),
-                CreateTextFields(),
-                new W.Label("— Slider 类（PointerUp 提交）—"),
-                CreateSliders(),
-                new W.Label("— 瞬时选择型（ChangeEvent 即提交）—"),
-                CreateInstantFields(),
-                new W.Label("— 复合型（ChangeEvent 即提交）—"),
-                CreateCompositeFields(),
+                new W.VerticalLayout
+                {
+                    new W.Label("Snapshot Showcase — 全类型 Undo/Redo 验证"),
+                    _statusLabel,
+                    new W.Label("— 连续输入型（Blur/Enter 提交）—"),
+                    CreateFloatFields(),
+                    CreateTextFields(),
+                    new W.Label("— Slider 类（PointerUp 提交）—"),
+                    CreateSliders(),
+                    new W.Label("— 瞬时选择型（ChangeEvent 即提交）—"),
+                    CreateInstantFields(),
+                    new W.Label("— 复合型（ChangeEvent 即提交）—"),
+                    CreateCompositeFields(),
+                },
             };
-
-            layout.Scope = _scope;
-            return new W.Panel { layout };
         }
 
         private W.VerticalLayout CreateFloatFields()
@@ -128,7 +130,6 @@ namespace UniDecl.BuiltIn.Editor.Snapshot.Examples
 
         private void OnDestroy()
         {
-            _scope?.Dispose();
             _snapshotManager?.Dispose();
         }
     }

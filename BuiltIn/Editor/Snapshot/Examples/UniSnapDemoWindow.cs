@@ -8,7 +8,7 @@ using UniDecl.BuiltIn.Runtime.Snapshot;
 namespace UniDecl.BuiltIn.Editor.Snapshot.Examples
 {
     /// <summary>
-    /// UniSnap Demo 窗口——完整演示 ValueStep / ObjectDiffStep / GroupStep / Merge
+    /// UniSnap Demo 窗口——单轨快照演示：对象绑定自动展开 / 递归 Commit / GroupStep / Merge / changeSet
     /// 菜单: Window > UniDecl > UniSnap Demo
     /// </summary>
     public class UniSnapDemoWindow : EditorWindow
@@ -42,11 +42,10 @@ namespace UniDecl.BuiltIn.Editor.Snapshot.Examples
         private ConfigData _config;
         private EditorSnapshotManager _manager;
         private UndoScope _scope;
-        // ValueStep 字段
+        private SnapshotBinding _configBinding; // 对象绑定：自动展开 size/name/color/nested.*
+
         private FloatField _sizeField;
         private TextField _nameField;
-
-        // ObjectDiffStep 字段
         private IntegerField _countField;
         private TextField _tagField;
         private ColorField _colorField;
@@ -58,9 +57,6 @@ namespace UniDecl.BuiltIn.Editor.Snapshot.Examples
         private Label _statusLabel;
         private Label _configLabel;
 
-        // Color 防抖：连续拖拽时延迟一帧提交，让 Merge 合并同 key Record
-        private int _colorDebounceId;
-
         // ─── 生命周期 ───
 
         public void OnEnable()
@@ -69,33 +65,9 @@ namespace UniDecl.BuiltIn.Editor.Snapshot.Examples
             _manager = new EditorSnapshotManager(new SnapshotManager());
             _scope = new UndoScope(_manager);
 
-            // ① ValueStep setter：Func<T, T> 接收新值恢复，返回被覆盖的旧值
-            _scope.Register<float>("size", v =>
-            {
-                float old = _config.size;
-                _config.size = v;
-                return old;
-            });
-            _scope.Register<string>("name", v =>
-            {
-                string old = _config.name;
-                _config.name = v;
-                return old;
-            });
-            _scope.Register<Color>("color", v =>
-            {
-                var old = _config.color;
-                _config.color = v;
-                return old;
-            });
-
-            // ② ObjectDiffStep setter：深拷贝快照整体恢复嵌套对象
-            _scope.Register<object>("config", v =>
-            {
-                DeepCopyUtility.RestoreFields(_config,
-                    (System.Collections.Generic.Dictionary<string, object>)v);
-                return null;
-            });
+            // 单轨：绑定整个对象，字段自动展开（size/name/color/nested.count/nested.tag），
+            // 根 Commit 递归对比，变化的字段各自成 step 并自动打包 group。
+            _configBinding = new SnapshotBinding(_scope, "config", () => _config);
 
             _manager.OnUndoRedoPerformed += RebuildUI;
 
@@ -106,8 +78,10 @@ namespace UniDecl.BuiltIn.Editor.Snapshot.Examples
         {
             _manager?.Dispose();
             _scope?.Dispose();
+            _configBinding?.Dispose();
             _manager = null;
             _scope = null;
+            _configBinding = null;
         }
 
         // ─── UI 构建 ───
@@ -121,17 +95,16 @@ namespace UniDecl.BuiltIn.Editor.Snapshot.Examples
             container.style.paddingRight = 10;
             container.style.paddingTop = 10;
 
-            // ── ① ValueStep ──
-            AddHeader(container, "① ValueStep — 值类型快照");
+            // ── ① 值字段（自动展开的叶子）──
+            AddHeader(container, "① 值字段 — 对象绑定自动展开的叶子");
             AddHint(container,
-                "修改 Size / Name / Color，Ctrl+Z 撤销。同 key 500ms 内连续修改自动合并。");
+                "修改 Size / Name / Color，Ctrl+Z 撤销。同 binding 500ms 内连续修改自动合并。");
 
             _sizeField = new FloatField("Size") { value = _config.size };
             _sizeField.RegisterValueChangedCallback(evt =>
             {
-                _scope.Record(evt.previousValue, "size");
                 _config.size = evt.newValue;
-                _scope.Commit();
+                _configBinding.Commit(); // 根 commit：递归对比，只记录变化的字段
                 UpdateStatus();
             });
             container.Add(_sizeField);
@@ -139,9 +112,8 @@ namespace UniDecl.BuiltIn.Editor.Snapshot.Examples
             _nameField = new TextField("Name") { value = _config.name };
             _nameField.RegisterValueChangedCallback(evt =>
             {
-                _scope.Record(evt.previousValue, "name");
                 _config.name = evt.newValue;
-                _scope.Commit();
+                _configBinding.Commit();
                 UpdateStatus();
             });
             container.Add(_nameField);
@@ -149,33 +121,23 @@ namespace UniDecl.BuiltIn.Editor.Snapshot.Examples
             _colorField = new ColorField("Color") { value = _config.color };
             _colorField.RegisterValueChangedCallback(evt =>
             {
-                _scope.Record(evt.previousValue, "color");
                 _config.color = evt.newValue;
+                _configBinding.Commit();
                 UpdateStatus();
-                // 防抖：延迟一帧提交。连续拖拽时每次新变更重置 debounceId，
-                // 只有最后一次停顿后的 delayCall 才提交，此时 Merge 已合并同 key Record
-                int id = ++_colorDebounceId;
-                EditorApplication.delayCall += () =>
-                {
-                    if (_colorDebounceId == id)
-                        _scope.Commit();
-                };
             });
             container.Add(_colorField);
 
-            // ── ② ObjectDiffStep ──
+            // ── ② 嵌套对象（自动递归展开）──
             AddSeparator(container);
-            AddHeader(container, "② ObjectDiffStep — 对象深拷贝快照");
+            AddHeader(container, "② 嵌套对象 — 自动递归展开");
             AddHint(container,
-                "RecordObject 对整个 _config 做深拷贝快照。修改 Count / Tag 后，" +
-                "Ctrl+Z 一次性恢复所有字段（包括 size/name/color/nested）到快照时的状态。");
+                "修改 Count / Tag，Ctrl+Z 只撤销对应字段（changeSet 精确刷新）。");
 
             _countField = new IntegerField("Nested Count") { value = _config.nested.count };
             _countField.RegisterValueChangedCallback(evt =>
             {
-                _scope.RecordObject(_config, "config");
                 _config.nested.count = evt.newValue;
-                _scope.Commit();
+                _configBinding.Commit();
                 UpdateStatus();
             });
             container.Add(_countField);
@@ -183,9 +145,8 @@ namespace UniDecl.BuiltIn.Editor.Snapshot.Examples
             _tagField = new TextField("Nested Tag") { value = _config.nested.tag };
             _tagField.RegisterValueChangedCallback(evt =>
             {
-                _scope.RecordObject(_config, "config");
                 _config.nested.tag = evt.newValue;
-                _scope.Commit();
+                _configBinding.Commit();
                 UpdateStatus();
             });
             container.Add(_tagField);
@@ -246,71 +207,65 @@ namespace UniDecl.BuiltIn.Editor.Snapshot.Examples
 
         private void OnRandomizeAll()
         {
+            // 手动组包裹提交事务：BeginGroup → Commit（自动组嵌套）→ EndGroup → 提交
             _manager.BeginGroup("randomize");
 
-            var oldSize = _config.size;
-            var oldName = _config.name;
-            var oldCount = _config.nested.count;
+            _config.size = UnityEngine.Random.Range(0f, 100f);
+            _config.name = "item_" + UnityEngine.Random.Range(1000, 9999);
+            _config.nested.count = UnityEngine.Random.Range(0, 50);
 
-            var newSize = UnityEngine.Random.Range(0f, 100f);
-            var newName = "item_" + UnityEngine.Random.Range(1000, 9999);
-            var newCount = UnityEngine.Random.Range(0, 50);
-
-            // ValueStep x2
-            _scope.Record(oldSize, "size");
-            _config.size = newSize;
-
-            _scope.Record(oldName, "name");
-            _config.name = newName;
-
-            // ObjectDiffStep x1（快照当前 state 再修改）
-            _scope.RecordObject(_config, "config");
-            _config.nested.count = newCount;
-
+            _configBinding.Commit(); // 自动组嵌套进手动组
             _manager.EndGroup();
-            _scope.Commit();
+            _manager.CommitPending(); // 提交手动组 → 一步撤销整组
 
             _groupLogLabel.text =
-                $"Group: size {oldSize:F1}→{newSize:F1}, " +
-                $"name '{oldName}'→'{newName}', count {oldCount}→{newCount}";
-            RebuildUI();
+                $"Group: size/name/count → {_config.size:F1} / {_config.name} / {_config.nested.count}";
+            RebuildUI(null);
         }
 
         private void OnBatchColorAndCount()
         {
             _manager.BeginGroup("batch-color-count");
 
-            var oldColor = _config.color;
-            var oldCount = _config.nested.count;
+            _config.color = UnityEngine.Random.ColorHSV();
+            _config.nested.count = UnityEngine.Random.Range(0, 100);
 
-            var newColor = UnityEngine.Random.ColorHSV();
-            var newCount = UnityEngine.Random.Range(0, 100);
-
-            // ValueStep x1 (Color)
-            _scope.Record(oldColor, "color");
-            _config.color = newColor;
-
-            // ObjectDiffStep x1 (整个 config 快照)
-            _scope.RecordObject(_config, "config");
-            _config.nested.count = newCount;
-
+            _configBinding.Commit();
             _manager.EndGroup();
-            _scope.Commit();
+            _manager.CommitPending();
 
             _groupLogLabel.text =
-                $"Group: color {oldColor}→{newColor}, count {oldCount}→{newCount}";
-            RebuildUI();
+                $"Group: color → {_config.color}, count → {_config.nested.count}";
+            RebuildUI(null);
         }
 
         // ─── UI 辅助 ───
 
-        private void RebuildUI()
+        // changeSet 局部刷新：只更新实际变更的字段
+        private void RebuildUI(ChangeSet changes)
         {
-            if (_sizeField != null) _sizeField.SetValueWithoutNotify(_config.size);
-            if (_nameField != null) _nameField.SetValueWithoutNotify(_config.name);
-            if (_colorField != null) _colorField.SetValueWithoutNotify(_config.color);
-            if (_countField != null) _countField.SetValueWithoutNotify(_config.nested.count);
-            if (_tagField != null) _tagField.SetValueWithoutNotify(_config.nested.tag);
+            if (changes != null)
+            {
+                foreach (var c in changes.Changes)
+                {
+                    switch (c.Path)
+                    {
+                        case "config.size": if (_sizeField != null) _sizeField.SetValueWithoutNotify(_config.size); break;
+                        case "config.name": if (_nameField != null) _nameField.SetValueWithoutNotify(_config.name); break;
+                        case "config.color": if (_colorField != null) _colorField.SetValueWithoutNotify(_config.color); break;
+                        case "config.nested.count": if (_countField != null) _countField.SetValueWithoutNotify(_config.nested.count); break;
+                        case "config.nested.tag": if (_tagField != null) _tagField.SetValueWithoutNotify(_config.nested.tag); break;
+                    }
+                }
+            }
+            else
+            {
+                if (_sizeField != null) _sizeField.SetValueWithoutNotify(_config.size);
+                if (_nameField != null) _nameField.SetValueWithoutNotify(_config.name);
+                if (_colorField != null) _colorField.SetValueWithoutNotify(_config.color);
+                if (_countField != null) _countField.SetValueWithoutNotify(_config.nested.count);
+                if (_tagField != null) _tagField.SetValueWithoutNotify(_config.nested.tag);
+            }
             UpdateStatus();
         }
 

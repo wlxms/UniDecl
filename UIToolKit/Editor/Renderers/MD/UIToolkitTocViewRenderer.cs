@@ -12,7 +12,7 @@ namespace UniDecl.Editor.UIToolKit.Renderers.MD
         private const string ChevronRight = "\u25B6";   // ▶
         private const string ChevronDown  = "\u25BC";   // ▼
 
-        public VisualElement Render(W.TocView element, IElementRenderHost<VisualElement> manager, ElementState state)
+        public VisualElement Render(W.TocView element, VisualElement existing, IElementRenderHost<VisualElement> manager, ElementState state)
         {
             if (element == null) return null;
 

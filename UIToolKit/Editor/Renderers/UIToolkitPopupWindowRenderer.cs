@@ -7,7 +7,7 @@ namespace UniDecl.Editor.UIToolKit.Renderers
 {
     public class UIToolkitPopupWindowRenderer : IElementRenderer<W.PopupWindow, VisualElement>
     {
-        public VisualElement Render(W.PopupWindow element, IElementRenderHost<VisualElement> manager, ElementState state)
+        public VisualElement Render(W.PopupWindow element, VisualElement existing, IElementRenderHost<VisualElement> manager, ElementState state)
         {
             if (element == null) return null;
 

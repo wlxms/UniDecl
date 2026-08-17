@@ -1,78 +1,58 @@
+using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
-using UnityEditor.UIElements;
 using UniDecl.BuiltIn.Runtime.Core;
 using UniDecl.Editor.UIToolKit.Style;
+using UniDecl.BuiltIn.Runtime.Snapshot;
 using UITKStyle = UniDecl.UIToolKit.Runtime.UITKStyle;
 using W = UniDecl.BuiltIn.Runtime.Widgets;
 
 namespace UniDecl.Editor.UIToolKit.Renderers
 {
-    public class UIToolkitGradientFieldRenderer : IElementRenderer<W.GradientField, VisualElement>,
-        IElementUpdater<VisualElement>, IElementUpdater<W.GradientField, VisualElement>
+    public class UIToolkitGradientFieldRenderer : IElementRenderer<W.GradientField, VisualElement>
     {
-        public VisualElement Render(W.GradientField element, IElementRenderHost<VisualElement> manager, ElementState state)
+        public VisualElement Render(W.GradientField element, VisualElement existing, IElementRenderHost<VisualElement> manager, ElementState state)
         {
             if (element == null) return null;
+
+            if (existing is GradientField reused)
+            {
+                reused.SetValueWithoutNotify(element.Value);
+                return reused;
+            }
+
             var field = new GradientField(element.Label) { value = element.Value };
-            var scope = state?.Scope;
 
-            // Gradient 是引用类型，Unity GradientField 弹窗原地修改对象（prevRef == newRef）。
-            // 用 SnapshotBinding + CloneGradient 确保 Record/Undo 拿到的是独立副本。
-            // 必须用 ValueStep（走 Register setter）而非 ObjectDiffStep（不走 setter，VE 不会更新）。
-            var binding = new SnapshotBinding<Gradient>(scope, element.Key, CloneGradient(element.Value),
+            // Snapshot 绑定——用 CloneGradient 确保 Record/Undo 拿到的是独立副本。
+            var binding = new SnapshotBinding(state?.Scope, element.Key,
                 () => CloneGradient(element.Value),
-                v => { field.SetValueWithoutNotify(v); element.Value = v; });
+                (restore, current, changes) =>
+                {
+                    field.SetValueWithoutNotify((Gradient)restore);
+                    element.Value = (Gradient)restore;
+                    element.OnValueChanged?.Invoke((Gradient)restore);
+                });
 
-            // ChangeEvent 只更新值 + 转发事件，不 Commit 不 NotifyChanged。
-            // Gradient 的 Color Picker 是弹窗，拖拽期间持续触发 ChangeEvent，
-            // 在此处 Commit/NotifyChanged 会抢走弹窗焦点导致编辑中断。
             field.RegisterValueChangedCallback(evt =>
             {
-                element.Value = evt.newValue;
-                element.OnValueChanged?.Invoke(evt.newValue);
-                manager.Dispatch(new GradientFieldChangeEvent(element, evt.newValue, evt.previousValue));
-            });
-
-            // Blur 时才提交——关闭 Color Picker / 离开字段时产生一个 undo step。
-            // 不调 NotifyChanged——Gradient 的 Color Picker 是独立 popup，
-            // Rebuild 会干扰 popup 焦点。Gradient 字段通常不参与条件依赖（ShowIf 等）。
-            field.RegisterCallback<BlurEvent>(_ =>
-            {
+                element.Value = CloneGradient(evt.newValue);
+                element.OnValueChanged?.Invoke(element.Value);
+                manager.Dispatch(new GradientFieldChangeEvent(element, element.Value, evt.previousValue));
                 binding.Commit();
+                element.NotifyChanged();
             });
-
             UIToolkitStyleApplier.ApplyElementStyles(element, field);
             return field;
         }
 
-        /// <summary>
-        /// 深拷贝 Gradient——复制 colorKeys 和 alphaKeys 数组。
-        /// Gradient 是引用类型且 Unity 弹窗会原地修改，必须拷贝才能用于 ValueStep 快照。
-        /// </summary>
         private static Gradient CloneGradient(Gradient source)
         {
-            if (source == null) return new Gradient();
-            return new Gradient
-            {
-                colorKeys = (GradientColorKey[])source.colorKeys.Clone(),
-                alphaKeys = (GradientAlphaKey[])source.alphaKeys.Clone(),
-                mode = source.mode,
-            };
+            if (source == null) return null;
+            var copy = new Gradient();
+            copy.SetKeys(source.colorKeys, source.alphaKeys);
+            copy.mode = source.mode;
+            return copy;
         }
-
-        public bool TryUpdate(W.GradientField element, VisualElement existing, IElementRenderHost<VisualElement> manager, ElementState state)
-        {
-            if (existing is GradientField field)
-            {
-                field.SetValueWithoutNotify(element.Value);
-                return true;
-            }
-            return false;
-        }
-
-        public bool TryUpdate(IElement element, VisualElement existing, IElementRenderHost<VisualElement> manager, ElementState state)
-            => element is W.GradientField f && TryUpdate(f, existing, manager, state);
     }
 
     public struct GradientFieldChangeEvent

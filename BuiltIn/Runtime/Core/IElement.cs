@@ -21,16 +21,11 @@ namespace UniDecl.BuiltIn.Runtime.Core
     }
 
     /// <summary>
-    /// Scope 提供者——DOMTree 展开此元素的子树时，会自动 Push 此 Scope，
-    /// 让子元素的 ElementState 携带该 Scope。子树展开完毕后自动 Pop。
+    /// Scope 提供者标记——声明此元素的子树需要 Undo/Redo 作用域。
+    /// 仅作标记，实际 Scope 挂在 ElementState.Scope 上（由 Host 注入）。
     /// </summary>
-    public interface IScopeProvider : IElement
+    public interface IScopeProvider
     {
-        /// <summary>
-        /// 为子元素提供的 Undo/Redo 作用域。
-        /// 返回 null 表示当前不提供 Scope（DOMTree 会跳过 Push）。
-        /// </summary>
-        UndoScope Scope { get; }
     }
 
     public interface IElementComponent
@@ -52,7 +47,10 @@ namespace UniDecl.BuiltIn.Runtime.Core
         public new TState BuildState();
     }
 
-    public interface IContainerElement : IElement, IEnumerable
+    /// <summary>
+    /// 容器元素接口。继承 IScopeProvider 标记：容器的子树需要 Undo/Redo 作用域。
+    /// </summary>
+    public interface IContainerElement : IElement, IEnumerable, IScopeProvider
     {
         public IEnumerable<IElement> Children { get; }
         public void Add(IElement element);

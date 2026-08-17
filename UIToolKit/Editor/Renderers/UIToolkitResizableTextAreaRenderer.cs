@@ -1,75 +1,69 @@
-using UnityEngine;
 using UnityEngine.UIElements;
 using UniDecl.BuiltIn.Runtime.Core;
 using UniDecl.Editor.UIToolKit.Style;
+using UniDecl.BuiltIn.Runtime.Snapshot;
+using UITKStyle = UniDecl.UIToolKit.Runtime.UITKStyle;
 using W = UniDecl.BuiltIn.Runtime.Widgets;
 
 namespace UniDecl.Editor.UIToolKit.Renderers
 {
-    public class UIToolkitResizableTextAreaRenderer : IElementRenderer<W.ResizableTextArea, VisualElement>,
-        IElementUpdater<W.ResizableTextArea, VisualElement>
+    public class UIToolkitResizableTextAreaRenderer : IElementRenderer<W.ResizableTextArea, VisualElement>
     {
-        public VisualElement Render(W.ResizableTextArea element, IElementRenderHost<VisualElement> manager, ElementState state)
+        public VisualElement Render(W.ResizableTextArea element, VisualElement existing, IElementRenderHost<VisualElement> manager, ElementState state)
         {
             if (element == null) return null;
 
-            // ResizableTextArea doesn't exist in this Unity version; fallback to multiline TextField
-            var field = new TextField(element.Label) {
-                value = element.Value ?? "",
-                multiline = true
+            if (existing is UnityEngine.UIElements.TextField reused)
+            {
+                reused.SetValueWithoutNotify(element.Value ?? string.Empty);
+                return reused;
+            }
+
+            var field = new UnityEngine.UIElements.TextField(element.Label)
+            {
+                value = element.Value ?? string.Empty,
+                multiline = true,
+                isDelayed = true
             };
 
-            // Snapshot 绑定——Register setter + 提供 Commit() 方法
-            var binding = new SnapshotBinding<string>(state?.Scope, element.Key, element.Value ?? "",
-                () => element.Value,
-                v => { field.SetValueWithoutNotify(v ?? ""); element.Value = v; });
+            // Snapshot 绑定——连续输入型，Blur 时提交
+            var binding = new SnapshotBinding(state?.Scope, element.Key,
+                () => element.Value ?? string.Empty,
+                (restore, current, changes) =>
+                {
+                    field.SetValueWithoutNotify((string)restore);
+                    element.Value = (string)restore;
+                    element.OnValueChanged?.Invoke((string)restore, (string)current);
+                });
 
             field.RegisterValueChangedCallback(evt =>
             {
-                var oldValue = element.Value ?? "";
-                var newValue = evt.newValue ?? "";
-
-                element.Value = newValue;
-                element.OnValueChanged?.Invoke(newValue, oldValue);
-                manager.Dispatch(new ResizableTextAreaChangeEvent(element, newValue, oldValue));
+                element.Value = evt.newValue;
+                element.OnValueChanged?.Invoke(evt.newValue, evt.previousValue);
+                manager.Dispatch(new ResizableTextAreaChangeEvent(element, evt.newValue));
+                // isDelayed=true：ChangeEvent 仅在失焦/回车触发一次，即提交点
+                binding.Commit();
+                element.NotifyChanged();
             });
-
             field.RegisterCallback<BlurEvent>(_ =>
             {
                 binding.Commit();
-                element.OnCommit?.Invoke(element.Value ?? "");
-                element.NotifyChanged();
+                element.OnCommit?.Invoke(element.Value ?? string.Empty);
             });
-
             UIToolkitStyleApplier.ApplyElementStyles(element, field);
             return field;
         }
-
-        public bool TryUpdate(W.ResizableTextArea element, VisualElement existing, IElementRenderHost<VisualElement> manager, ElementState state)
-        {
-            if (existing is TextField textField)
-            {
-                textField.SetValueWithoutNotify(element.Value ?? "");
-                return true;
-            }
-            return false;
-        }
-
-        bool IElementUpdater<VisualElement>.TryUpdate(IElement element, VisualElement existing, IElementRenderHost<VisualElement> manager, ElementState state)
-            => element is W.ResizableTextArea rta && TryUpdate(rta, existing, manager, state);
     }
 
     public struct ResizableTextAreaChangeEvent
     {
         public W.ResizableTextArea Source { get; }
         public string NewValue { get; }
-        public string PreviousValue { get; }
 
-        public ResizableTextAreaChangeEvent(W.ResizableTextArea source, string newValue, string previousValue)
+        public ResizableTextAreaChangeEvent(W.ResizableTextArea source, string newValue)
         {
             Source = source;
             NewValue = newValue;
-            PreviousValue = previousValue;
         }
     }
 }

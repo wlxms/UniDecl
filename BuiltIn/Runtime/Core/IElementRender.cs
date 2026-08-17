@@ -49,7 +49,12 @@ namespace UniDecl.BuiltIn.Runtime.Core
     /// </summary>
     public interface IElementRender<TRenderResult> : IDisposable
     {
-        TRenderResult Render(IElement element, IElementRenderHost<TRenderResult> manager, ElementState state);
+        /// <summary>
+        /// 将元素投影到渲染结果。
+        /// existing 为该元素上次的渲染结果（首次为 default）。可复用则原地更新并返回 existing 本身，
+        /// 返回新对象则宿主替换缓存并触发渲染结果变更回调。
+        /// </summary>
+        TRenderResult Render(IElement element, TRenderResult existing, IElementRenderHost<TRenderResult> manager, ElementState state);
 
         /// <summary>
         /// 默认空实现。需要释放资源的 Renderer 重写此方法。
@@ -64,32 +69,12 @@ namespace UniDecl.BuiltIn.Runtime.Core
     /// </summary>
     public interface IElementRenderer<TElement, TRenderResult> : IElementRender<TRenderResult> where TElement : IElement
     {
-        TRenderResult Render(TElement element, IElementRenderHost<TRenderResult> manager, ElementState state);
+        /// <summary>
+        /// 将元素投影到渲染结果。existing 语义同 IElementRender&lt;TRenderResult&gt;.Render。
+        /// </summary>
+        TRenderResult Render(TElement element, TRenderResult existing, IElementRenderHost<TRenderResult> manager, ElementState state);
 
-        TRenderResult IElementRender<TRenderResult>.Render(IElement element, IElementRenderHost<TRenderResult> manager, ElementState state)
-            => Render((TElement)element, manager, state);
-    }
-
-    // ==== Updater 接口（diff 模式增量更新）====
-
-    /// <summary>
-    /// 泛型增量更新器接口（类型擦除）
-    /// 供渲染管线在不知道具体 TElement 时调用
-    /// </summary>
-    public interface IElementUpdater<TRenderResult>
-    {
-        bool TryUpdate(IElement element, TRenderResult existing,
-            IElementRenderHost<TRenderResult> manager, ElementState state);
-    }
-
-    /// <summary>
-    /// 泛型增量更新器接口
-    /// Renderer 可同时实现此接口，在 diff 模式下复用已有渲染结果
-    /// 返回 true 表示成功复用，返回 false 则框架回退到 Render()
-    /// </summary>
-    public interface IElementUpdater<TElement, TRenderResult> : IElementUpdater<TRenderResult> where TElement : IElement
-    {
-        bool TryUpdate(TElement element, TRenderResult existing,
-            IElementRenderHost<TRenderResult> manager, ElementState state);
+        TRenderResult IElementRender<TRenderResult>.Render(IElement element, TRenderResult existing, IElementRenderHost<TRenderResult> manager, ElementState state)
+            => Render((TElement)element, existing, manager, state);
     }
 }

@@ -1,72 +1,63 @@
-using System;
 using UnityEditor.UIElements;
+using System;
 using UnityEngine.UIElements;
 using UniDecl.BuiltIn.Runtime.Core;
 using UniDecl.Editor.UIToolKit.Style;
+using UniDecl.BuiltIn.Runtime.Snapshot;
 using UITKStyle = UniDecl.UIToolKit.Runtime.UITKStyle;
 using W = UniDecl.BuiltIn.Runtime.Widgets;
 
 namespace UniDecl.Editor.UIToolKit.Renderers
 {
-    public class UIToolkitEnumFlagsFieldRenderer : IElementRenderer<W.EnumFlagsField, VisualElement>,
-        IElementUpdater<VisualElement>, IElementUpdater<W.EnumFlagsField, VisualElement>
+    public class UIToolkitEnumFlagsFieldRenderer : IElementRenderer<W.EnumFlagsField, VisualElement>
     {
-        public VisualElement Render(W.EnumFlagsField element, IElementRenderHost<VisualElement> manager, ElementState state)
+        public VisualElement Render(W.EnumFlagsField element, VisualElement existing, IElementRenderHost<VisualElement> manager, ElementState state)
         {
             if (element == null) return null;
 
-            var enumType = element.EnumType ?? typeof(int);
-            var enumValues = Enum.GetValues(enumType);
-            var currentValue = enumValues.GetValue(element.Value);
+            if (existing is EnumFlagsField reused)
+            {
+                reused.SetValueWithoutNotify((Enum)Enum.ToObject(element.EnumType, element.Value));
+                return reused;
+            }
 
-            var field = new EnumFlagsField(element.Label, (Enum)currentValue);
+            var field = new EnumFlagsField(element.Label,
+                (Enum)Enum.ToObject(element.EnumType, element.Value));
 
             // Snapshot 绑定——瞬时选择型，ChangeEvent 即提交
-            var binding = new SnapshotBinding<int>(state?.Scope, element.Key, element.Value,
+            var binding = new SnapshotBinding(state?.Scope, element.Key,
                 () => element.Value,
-                v =>
+                (restore, current, changes) =>
                 {
-                    var ev = enumValues.GetValue(v);
-                    field.SetValueWithoutNotify((Enum)ev);
+                    var v = (int)restore;
+                    field.SetValueWithoutNotify((Enum)Enum.ToObject(element.EnumType, v));
                     element.Value = v;
+                    element.OnValueChanged?.Invoke(v);
                 });
 
-            field.RegisterValueChangedCallback<Enum>(evt =>
+            field.RegisterValueChangedCallback(evt =>
             {
-                element.Value = Convert.ToInt32(evt.newValue);
-                element.OnValueChanged?.Invoke(element.Value);
-                manager.Dispatch(new EnumFlagsFieldChangeEvent(element, element.Value));
-                binding.Commit();  // 瞬时型：ChangeEvent 即提交
+                var newValue = Convert.ToInt32(evt.newValue);
+                element.Value = newValue;
+                element.OnValueChanged?.Invoke(newValue);
+                manager.Dispatch(new EnumFlagsFieldChangeEvent(element, newValue));
+                binding.Commit();
                 element.NotifyChanged();
             });
-
             UIToolkitStyleApplier.ApplyElementStyles(element, field);
             return field;
         }
-
-        public bool TryUpdate(W.EnumFlagsField element, VisualElement existing, IElementRenderHost<VisualElement> manager, ElementState state)
-        {
-            if (existing is EnumFlagsField field)
-            {
-                field.SetValueWithoutNotify((Enum)Enum.ToObject(field.value?.GetType() ?? typeof(Enum), element.Value));
-                return true;
-            }
-            return false;
-        }
-
-        public bool TryUpdate(IElement element, VisualElement existing, IElementRenderHost<VisualElement> manager, ElementState state)
-            => element is W.EnumFlagsField f && TryUpdate(f, existing, manager, state);
     }
 
     public struct EnumFlagsFieldChangeEvent
     {
         public W.EnumFlagsField Source { get; }
-        public int Value { get; }
-        
-        public EnumFlagsFieldChangeEvent(W.EnumFlagsField source, int value)
+        public int NewValue { get; }
+
+        public EnumFlagsFieldChangeEvent(W.EnumFlagsField source, int newValue)
         {
             Source = source;
-            Value = value;
+            NewValue = newValue;
         }
     }
 }

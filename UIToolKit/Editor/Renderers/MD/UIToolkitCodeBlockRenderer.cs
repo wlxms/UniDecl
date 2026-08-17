@@ -18,7 +18,7 @@ namespace UniDecl.Editor.UIToolKit.Renderers.MD
     {
         private const string DefaultCodeColor = "#d4d4d4";
 
-        public VisualElement Render(W.CodeBlock element, IElementRenderHost<VisualElement> manager, ElementState state)
+        public VisualElement Render(W.CodeBlock element, VisualElement existing, IElementRenderHost<VisualElement> manager, ElementState state)
         {
             if (element == null) return null;
 

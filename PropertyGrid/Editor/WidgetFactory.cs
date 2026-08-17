@@ -60,7 +60,6 @@ namespace UniDecl.PropertyGrid.Editor
             else { Debug.LogWarning($"[PropertyGrid] No TypeRenderer for '{a.PropertyType.Name}', field='{a.DisplayName}'. Using Fallback."); editor = FieldTypeRendererRegistry.Fallback.CreateWidget(a, ctx); }
             if (editor == null) return null;
             if (editor is Element el) el.WithKey($"insp_{a.SourceField?.Name ?? a.DisplayName}");
-            if (editor is PropertyGridElement ne) ne.HostObject = ctx.PropertyGridElement?.HostObject;
             var pf = new PropertyField(label) { Editor = editor, Accessor = a };
             // EnableIf 处理（P1-2 修复）
             ApplyEnableIf(attrs, ctx, pf);
