@@ -17,6 +17,26 @@ namespace UniDecl.BuiltIn.Runtime.Core
         private readonly Dictionary<IElement, IStateManager> _containerStateManagers = new();
         private readonly Dictionary<string, DOMNode> _anchorToNode = new();
         private readonly Stack<UndoScope> _scopeStack = new();
+
+        /// <summary>
+        /// 节点从树中移除时触发（替换/删除/全树清空）。
+        /// 订阅者在内部判断 node.Element 类型（如 IContainerElement）执行资源清理。
+        /// 注意：触发时节点已摘除，Children/Parent 不可依赖；容器实例被替换但子树复用时（ReuseNode）不触发。
+        /// </summary>
+        public event Action<DOMNode> NodeRemoved;
+
+        /// <summary>
+        /// 新节点进入树时触发（初始构建或 Diff 新建）。
+        /// 触发时 ElementState 已挂载（node.State 可用）但子树尚未构建；
+        /// 无 Key/无 ElementState 的节点不触发。
+        /// </summary>
+        public event Action<DOMNode> NodeCreated;
+
+        /// <summary>
+        /// 节点被复用、新元素实例接管时触发（Diff 匹配且类型相同）。
+        /// 触发时新元素已登记并替换旧元素，但子节点 diff 尚未进行。
+        /// </summary>
+        public event Action<DOMNode> NodeReused;
         
         private IElementRenderHostBase _manager;
         private ContextStack _contextStack;
@@ -154,11 +174,15 @@ namespace UniDecl.BuiltIn.Runtime.Core
             var elementState = GetOrCreateElementState(element);
             if (elementState != null)
             {
-                // 从 ScopeStack 注入当前 Scope（如果有）
-                if (_scopeStack.Count > 0)
+                // 容器（IScopeProvider）拥有自己的域（Host 注入），不继承父域；叶子继承 ScopeStack 栈顶
+                if (_scopeStack.Count > 0 && element is not IScopeProvider)
                     elementState.Scope ??= _scopeStack.Peek();
 
                 node.State = elementState;
+
+                // 节点创建完成（ElementState 已挂载、子树尚未构建），
+                // 供 Host 注入 Scope 等跨渲染数据
+                NodeCreated?.Invoke(node);
             }
 
             if (element is IStatefulElement sf)
@@ -166,11 +190,11 @@ namespace UniDecl.BuiltIn.Runtime.Core
                 RestoreOrBuildState(sf, elementState);
             }
 
-            // IScopeProvider：展开子树前 Push，让所有子元素（含容器子树）获得 Scope。
-            // 统一在 ProcessElement 层处理，不限于 expander 路径——容器也能提供 Scope。
-            var scopeProvider = element as IScopeProvider;
-            if (scopeProvider?.Scope != null)
-                PushScope(scopeProvider.Scope);
+            // 容器（IScopeProvider 标记）：Push 自己的 Scope，
+            // 让所有子元素（含容器子树）的 Scope 由此继承。
+            var childrenScope = element is IScopeProvider ? node.State?.Scope : null;
+            if (childrenScope != null)
+                PushScope(childrenScope);
             try
             {
                 switch (element)
@@ -191,7 +215,7 @@ namespace UniDecl.BuiltIn.Runtime.Core
             }
             finally
             {
-                if (scopeProvider?.Scope != null)
+                if (childrenScope != null)
                     PopScope();
             }
         }
@@ -521,6 +545,7 @@ namespace UniDecl.BuiltIn.Runtime.Core
                 }
                 n.Parent = null;
                 n.Children.Clear();
+                NotifyNodeRemoved(n);
             }
 
             var removeSet = new HashSet<DOMNode>(nodesToRemove);
@@ -635,6 +660,9 @@ namespace UniDecl.BuiltIn.Runtime.Core
                 _elementToNode.Remove(oldElement);
                 UnsubscribeNodeListeners(node);
                 UnregisterAnchor(node);
+                // 容器实例被替换但子树复用：仅清理旧 StateManager，不触发 NodeRemoved
+                if (oldElement is IContainerElement oldContainer)
+                    _containerStateManagers.Remove(oldContainer);
             }
 
             node.Element = newElement;
@@ -648,6 +676,8 @@ namespace UniDecl.BuiltIn.Runtime.Core
                 _elementToNode[newElement] = node;
                 SubscribeNodeListeners(node);
                 RegisterAnchor(node);
+
+                NodeReused?.Invoke(node);
 
                 // 状态恢复
                 if (newElement is IStatefulElement sf)
@@ -697,6 +727,7 @@ namespace UniDecl.BuiltIn.Runtime.Core
 
             node.Parent = null;
             node.Children.Clear();
+            NotifyNodeRemoved(node);
         }
 
         private void CollectAndCleanupDescendants(DOMNode node)
@@ -717,7 +748,13 @@ namespace UniDecl.BuiltIn.Runtime.Core
                         _containerStateManagers.Remove(container);
                 }
                 _allNodes.Remove(child);
+                NotifyNodeRemoved(child);
             }
+        }
+
+        private void NotifyNodeRemoved(DOMNode node)
+        {
+            NodeRemoved?.Invoke(node);
         }
 
         /// <summary>
@@ -760,6 +797,8 @@ namespace UniDecl.BuiltIn.Runtime.Core
         /// </summary>
         public void Clear()
         {
+            // 先收集节点列表——通知回调可能在通知期间访问树
+            var removed = new List<DOMNode>(_allNodes);
             foreach (var node in _allNodes)
             {
                 UnsubscribeNodeListeners(node);
@@ -772,6 +811,9 @@ namespace UniDecl.BuiltIn.Runtime.Core
             _elementToNode.Clear();
             _containerStateManagers.Clear();
             _anchorToNode.Clear();
+
+            foreach (var node in removed)
+                NotifyNodeRemoved(node);
         }
     }
 

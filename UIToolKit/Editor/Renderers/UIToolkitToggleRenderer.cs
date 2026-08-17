@@ -1,53 +1,48 @@
 using UnityEngine.UIElements;
 using UniDecl.BuiltIn.Runtime.Core;
-using W = UniDecl.BuiltIn.Runtime.Widgets;
 using UniDecl.Editor.UIToolKit.Style;
+using UniDecl.BuiltIn.Runtime.Snapshot;
+using UITKStyle = UniDecl.UIToolKit.Runtime.UITKStyle;
+using W = UniDecl.BuiltIn.Runtime.Widgets;
 
 namespace UniDecl.Editor.UIToolKit.Renderers
 {
-    public class UIToolkitToggleRenderer : IElementRenderer<W.Toggle, VisualElement>,
-        IElementUpdater<VisualElement>, IElementUpdater<W.Toggle, VisualElement>
+    public class UIToolkitToggleRenderer : IElementRenderer<W.Toggle, VisualElement>
     {
-        public VisualElement Render(W.Toggle element, IElementRenderHost<VisualElement> manager, ElementState state)
+        public VisualElement Render(W.Toggle element, VisualElement existing, IElementRenderHost<VisualElement> manager, ElementState state)
         {
             if (element == null) return null;
 
-            var toggle = new UnityEngine.UIElements.Toggle(element.Label) { value = element.Value };
+            if (existing is Toggle reused)
+            {
+                reused.SetValueWithoutNotify(element.Value);
+                return reused;
+            }
+
+            var toggle = new Toggle(element.Label) { value = element.Value };
 
             // Snapshot 绑定——瞬时选择型，ChangeEvent 即提交
-            var binding = new SnapshotBinding<bool>(state?.Scope, element.Key, element.Value,
+            var binding = new SnapshotBinding(state?.Scope, element.Key,
                 () => element.Value,
-                v => { toggle.SetValueWithoutNotify(v); element.Value = v; });
+                (restore, current, changes) =>
+                {
+                    toggle.SetValueWithoutNotify((bool)restore);
+                    element.Value = (bool)restore;
+                    element.OnValueChanged?.Invoke((bool)restore);
+                });
 
-            UIToolkitStyleApplier.ApplyElementStyles(element, toggle);
-            RegisterToggleCallbacks(toggle, element, manager, binding);
-            return toggle;
-        }
-
-        public bool TryUpdate(W.Toggle element, VisualElement existing, IElementRenderHost<VisualElement> manager, ElementState state)
-        {
-            if (existing is UnityEngine.UIElements.Toggle ve)
-            {
-                // SetValueWithoutNotify 避免触发 ChangeEvent 导致误 Commit（外部更新不应进 Undo 栈）
-                ve.SetValueWithoutNotify(element.Value);
-                return true;
-            }
-            return false;
-        }
-
-        public bool TryUpdate(IElement element, VisualElement existing, IElementRenderHost<VisualElement> manager, ElementState state)
-            => element is W.Toggle toggle && TryUpdate(toggle, existing, manager, state);
-
-        private static void RegisterToggleCallbacks(UnityEngine.UIElements.Toggle toggle, W.Toggle element, IElementRenderHost<VisualElement> manager, SnapshotBinding<bool> binding)
-        {
             toggle.RegisterValueChangedCallback(evt =>
             {
+                if (!ReferenceEquals(evt.target, toggle)) return; // 子控件 ChangeEvent 冒泡不处理
                 element.Value = evt.newValue;
                 element.OnValueChanged?.Invoke(evt.newValue);
-                manager.Dispatch(new ToggleChangeEvent(element, evt.newValue));
-                binding.Commit();  // 瞬时型：ChangeEvent 即提交
+                manager.Dispatch(new ToggleChangeEvent(element, evt.newValue, evt.previousValue));
+                binding.BreakMerge(); // 离散点击：每次独立 step
+                binding.Commit();
                 element.NotifyChanged();
             });
+            UIToolkitStyleApplier.ApplyElementStyles(element, toggle);
+            return toggle;
         }
     }
 
@@ -55,6 +50,13 @@ namespace UniDecl.Editor.UIToolKit.Renderers
     {
         public W.Toggle Source { get; }
         public bool NewValue { get; }
-        public ToggleChangeEvent(W.Toggle source, bool newValue) { Source = source; NewValue = newValue; }
+        public bool PreviousValue { get; }
+
+        public ToggleChangeEvent(W.Toggle source, bool newValue, bool previousValue)
+        {
+            Source = source;
+            NewValue = newValue;
+            PreviousValue = previousValue;
+        }
     }
 }

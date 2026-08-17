@@ -2,7 +2,9 @@ using System;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
+using UniDecl.BuiltIn.Editor.Snapshot;
 using UniDecl.BuiltIn.Runtime.Core;
+using UniDecl.BuiltIn.Runtime.Snapshot;
 using UniDecl.BuiltIn.Runtime.Widgets;
 using UniDecl.BuiltIn.Runtime.Widgets.MD;
 using UniDecl.Editor.UIToolKit;
@@ -267,7 +269,6 @@ namespace UniDecl.PropertyGrid.Editor.Examples
     {
         private UIToolkitRenderManager _manager;
         private PropertyGridShowcase _config;
-        private PropertyGridElement _propertyGridElement;
 
         [MenuItem("Window/UniDecl/PropertyGrid Example")]
         [MenuItem("Window/UniDecl/PropertyGrid Feature Showcase")]
@@ -280,7 +281,8 @@ namespace UniDecl.PropertyGrid.Editor.Examples
         {
             _config = new PropertyGridShowcase();
 
-            _manager = new UIToolkitRenderManager();
+            // 注入 EditorSnapshotManager：PropertyGrid 的 Undo/Redo 由 Host 自动接线
+            _manager = new UIToolkitRenderManager(new EditorSnapshotManager(new SnapshotManager()));
             var root = new Panel
             {
                 new VerticalLayout
@@ -291,8 +293,7 @@ namespace UniDecl.PropertyGrid.Editor.Examples
                     new Divider(),
                     new ScrollView
                     {
-                        (_propertyGridElement = new PropertyGridElement(_config) { HostObject = this })
-                            .WithKey("feature_showcase_propertygrid"),
+                        new PropertyGridElement(_config).WithKey("feature_showcase_propertygrid"),
                     },
                 },
             };
@@ -304,11 +305,6 @@ namespace UniDecl.PropertyGrid.Editor.Examples
 
         private void OnDestroy()
         {
-            if (_propertyGridElement != null)
-            {
-                PropertyGridModule.ReleaseManager(_propertyGridElement);
-                _propertyGridElement = null;
-            }
             _manager = null;
         }
     }

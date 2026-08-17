@@ -7,7 +7,7 @@ namespace UniDecl.Editor.UIToolKit.Renderers
 {
     public class UIToolkitToolbarRenderer : IElementRenderer<W.Toolbar, VisualElement>
     {
-        public VisualElement Render(W.Toolbar element, IElementRenderHost<VisualElement> manager, ElementState state)
+        public VisualElement Render(W.Toolbar element, VisualElement existing, IElementRenderHost<VisualElement> manager, ElementState state)
         {
             if (element == null) return null;
 

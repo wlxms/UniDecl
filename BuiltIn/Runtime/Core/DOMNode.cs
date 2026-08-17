@@ -49,12 +49,6 @@ namespace UniDecl.BuiltIn.Runtime.Core
         private bool _hasRenderResult;
         private TRenderResult _renderResult;
 
-        /// <summary>
-        /// 该节点渲染结果在父容器 VE 中的顺序 index。
-        /// 组织 VE 时由渲染宿主记录，重建替换 VE 时用于插回原位。
-        /// </summary>
-        public int RenderIndex { get; set; } = -1;
-
         public bool HasRenderResult => _hasRenderResult;
 
         public TRenderResult RenderResult

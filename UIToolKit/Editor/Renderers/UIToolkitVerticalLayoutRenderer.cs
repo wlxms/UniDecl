@@ -7,7 +7,7 @@ namespace UniDecl.Editor.UIToolKit.Renderers
 {
     public class UIToolkitVerticalLayoutRenderer : IElementRenderer<VerticalLayout, VisualElement>
     {
-        public VisualElement Render(VerticalLayout element, IElementRenderHost<VisualElement> manager, ElementState state)
+        public VisualElement Render(VerticalLayout element, VisualElement existing, IElementRenderHost<VisualElement> manager, ElementState state)
         {
             if (element == null) return null;
 

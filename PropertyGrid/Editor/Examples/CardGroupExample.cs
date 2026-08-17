@@ -1,6 +1,8 @@
 using System;
 using System.Diagnostics;
+using UniDecl.BuiltIn.Editor.Snapshot;
 using UniDecl.BuiltIn.Runtime.Core;
+using UniDecl.BuiltIn.Runtime.Snapshot;
 using UniDecl.BuiltIn.Runtime.Widgets;
 using UniDecl.Editor.UIToolKit;
 using UniDecl.PropertyGrid.Editor;
@@ -133,7 +135,7 @@ namespace UniDecl.PropertyGrid.Editor.Examples
 
         private void CreateGUI()
         {
-            _manager = new UIToolkitRenderManager();
+            _manager = new UIToolkitRenderManager(new EditorSnapshotManager(new SnapshotManager()));
             _manager.RegisterStyleSheet(Resources.Load<UnityEngine.UIElements.StyleSheet>("Themes/DefaultStyle"));
             Rebuild();
         }

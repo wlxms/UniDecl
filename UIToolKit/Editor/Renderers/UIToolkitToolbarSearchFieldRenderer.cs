@@ -1,61 +1,63 @@
+using UnityEditor.UIElements;
 using UnityEngine.UIElements;
 using UniDecl.BuiltIn.Runtime.Core;
-using W = UniDecl.BuiltIn.Runtime.Widgets;
 using UniDecl.Editor.UIToolKit.Style;
+using UniDecl.BuiltIn.Runtime.Snapshot;
+using UITKStyle = UniDecl.UIToolKit.Runtime.UITKStyle;
+using W = UniDecl.BuiltIn.Runtime.Widgets;
 
 namespace UniDecl.Editor.UIToolKit.Renderers
 {
-    public class UIToolkitToolbarSearchFieldRenderer : IElementRenderer<W.ToolbarSearchField, VisualElement>,
-        IElementUpdater<VisualElement>, IElementUpdater<W.ToolbarSearchField, VisualElement>
+    public class UIToolkitToolbarSearchFieldRenderer : IElementRenderer<W.ToolbarSearchField, VisualElement>
     {
-        public VisualElement Render(W.ToolbarSearchField element, IElementRenderHost<VisualElement> manager, ElementState state)
+        public VisualElement Render(W.ToolbarSearchField element, VisualElement existing, IElementRenderHost<VisualElement> manager, ElementState state)
         {
             if (element == null) return null;
 
-            var searchField = new UnityEditor.UIElements.ToolbarSearchField();
+            if (existing is ToolbarSearchField reused)
+            {
+                reused.SetValueWithoutNotify(element.Value ?? string.Empty);
+                return reused;
+            }
 
-            // Snapshot 绑定——Register setter + 提供 Commit() 方法
-            var binding = new SnapshotBinding<string>(state?.Scope, element.Key, element.Value ?? "",
-                () => element.Value,
-                v => { searchField.SetValueWithoutNotify(v ?? ""); element.Value = v; });
+            var field = new ToolbarSearchField { value = element.Value ?? string.Empty };
 
-            searchField.RegisterCallback<ChangeEvent<string>>(evt =>
+            // Snapshot 绑定——连续输入型，Blur 时提交
+            var binding = new SnapshotBinding(state?.Scope, element.Key,
+                () => element.Value ?? string.Empty,
+                (restore, current, changes) =>
+                {
+                    field.SetValueWithoutNotify((string)restore);
+                    element.Value = (string)restore;
+                    element.OnValueChanged?.Invoke((string)restore);
+                });
+
+            field.RegisterValueChangedCallback(evt =>
             {
                 element.Value = evt.newValue;
                 element.OnValueChanged?.Invoke(evt.newValue);
                 manager.Dispatch(new ToolbarSearchFieldChangeEvent(element, evt.newValue));
                 element.NotifyChanged();
             });
-
-            searchField.RegisterCallback<BlurEvent>(_ =>
+            field.RegisterCallback<BlurEvent>(_ =>
             {
                 binding.Commit();
-                element.OnCommit?.Invoke(element.Value);
-                element.NotifyChanged();
+                element.OnCommit?.Invoke(element.Value ?? string.Empty);
             });
-
-            UIToolkitStyleApplier.ApplyElementStyles(element, searchField);
-            return searchField;
+            UIToolkitStyleApplier.ApplyElementStyles(element, field);
+            return field;
         }
-
-        public bool TryUpdate(W.ToolbarSearchField element, VisualElement existing, IElementRenderHost<VisualElement> manager, ElementState state)
-        {
-            if (existing is UnityEditor.UIElements.ToolbarSearchField field)
-            {
-                field.SetValueWithoutNotify(element.Value ?? "");
-                return true;
-            }
-            return false;
-        }
-
-        public bool TryUpdate(IElement element, VisualElement existing, IElementRenderHost<VisualElement> manager, ElementState state)
-            => element is W.ToolbarSearchField f && TryUpdate(f, existing, manager, state);
     }
 
     public struct ToolbarSearchFieldChangeEvent
     {
         public W.ToolbarSearchField Source { get; }
         public string NewValue { get; }
-        public ToolbarSearchFieldChangeEvent(W.ToolbarSearchField source, string newValue) { Source = source; NewValue = newValue; }
+
+        public ToolbarSearchFieldChangeEvent(W.ToolbarSearchField source, string newValue)
+        {
+            Source = source;
+            NewValue = newValue;
+        }
     }
 }

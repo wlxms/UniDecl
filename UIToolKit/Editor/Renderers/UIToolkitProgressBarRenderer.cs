@@ -8,7 +8,7 @@ namespace UniDecl.Editor.UIToolKit.Renderers
 {
     public class UIToolkitProgressBarRenderer : IElementRenderer<W.ProgressBar, VisualElement>
     {
-        public VisualElement Render(W.ProgressBar element, IElementRenderHost<VisualElement> manager, ElementState state)
+        public VisualElement Render(W.ProgressBar element, VisualElement existing, IElementRenderHost<VisualElement> manager, ElementState state)
         {
             if (element == null) return null;
 

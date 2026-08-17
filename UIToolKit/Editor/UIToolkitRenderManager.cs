@@ -3,6 +3,7 @@ using UnityEditor;
 using VisualElement = UnityEngine.UIElements.VisualElement;
 using UniDecl.BuiltIn.Runtime.Contexts;
 using UniDecl.BuiltIn.Runtime.Core;
+using UniDecl.BuiltIn.Runtime.Snapshot;
 using UniDecl.BuiltIn.Runtime.Widgets;
 using UniDecl.BuiltIn.Runtime.Widgets.MD;
 using UniDecl.BuiltIn.Runtime.Widgets.UE;
@@ -15,8 +16,21 @@ namespace UniDecl.Editor.UIToolKit
     public class UIToolkitRenderManager : ElementRenderHost<VisualElement>
     {
         private readonly List<UnityEngine.UIElements.StyleSheet> _styleSheets = new List<UnityEngine.UIElements.StyleSheet>();
+        private VisualElement _rootVE;
 
-        public UIToolkitRenderManager()
+        /// <summary>
+        /// 无 Snapshot 能力的默认构造（满足 UIToolkitHostEditorWindow 的 new() 约束）。
+        /// 需要 Undo/Redo 时使用带参构造注入 SnapshotManager。
+        /// </summary>
+        public UIToolkitRenderManager() : this(null)
+        {
+        }
+
+        /// <summary>
+        /// 可选注入 SnapshotManager（编辑器环境通常注入 EditorSnapshotManager 以接入 Unity Undo）。
+        /// 不注入则无 Undo/Redo 能力。
+        /// </summary>
+        public UIToolkitRenderManager(ISnapshotManager snapshotManager) : base(snapshotManager)
         {
             LoadStyleSheetFromResources("Themes/DefaultStyle");
         }
@@ -118,14 +132,14 @@ namespace UniDecl.Editor.UIToolKit
         {
             if (rootElement == null) return null;
             BuildDOM(rootElement);
-            var root = RenderElement(rootElement);
-            if (root != null)
+            _rootVE = RenderElement(rootElement);
+            if (_rootVE != null)
             {
-                root.AddToClassList("ud-root");
+                _rootVE.AddToClassList("ud-root");
                 foreach (var ss in _styleSheets)
-                    root.styleSheets.Add(ss);
+                    _rootVE.styleSheets.Add(ss);
             }
-            return root;
+            return _rootVE;
         }
 
         protected override void ScheduleFlush()
@@ -137,6 +151,15 @@ namespace UniDecl.Editor.UIToolKit
         {
             if (oldVE == null || newVE == null) return;
             if (ReferenceEquals(oldVE, newVE)) return;
+
+            // root 重建时重挂 ud-root 与样式表（USS 只挂在 root 上，替换后需恢复）
+            if (ReferenceEquals(oldVE, _rootVE))
+            {
+                _rootVE = newVE;
+                newVE.AddToClassList("ud-root");
+                foreach (var ss in _styleSheets)
+                    newVE.styleSheets.Add(ss);
+            }
 
             var parentVE = oldVE.parent;
             if (parentVE == null) return;

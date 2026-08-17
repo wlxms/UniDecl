@@ -12,7 +12,7 @@ namespace UniDecl.Editor.UIToolKit.Renderers.MD
     /// </summary>
     public class UIToolkitBlockquoteRenderer : IElementRenderer<W.Blockquote, VisualElement>
     {
-        public VisualElement Render(W.Blockquote element, IElementRenderHost<VisualElement> manager, ElementState state)
+        public VisualElement Render(W.Blockquote element, VisualElement existing, IElementRenderHost<VisualElement> manager, ElementState state)
         {
             if (element == null) return null;
 

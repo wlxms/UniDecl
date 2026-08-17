@@ -8,7 +8,7 @@ namespace UniDecl.Editor.UIToolKit.Renderers
 {
     public class UIToolkitPanelRenderer : IElementRenderer<Panel, VisualElement>
     {
-        public VisualElement Render(Panel element, IElementRenderHost<VisualElement> manager, ElementState state)
+        public VisualElement Render(Panel element, VisualElement existing, IElementRenderHost<VisualElement> manager, ElementState state)
         {
             if (element == null) return null;
 

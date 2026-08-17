@@ -1,23 +1,37 @@
+using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
 using UniDecl.BuiltIn.Runtime.Core;
 using UniDecl.Editor.UIToolKit.Style;
+using UniDecl.BuiltIn.Runtime.Snapshot;
+using UITKStyle = UniDecl.UIToolKit.Runtime.UITKStyle;
 using W = UniDecl.BuiltIn.Runtime.Widgets;
 
 namespace UniDecl.Editor.UIToolKit.Renderers
 {
-    public class UIToolkitVector2IntFieldRenderer : IElementRenderer<W.Vector2IntField, VisualElement>,
-        IElementUpdater<VisualElement>, IElementUpdater<W.Vector2IntField, VisualElement>
+    public class UIToolkitVector2IntFieldRenderer : IElementRenderer<W.Vector2IntField, VisualElement>
     {
-        public VisualElement Render(W.Vector2IntField element, IElementRenderHost<VisualElement> manager, ElementState state)
+        public VisualElement Render(W.Vector2IntField element, VisualElement existing, IElementRenderHost<VisualElement> manager, ElementState state)
         {
             if (element == null) return null;
+
+            if (existing is Vector2IntField reused)
+            {
+                reused.SetValueWithoutNotify(element.Value);
+                return reused;
+            }
+
             var field = new Vector2IntField(element.Label) { value = element.Value };
 
-            // Snapshot 绑定——瞬时选择型，Commit 在 ChangeEvent 回调里调用
-            var binding = new SnapshotBinding<Vector2Int>(state?.Scope, element.Key, element.Value,
+            // Snapshot 绑定——瞬时型，ChangeEvent 即提交
+            var binding = new SnapshotBinding(state?.Scope, element.Key,
                 () => element.Value,
-                v => { field.SetValueWithoutNotify(v); element.Value = v; });
+                (restore, current, changes) =>
+                {
+                    field.SetValueWithoutNotify((Vector2Int)restore);
+                    element.Value = (Vector2Int)restore;
+                    element.OnValueChanged?.Invoke((Vector2Int)restore);
+                });
 
             field.RegisterValueChangedCallback(evt =>
             {
@@ -30,19 +44,6 @@ namespace UniDecl.Editor.UIToolKit.Renderers
             UIToolkitStyleApplier.ApplyElementStyles(element, field);
             return field;
         }
-
-        public bool TryUpdate(W.Vector2IntField element, VisualElement existing, IElementRenderHost<VisualElement> manager, ElementState state)
-        {
-            if (existing is Vector2IntField field)
-            {
-                field.SetValueWithoutNotify(element.Value);
-                return true;
-            }
-            return false;
-        }
-
-        public bool TryUpdate(IElement element, VisualElement existing, IElementRenderHost<VisualElement> manager, ElementState state)
-            => element is W.Vector2IntField f && TryUpdate(f, existing, manager, state);
     }
 
     public struct Vector2IntFieldChangeEvent

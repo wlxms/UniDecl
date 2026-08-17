@@ -8,7 +8,7 @@ namespace UniDecl.Editor.UIToolKit.Renderers.UE
 {
     public class UIToolkitUeCardRenderer : IElementRenderer<WUE.UeCard, VisualElement>
     {
-        public VisualElement Render(WUE.UeCard element, IElementRenderHost<VisualElement> manager, ElementState state)
+        public VisualElement Render(WUE.UeCard element, VisualElement existing, IElementRenderHost<VisualElement> manager, ElementState state)
         {
             if (element == null) return null;
 

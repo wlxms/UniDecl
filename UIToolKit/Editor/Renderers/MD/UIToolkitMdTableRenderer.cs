@@ -16,7 +16,7 @@ namespace UniDecl.Editor.UIToolKit.Renderers.MD
     /// </summary>
     public class UIToolkitMdTableRenderer : IElementRenderer<W.MdTable, VisualElement>
     {
-        public VisualElement Render(W.MdTable element, IElementRenderHost<VisualElement> manager, ElementState state)
+        public VisualElement Render(W.MdTable element, VisualElement existing, IElementRenderHost<VisualElement> manager, ElementState state)
         {
             if (element == null) return null;
 

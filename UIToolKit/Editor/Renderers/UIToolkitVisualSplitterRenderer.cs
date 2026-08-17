@@ -7,7 +7,7 @@ namespace UniDecl.Editor.UIToolKit.Renderers
 {
     public class UIToolkitVisualSplitterRenderer : IElementRenderer<W.VisualSplitter, VisualElement>
     {
-        public VisualElement Render(W.VisualSplitter element, IElementRenderHost<VisualElement> manager, ElementState state)
+        public VisualElement Render(W.VisualSplitter element, VisualElement existing, IElementRenderHost<VisualElement> manager, ElementState state)
         {
             if (element == null) return null;
 

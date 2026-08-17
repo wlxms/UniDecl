@@ -15,7 +15,7 @@ namespace UniDecl.Editor.UIToolKit.Renderers
         IElementRenderer<W.HorizontalPaneSplitView, VisualElement>,
         IElementRenderer<W.VerticalPaneSplitView, VisualElement>
     {
-        public VisualElement Render(W.PaneSplitView element, IElementRenderHost<VisualElement> manager, ElementState state)
+        public VisualElement Render(W.PaneSplitView element, VisualElement existing, IElementRenderHost<VisualElement> manager, ElementState state)
         {
             if (element == null) return null;
 
@@ -95,13 +95,13 @@ namespace UniDecl.Editor.UIToolKit.Renderers
             if (opt.FlexShrink.HasValue) pane.style.flexShrink = opt.FlexShrink.Value;
         }
 
-        VisualElement IElementRender<VisualElement>.Render(IElement element, IElementRenderHost<VisualElement> manager, ElementState state)
-            => Render((W.PaneSplitView)element, manager, state);
+        VisualElement IElementRender<VisualElement>.Render(IElement element, VisualElement existing, IElementRenderHost<VisualElement> manager, ElementState state)
+            => Render((W.PaneSplitView)element, existing, manager, state);
 
-        VisualElement IElementRenderer<W.HorizontalPaneSplitView, VisualElement>.Render(W.HorizontalPaneSplitView element, IElementRenderHost<VisualElement> manager, ElementState state)
-            => Render(element, manager, state);
+        VisualElement IElementRenderer<W.HorizontalPaneSplitView, VisualElement>.Render(W.HorizontalPaneSplitView element, VisualElement existing, IElementRenderHost<VisualElement> manager, ElementState state)
+            => Render(element, existing, manager, state);
 
-        VisualElement IElementRenderer<W.VerticalPaneSplitView, VisualElement>.Render(W.VerticalPaneSplitView element, IElementRenderHost<VisualElement> manager, ElementState state)
-            => Render(element, manager, state);
+        VisualElement IElementRenderer<W.VerticalPaneSplitView, VisualElement>.Render(W.VerticalPaneSplitView element, VisualElement existing, IElementRenderHost<VisualElement> manager, ElementState state)
+            => Render(element, existing, manager, state);
     }
 }

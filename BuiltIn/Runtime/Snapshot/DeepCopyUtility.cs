@@ -5,7 +5,7 @@ using System.Runtime.Serialization;
 namespace UniDecl.BuiltIn.Runtime.Snapshot
 {
     /// <summary>
-    /// 深拷贝工具——为 ObjectDiffStep 提供对象字段的深拷贝和恢复能力
+    /// 深拷贝工具——为 List/Dict 集合整体快照提供元素深拷贝能力。
     ///
     /// 已知限制：Add+Remove 树回溯模式下，同一对象被多个字段引用时（DAG），
     /// 深拷贝会产生多个独立副本。Undo 后这些字段不再指向同一对象，引用共享关系丢失。
@@ -16,6 +16,14 @@ namespace UniDecl.BuiltIn.Runtime.Snapshot
     {
         private const BindingFlags FieldBindingFlags =
             BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
+
+        /// <summary>
+        /// 深拷贝任意值：null/值类型/string 直接返回；引用类型递归拷贝字段（循环引用截断）。
+        /// </summary>
+        public static object DeepCopy(object value)
+        {
+            return DeepCopyValue(value, new HashSet<object>());
+        }
 
         /// <summary>
         /// 对目标对象的所有实例字段做深拷贝，返回字段名→深拷贝值的字典

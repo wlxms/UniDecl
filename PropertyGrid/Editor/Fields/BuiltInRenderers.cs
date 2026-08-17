@@ -150,6 +150,7 @@ namespace UniDecl.PropertyGrid.Editor
             if (!(input is PropertyField pf)) return input;
             var attr = ctx.GetAttribute<RangeAttribute>();
             var slider = new Slider(value: Convert.ToSingle(ctx.Accessor.GetValue()), low: (float)attr.Min, high: (float)attr.Max);
+            slider.WithKey(pf.Editor?.Key); // 继承 insp_字段名：跨 rebuild 稳定（undo 合并按 Path 匹配）
             slider.OnValueChanged = (n) => ctx.Accessor.SetValue(ctx.Accessor.PropertyType == typeof(int) ? Mathf.RoundToInt(n) : (object)n);
             pf.Editor = slider;
             return pf;
@@ -237,6 +238,7 @@ namespace UniDecl.PropertyGrid.Editor
             var attr = ctx.GetAttribute<MinMaxSliderAttribute>();
             var v = (Vector2)ctx.Accessor.GetValue();
             var slider = new MinMaxSlider(min: v.x, max: v.y, lowLimit: (float)attr.Min, highLimit: (float)attr.Max);
+            slider.WithKey(pf.Editor?.Key); // 继承 insp_字段名：跨 rebuild 稳定（undo 合并按 Path 匹配）
             slider.OnValueChanged = (nmin, nmax) => ctx.Accessor.SetValue(new Vector2(nmin, nmax));
             pf.Editor = slider;
             return pf;

@@ -11,7 +11,7 @@ namespace UniDecl.Editor.UIToolKit.Renderers
 {
     public class UIToolkitMultiColumnListViewRenderer : IElementRenderer<MCLV, VisualElement>
     {
-        public VisualElement Render(MCLV element, IElementRenderHost<VisualElement> manager, ElementState state)
+        public VisualElement Render(MCLV element, VisualElement existing, IElementRenderHost<VisualElement> manager, ElementState state)
         {
             if (element == null) return null;
 
