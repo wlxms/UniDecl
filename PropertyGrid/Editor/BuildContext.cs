@@ -15,7 +15,11 @@ namespace UniDecl.PropertyGrid.Editor
         public BuildContext Root => Parent?.Root ?? this;
         public event Action<string, object> FieldChanged;
 
-        internal void RaiseFieldChanged(string fieldName, object value) => FieldChanged?.Invoke(fieldName, value);
+        internal void RaiseFieldChanged(string fieldName, object value)
+        {
+            FieldChanged?.Invoke(fieldName, value);
+            Parent?.RaiseFieldChanged(fieldName, value);
+        }
 
         public static BuildContext CreateRoot(PropertyGridElement element, object target, TypeMeta meta)
             => new BuildContext { Target = target, Meta = meta, PropertyGridElement = element };

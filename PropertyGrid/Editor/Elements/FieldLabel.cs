@@ -1,6 +1,8 @@
 using UniDecl.BuiltIn.Runtime.Components;
 using UniDecl.BuiltIn.Runtime.Core;
 using UniDecl.BuiltIn.Runtime.Widgets;
+using UniDecl.UIToolKit.Runtime;
+using UnityEngine.UIElements;
 
 namespace UniDecl.PropertyGrid.Editor.Elements
 {
@@ -27,11 +29,15 @@ namespace UniDecl.PropertyGrid.Editor.Elements
 
         public override IElement Render()
         {
-            return new Label(Text)
-                .With(new InlineStyle("unity-base-field__label")
+            return new UniDecl.BuiltIn.Runtime.Widgets.Label(Text)
+                .With(new UITKStyle
                 {
                     Width = DefaultWidth,
                     MinWidth = DefaultWidth,
+                    MaxWidth = DefaultWidth,
+                    FlexGrow = 0,
+                    FlexShrink = 0,
+                    AlignSelf = Align.Center,
                 });
         }
     }

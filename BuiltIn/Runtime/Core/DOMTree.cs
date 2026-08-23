@@ -171,7 +171,7 @@ namespace UniDecl.BuiltIn.Runtime.Core
             element.Initialize(node.Parent.Children.Count - 1, _manager);
 
             // 所有节点都创建 ElementState——用于携带 Scope 等跨渲染数据
-            var elementState = GetOrCreateElementState(element);
+            var elementState = GetOrCreateElementState(element, node);
             if (elementState != null)
             {
                 // 容器（IScopeProvider）拥有自己的域（Host 注入），不继承父域；叶子继承 ScopeStack 栈顶
@@ -359,11 +359,25 @@ namespace UniDecl.BuiltIn.Runtime.Core
                 _scopeStack.Pop();
         }
 
-        private ElementState GetOrCreateElementState(IElement element)
+        private ElementState GetOrCreateElementState(IElement element, DOMNode node = null)
         {
             if (string.IsNullOrEmpty(element.Key) || _stateStack.IsEmpty)
                 return null;
-            return _stateStack.Current.GetOrCreateState(element.Key, () => new ElementState());
+            var state = _stateStack.Current.GetOrCreateState(element.Key, () => new ElementState());
+            if (state.Scope == null && element is not IScopeProvider && node?.Parent != null)
+            {
+                var parent = node.Parent;
+                while (parent != null)
+                {
+                    if (parent.State?.Scope != null)
+                    {
+                        state.Scope = parent.State.Scope;
+                        break;
+                    }
+                    parent = parent.Parent;
+                }
+            }
+            return state;
         }
 
         private void RestoreOrBuildState(IStatefulElement sf, ElementState es)
@@ -415,7 +429,7 @@ namespace UniDecl.BuiltIn.Runtime.Core
                 // 状态恢复
                 if (element is IStatefulElement sf)
                 {
-                    var elementState = GetOrCreateElementState(element);
+                    var elementState = GetOrCreateElementState(element, node);
                     RestoreOrBuildState(sf, elementState);
                     node.State = elementState;
                 }
@@ -653,6 +667,7 @@ namespace UniDecl.BuiltIn.Runtime.Core
         private void ReuseNode(DOMNode node, IElement newElement)
         {
             var oldElement = node.Element;
+            var elementChanged = oldElement != null && !ReferenceEquals(oldElement, newElement);
 
             // 更新 _elementToNode 映射
             if (oldElement != null)
@@ -664,6 +679,11 @@ namespace UniDecl.BuiltIn.Runtime.Core
                 if (oldElement is IContainerElement oldContainer)
                     _containerStateManagers.Remove(oldContainer);
             }
+
+            // Element 换代时旧 RenderResult 里的事件闭包仍指向旧 Element、Accessor 和 Binding。
+            // 清掉后端结果，强制渲染器为当代 Element 建立新的事件链；同一实例局部重建仍可复用结果。
+            if (elementChanged)
+                node.ClearRenderResult();
 
             node.Element = newElement;
 
@@ -682,7 +702,7 @@ namespace UniDecl.BuiltIn.Runtime.Core
                 // 状态恢复
                 if (newElement is IStatefulElement sf)
                 {
-                    var elementState = GetOrCreateElementState(newElement);
+                    var elementState = GetOrCreateElementState(newElement, node);
                     RestoreOrBuildState(sf, elementState);
                     node.State = elementState;
                 }

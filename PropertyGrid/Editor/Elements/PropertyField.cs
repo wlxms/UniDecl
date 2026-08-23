@@ -1,5 +1,8 @@
 using UniDecl.BuiltIn.Runtime.Core;
+using UniDecl.BuiltIn.Runtime.Contexts;
 using UniDecl.BuiltIn.Runtime.Widgets;
+using UniDecl.UIToolKit.Runtime;
+using UnityEngine.UIElements;
 
 namespace UniDecl.PropertyGrid.Editor.Elements
 {
@@ -32,7 +35,18 @@ namespace UniDecl.PropertyGrid.Editor.Elements
             // 避免 Visible 切换时容器类型变化导致整棵子树销毁重建。
             // Visible=false 时返回空容器（不 Add 子元素），子元素的增减由 DiffChildren 增量处理。
             var row = new HorizontalLayout();
-            row.WithKey($"pf_{LabelText}");
+            var rowKey = Accessor != null && !string.IsNullOrEmpty(Accessor.FullPath)
+                ? $"pf_{Accessor.FullPath}"
+                : $"pf_{LabelText}";
+            row.WithKey(rowKey);
+            row.With(new UITKStyle
+            {
+                FlexDirection = FlexDirection.Row,
+                AlignItems = Align.Center,
+                FlexGrow = 1,
+                FlexShrink = 1,
+                MinWidth = 0,
+            });
 
             if (!Visible) return row;
 
@@ -46,7 +60,15 @@ namespace UniDecl.PropertyGrid.Editor.Elements
             if (_editor != null)
             {
                 WidgetLabelHelper.SetLabel(_editor, null);
-                row.Add(_editor);
+                _editor.With(new UITKStyle
+                {
+                    FlexGrow = 1,
+                    FlexShrink = 1,
+                    MinWidth = 0,
+                });
+                row.Add(IsReadOnly
+                    ? new DisableContext(true, _editor).WithKey($"readonly_{LabelText}")
+                    : _editor);
             }
 
             return row;

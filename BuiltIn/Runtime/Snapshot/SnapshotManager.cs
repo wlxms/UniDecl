@@ -233,10 +233,10 @@ namespace UniDecl.BuiltIn.Runtime.Snapshot
             switch (step)
             {
                 case SnapshotStep ss:
-                    // Guid 命中当代 binding；换代/重建后 Guid 失效 → 按 Path 兜底到当代 binding
-                    // （条件显隐等结构 rebuild 不再断 undo 链）
-                    if (!_bindings.TryGetValue(ss.BindingId, out var binding) &&
-                        !_bindingsByPath.TryGetValue(ss.Path, out binding))
+                    // Path 始终指向当前视图 binding。重建会生成新 Guid，而旧 binding
+                    // 可能仍留在注册表中；优先 Path 才不会把历史恢复写回旧闭包。
+                    if (!_bindingsByPath.TryGetValue(ss.Path, out var binding) &&
+                        !_bindings.TryGetValue(ss.BindingId, out binding))
                         return null; // 无当代 binding（面板已销毁），跳过
                     var current = binding.Restore(ss.Value, changes);
                     return new SnapshotStep(binding.Id, ss.Path, current, ss.ScopeId);

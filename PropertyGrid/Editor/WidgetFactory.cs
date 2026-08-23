@@ -54,7 +54,6 @@ namespace UniDecl.PropertyGrid.Editor
             if (a.Context == null) a.Context = ctx;
             var lta = GetAttr<LabelTextAttribute>(attrs);
             var label = lta != null ? FieldBinder.ResolveReference(lta.Text, ctx.Renderer, ctx.Target) : ObjectNames.NicifyVariableName(a.SourceField?.Name ?? a.DisplayName);
-            if (!CheckCondition(attrs, ctx)) return null;
             IElement editor;
             if (FieldTypeRendererRegistry.TryResolve(a.PropertyType, out var tr)) editor = tr.CreateWidget(a, ctx);
             else { Debug.LogWarning($"[PropertyGrid] No TypeRenderer for '{a.PropertyType.Name}', field='{a.DisplayName}'. Using Fallback."); editor = FieldTypeRendererRegistry.Fallback.CreateWidget(a, ctx); }
@@ -72,32 +71,64 @@ namespace UniDecl.PropertyGrid.Editor
         static IElement BuildClass(ClassElementLayoutNode node, BuildContext ctx)
         {
             if (node.Source is ButtonAttribute ba) { var b = new Button(ba.Label); b.WithKey($"clsbtn_{ba.Method}"); b.OnClick = () => { if (ctx.Renderer == null) return; var m = FieldBinder.FindMethod(ctx.Renderer.GetType(), ba.Method, ctx.Target?.GetType()); if (m != null) { var ps = m.GetParameters(); if (ps.Length == 0) m.Invoke(ctx.Renderer, null); else if (ps.Length == 1 && ctx.Target != null) m.Invoke(ctx.Renderer, new[] { ctx.Target }); } }; return b; }
-            if (node.Source is PropertyGridLabelAttribute la) { var t = FieldBinder.ResolveReference(la.Text, ctx.Renderer, ctx.Target); return new Label(t).WithKey($"clslbl_{la.Text}"); }
-            if (node.Source is PropertyGridInfoBoxAttribute ia) { var t = FieldBinder.ResolveReference(ia.Text, ctx.Renderer, ctx.Target); var mt = ia.Type == InfoBoxType.Warning ? HelpBoxMessageType.Warning : ia.Type == InfoBoxType.Error ? HelpBoxMessageType.Error : HelpBoxMessageType.Info; return new HelpBox(t, mt).WithKey($"clsinfo_{ia.Text}"); }
-            if (node.Source is InfoBoxAttribute fa) { var t = FieldBinder.ResolveReference(fa.Text, ctx.Renderer, ctx.Target); var mt = fa.Type == InfoBoxType.Warning ? HelpBoxMessageType.Warning : fa.Type == InfoBoxType.Error ? HelpBoxMessageType.Error : HelpBoxMessageType.Info; return new HelpBox(t, mt).WithKey($"clsinfo_{fa.Text}"); }
-            return null;
+            if (node.Source is PropertyGridLabelAttribute la)
+            {
+                var label = new Label(FieldBinder.ResolveReference(la.Text, ctx.Renderer, ctx.Target));
+                label.WithKey($"clslbl_{la.Text}");
+                WatchReference(la.Text, ctx, value => { if (label.Text != value) { label.Text = value; label.Rebuild(); } });
+                return label;
+            }
+            if (node.Source is PropertyGridInfoBoxAttribute ia)
+            {
+                var info = new HelpBox(FieldBinder.ResolveReference(ia.Text, ctx.Renderer, ctx.Target), ToMessageType(ia.Type));
+                info.WithKey($"clsinfo_{ia.Text}");
+                WatchReference(ia.Text, ctx, value => { if (info.Text != value) { info.Text = value; info.Rebuild(); } });
+                return info;
+            }
+            if (node.Source is InfoBoxAttribute fa)
+            {
+                var info = new HelpBox(FieldBinder.ResolveReference(fa.Text, ctx.Renderer, ctx.Target), ToMessageType(fa.Type));
+                info.WithKey($"clsinfo_{fa.Text}");
+                WatchReference(fa.Text, ctx, value => { if (info.Text != value) { info.Text = value; info.Rebuild(); } });
+                return info;
+            }
+            var placeholder = new Label(node.DisplayName ?? string.Empty);
+            placeholder.WithKey($"clsmsg_{node.DisplayName}");
+            return placeholder;
         }
 
-        static bool CheckCondition(PropertyGridAttribute[] attrs, BuildContext ctx)
+        static HelpBoxMessageType ToMessageType(InfoBoxType type)
         {
-            foreach (var a in attrs)
-            {
-                if (a is ShowIfAttribute s) { var v = ctx.ResolveMember(s.Member); if (!IsTrue(v, s.Value)) return false; }
-                else if (a is HideIfAttribute h) { var v = ctx.ResolveMember(h.Member); if (IsTrue(v, h.Value)) return false; }
-            }
-            return true;
+            return type == InfoBoxType.Warning ? HelpBoxMessageType.Warning
+                : type == InfoBoxType.Error ? HelpBoxMessageType.Error
+                : HelpBoxMessageType.Info;
+        }
+
+        static void WatchReference(string reference, BuildContext ctx, Action<string> apply)
+        {
+            if (string.IsNullOrEmpty(reference) || !reference.StartsWith("@")) return;
+            ctx.Root.FieldChanged += (_, __) => apply(FieldBinder.ResolveReference(reference, ctx.Renderer, ctx.Target));
         }
 
         static void ApplyEnableIf(PropertyGridAttribute[] attrs, BuildContext ctx, PropertyField pf)
         {
-            foreach (var a in attrs)
+            if (attrs == null || attrs.All(a => !(a is EnableIfAttribute))) return;
+
+            pf.IsReadOnly = !EvaluateEnabled(attrs, ctx);
+            ctx.Root.FieldChanged += (_, __) =>
             {
-                if (a is EnableIfAttribute e)
-                {
-                    var v = ctx.ResolveMember(e.Member);
-                    if (!IsTrue(v, e.Value)) pf.IsReadOnly = true;
-                }
-            }
+                var readOnly = !EvaluateEnabled(attrs, ctx);
+                if (pf.IsReadOnly == readOnly) return;
+                pf.IsReadOnly = readOnly;
+                pf.Rebuild();
+            };
+        }
+
+        static bool EvaluateEnabled(PropertyGridAttribute[] attrs, BuildContext ctx)
+        {
+            foreach (var a in attrs)
+                if (a is EnableIfAttribute e && !IsTrue(ctx.ResolveMember(e.Member), e.Value)) return false;
+            return true;
         }
 
         static bool IsTrue(object mv, object ev) { if (ev == null) return mv is bool b ? b : mv != null; if (mv == null) return false; return ev.Equals(mv); }

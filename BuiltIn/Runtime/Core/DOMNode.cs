@@ -42,6 +42,11 @@ namespace UniDecl.BuiltIn.Runtime.Core
         /// ContextToPush 的类型，用于出栈时 Pop(Type)
         /// </summary>
         public Type ContextType { get; set; }
+
+        /// <summary>
+        /// 清除后端渲染结果。非泛型 DOM 节点没有渲染结果，由泛型节点覆盖。
+        /// </summary>
+        public virtual void ClearRenderResult() { }
     }
 
     public class DOMNode<TRenderResult> : DOMNode
@@ -61,7 +66,7 @@ namespace UniDecl.BuiltIn.Runtime.Core
             }
         }
 
-        public void ClearRenderResult()
+        public override void ClearRenderResult()
         {
             _renderResult = default;
             _hasRenderResult = false;
