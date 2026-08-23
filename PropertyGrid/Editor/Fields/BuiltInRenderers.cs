@@ -163,7 +163,20 @@ namespace UniDecl.PropertyGrid.Editor
         public override IElement Process(IElement input, DecoratorContext ctx)
         {
             if (input is PropertyField pf)
-                pf.LabelText = FieldBinder.ResolveReference(ctx.GetAttribute<LabelTextAttribute>().Text, ctx.BuildContext.Renderer, ctx.BuildContext.Target);
+            {
+                var reference = ctx.GetAttribute<LabelTextAttribute>().Text;
+                pf.LabelText = FieldBinder.ResolveReference(reference, ctx.BuildContext.Renderer, ctx.BuildContext.Target);
+                if (!string.IsNullOrEmpty(reference) && reference.StartsWith("@"))
+                {
+                    ctx.BuildContext.Root.FieldChanged += (_, __) =>
+                    {
+                        var label = FieldBinder.ResolveReference(reference, ctx.BuildContext.Renderer, ctx.BuildContext.Target);
+                        if (pf.LabelText == label) return;
+                        pf.LabelText = label;
+                        pf.Rebuild();
+                    };
+                }
+            }
             return input;
         }
     }
@@ -196,24 +209,28 @@ namespace UniDecl.PropertyGrid.Editor
         public override IElement Process(IElement input, DecoratorContext ctx)
         {
             if (!(input is PropertyField pf)) return input;
-            var showIf = ctx.GetAttribute<ShowIfAttribute>();
-            var hideIf = ctx.GetAttribute<HideIfAttribute>();
-            string member = showIf?.Member ?? hideIf?.Member;
-            bool isShow = showIf != null;
-            var expected = isShow ? showIf.Value : hideIf?.Value;
+            pf.Visible = Evaluate(ctx.Attributes, ctx.BuildContext);
 
-            var val = ctx.BuildContext.ResolveMember(member);
-            pf.Visible = isShow ? IsTrue(val, expected) : !IsTrue(val, expected);
-
-            ctx.BuildContext.FieldChanged += (name, _) =>
+            ctx.BuildContext.Root.FieldChanged += (_, __) =>
             {
-                if (name == member)
+                var visible = Evaluate(ctx.Attributes, ctx.BuildContext);
+                if (pf.Visible != visible)
                 {
-                    var nv = ctx.BuildContext.ResolveMember(member);
-                    pf.Visible = isShow ? IsTrue(nv, expected) : !IsTrue(nv, expected);
+                    pf.Visible = visible;
+                    pf.Rebuild();
                 }
             };
             return pf;
+        }
+
+        static bool Evaluate(PropertyGridAttribute[] attrs, BuildContext context)
+        {
+            foreach (var condition in attrs)
+            {
+                if (condition is ShowIfAttribute show && !IsTrue(context.ResolveMember(show.Member), show.Value)) return false;
+                if (condition is HideIfAttribute hide && IsTrue(context.ResolveMember(hide.Member), hide.Value)) return false;
+            }
+            return true;
         }
 
         static bool IsTrue(object mv, object ev)
@@ -254,6 +271,7 @@ namespace UniDecl.PropertyGrid.Editor
             if (!(input is PropertyField pf)) return input;
             var val = ctx.Accessor.GetValue() as string ?? "";
             var ta = new ResizableTextArea(val);
+            ta.WithKey(pf.Editor?.Key);
             ta.OnValueChanged = (n, _) => ctx.Accessor.SetValue(n);
             pf.Editor = ta;
             return pf;
@@ -270,6 +288,7 @@ namespace UniDecl.PropertyGrid.Editor
             var t = ctx.Accessor.PropertyType;
             var v = ctx.Accessor.GetValue();
             var ef = new EnumField(null, t, v != null ? Convert.ToInt32(v) : 0);
+            ef.WithKey(pf.Editor?.Key);
             ef.OnValueChanged = (n) => ctx.Accessor.SetValue(Enum.ToObject(t, n));
             pf.Editor = ef;
             return pf;
@@ -284,6 +303,7 @@ namespace UniDecl.PropertyGrid.Editor
             if (!(input is PropertyField pf)) return input;
             var attr = ctx.GetAttribute<ButtonAttribute>();
             var btn = new Button(attr.Label);
+            btn.WithKey(pf.Editor?.Key);
             btn.OnClick = () =>
             {
                 if (ctx.BuildContext.Renderer == null) return;
@@ -309,6 +329,7 @@ namespace UniDecl.PropertyGrid.Editor
             var choices = ResolveChoices(attr, ctx.BuildContext.Renderer, ctx.BuildContext.Target);
             var idx = ResolveIndex(ctx.Accessor.PropertyType, ctx.Accessor.GetValue(), choices);
             var dd = new UniDecl.BuiltIn.Runtime.Widgets.Dropdown(null, choices, idx);
+            dd.WithKey(pf.Editor?.Key);
             dd.OnSelectionChanged = (ni) =>
             {
                 if (ctx.Accessor.PropertyType == typeof(string))
