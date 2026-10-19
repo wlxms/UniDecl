@@ -1,0 +1,16 @@
+{
+    "name": "UniDecl.Core",
+    "rootNamespace": "UniDecl.Core",
+    "references": [
+        "UniDecl.Snapshot"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": true
+}

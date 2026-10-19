@@ -1,15 +1,15 @@
 using System;
 using System.Linq;
 using NUnit.Framework;
-using UniDecl.BuiltIn.Runtime.Widgets;
+using UniDecl.Widgets;
 using UniDecl.PropertyGrid.Editor.Decorators;
 using UniDecl.PropertyGrid.Editor.Examples;
-using UniDecl.PropertyGrid.Runtime;
+using UniDecl.PropertyGrid;
 using UnityEngine;
-using IAttr = UniDecl.PropertyGrid.Runtime;
+using IAttr = UniDecl.PropertyGrid;
 using PropertyField = UniDecl.PropertyGrid.Editor.Elements.PropertyField;
-using RangeAttribute = UniDecl.PropertyGrid.Runtime.RangeAttribute;
-using SpaceAttribute = UniDecl.PropertyGrid.Runtime.SpaceAttribute;
+using RangeAttribute = UniDecl.PropertyGrid.RangeAttribute;
+using SpaceAttribute = UniDecl.PropertyGrid.SpaceAttribute;
 
 namespace UniDecl.PropertyGrid.Editor.Tests
 {

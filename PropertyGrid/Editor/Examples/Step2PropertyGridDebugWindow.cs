@@ -1,14 +1,15 @@
+using UniDecl.Unity.Snapshot;
 using System;
 using System.IO;
 using System.Text;
-using UniDecl.BuiltIn.Editor.Snapshot;
-using UniDecl.BuiltIn.Runtime.Core;
-using UniDecl.BuiltIn.Runtime.Snapshot;
-using UniDecl.Editor.UIToolKit;
+using UniDecl.Unity.Editor;
+using UniDecl.Core;
+using UniDecl.Snapshot;
+using UniDecl.Backend.UIToolKit.Editor;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
-using W = UniDecl.BuiltIn.Runtime.Widgets;
+using W = UniDecl.Widgets;
 
 namespace UniDecl.PropertyGrid.Editor.Examples
 {
@@ -35,7 +36,7 @@ namespace UniDecl.PropertyGrid.Editor.Examples
 
         private void CreateGUI()
         {
-            _manager = new UIToolkitRenderManager(new EditorSnapshotManager(new SnapshotManager()));
+            _manager = new UIToolkitRenderManager(new EditorSnapshotManager(new SnapshotManager(new UnitySnapshotLeafPolicy())));
             _snap = (EditorSnapshotManager)FindField(_manager.GetType(), "_snapshotManager").GetValue(_manager);
             Instrument();
             Rebuild();

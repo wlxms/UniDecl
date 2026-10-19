@@ -1,0 +1,79 @@
+using UnityEngine.UIElements;
+using UniDecl.Core;
+using UniDecl.Backend.UIToolKit.Editor.Style;
+using UniDecl.Snapshot;
+using UITKStyle = UniDecl.Backend.UIToolKit.UITKStyle;
+using W = UniDecl.Widgets;
+
+namespace UniDecl.Backend.UIToolKit.Editor.Renderers
+{
+    public class UIToolkitTextFieldRenderer : IElementRenderer<W.TextField, VisualElement>
+    {
+        public VisualElement Render(W.TextField element, VisualElement existing, IElementRenderHost<VisualElement> manager, ElementState state)
+        {
+            if (element == null) return null;
+
+            if (existing is UnityEngine.UIElements.TextField reused)
+            {
+                reused.SetValueWithoutNotify(element.Value ?? string.Empty);
+                return reused;
+            }
+
+            var field = new UnityEngine.UIElements.TextField
+            {
+                value = element.Value ?? string.Empty,
+                isDelayed = element.IsDelayed,
+                isPasswordField = element.IsPassword,
+                multiline = element.IsMultiline,
+                isReadOnly = element.IsReadOnly,
+                maxLength = element.MaxLength
+            };
+
+            // Snapshot 绑定——连续输入型，Blur 时提交
+            var binding = new SnapshotBinding(state?.Scope, element.Key,
+                () => element.Value ?? string.Empty,
+                (restore, current, changes) =>
+                {
+                    field.SetValueWithoutNotify((string)restore);
+                    element.Value = (string)restore;
+                    element.OnValueChange?.Invoke((string)restore, (string)current);
+                });
+
+            field.RegisterValueChangedCallback(evt =>
+            {
+                element.Value = evt.newValue;
+                element.OnValueChange?.Invoke(evt.newValue, evt.previousValue);
+                manager.Dispatch(new TextFieldChangeEvent(element, evt.newValue, evt.previousValue));
+                // delayed：ChangeEvent 仅在失焦/回车触发一次，即提交点（显式动作 → 打断合并）
+                if (element.IsDelayed)
+                {
+                    binding.BreakMerge();
+                    binding.BreakMerge(); binding.Commit(); // 离散提交点：打断时间窗合并
+                }
+                element.NotifyChanged();
+            });
+            field.RegisterCallback<BlurEvent>(_ =>
+            {
+                binding.BreakMerge(); // 显式提交点：与上次编辑隔离
+                binding.BreakMerge(); binding.Commit(); // 离散提交点：打断时间窗合并
+                element.OnCommit?.Invoke(element.Value ?? string.Empty);
+            });
+            UIToolkitStyleApplier.ApplyElementStyles(element, field);
+            return field;
+        }
+    }
+
+    public struct TextFieldChangeEvent
+    {
+        public W.TextField Source { get; }
+        public string NewValue { get; }
+        public string PreviousValue { get; }
+
+        public TextFieldChangeEvent(W.TextField source, string newValue, string previousValue)
+        {
+            Source = source;
+            NewValue = newValue;
+            PreviousValue = previousValue;
+        }
+    }
+}

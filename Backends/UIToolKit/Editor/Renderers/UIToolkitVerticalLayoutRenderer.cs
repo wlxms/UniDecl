@@ -1,0 +1,28 @@
+using UnityEngine.UIElements;
+using UniDecl.Core;
+using UniDecl.Widgets;
+using UniDecl.Backend.UIToolKit.Editor.Style;
+
+namespace UniDecl.Backend.UIToolKit.Editor.Renderers
+{
+    public class UIToolkitVerticalLayoutRenderer : IElementRenderer<VerticalLayout, VisualElement>
+    {
+        public VisualElement Render(VerticalLayout element, VisualElement existing, IElementRenderHost<VisualElement> manager, ElementState state)
+        {
+            if (element == null) return null;
+
+            var container = new VisualElement();
+            // 轴向 / 交叉轴对齐见 .ud-vertical-layout（DefaultStyle.uss）
+
+            foreach (var child in element.Children)
+            {
+                var childElement = manager.RenderElement(child);
+                if (childElement != null)
+                    container.Add(childElement);
+            }
+
+            UIToolkitStyleApplier.ApplyElementStyles(element, container);
+            return container;
+        }
+    }
+}

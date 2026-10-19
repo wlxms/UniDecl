@@ -1,5 +1,5 @@
-using UniDecl.BuiltIn.Runtime.Core;
-using UniDecl.BuiltIn.Runtime.Snapshot;
+using UniDecl.Core;
+using UniDecl.Snapshot;
 
 namespace UniDecl.PropertyGrid.Editor
 {

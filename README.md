@@ -31,7 +31,7 @@ This separation is not an optimization trick — it's an **architectural stance*
 
 Unity is transitioning from IMGUI to UI Toolkit, and no one knows how long this transition will take. A framework bound to a single backend is making a choice on behalf of developers — who haven't made that choice yet.
 
-UniDecl's core (`Runtime/Core`) holds no backend opinion. It manages a logical element tree: builds it, diffs it, rebuilds it. How that tree is ultimately rendered — as `GUILayout` calls, `VisualElement` instances, or a third backend that doesn't exist yet — is the renderer's responsibility, not the framework's.
+UniDecl's core (`Core/`) holds no backend opinion. It manages a logical element tree: builds it, diffs it, rebuilds it. How that tree is ultimately rendered — as `GUILayout` calls, `VisualElement` instances, or a third backend that doesn't exist yet — is the renderer's responsibility, not the framework's.
 
 > A framework should make room for backend diversity, not promises about backend singularity.
 
@@ -109,74 +109,87 @@ At a deeper level, this follows the core thesis of declarative UI: **describe "w
 
 ```
 UniDecl/
-├── Runtime/
-│   ├── Core/              # Backend-agnostic abstractions
-│   │   ├── IElement.cs            # Element base interface
-│   │   ├── Element.cs             # Abstract base (Element, ContainerElement, Element<TState>)
-│   │   ├── DOMTree.cs             # Two-phase DOM construction + diff rebuild
-│   │   ├── DOMNode.cs             # Node in the DOM tree
-│   │   ├── ElementRenderHost.cs   # Render pipeline: BuildDOM → Render, event dispatch
-│   │   ├── IElementRender.cs      # Renderer + Updater interfaces
-│   │   ├── Context/               # ContextStack, ContextProvider, ContextConsumer
-│   │   ├── State/                 # StateManager, StateStack, ElementState
-│   │   └── Event/                 # EventDispatcher (generic struct events)
-│   │
-│   ├── Components/         # Backend-agnostic element definitions
-│   │   ├── InlineStyle.cs         # Lightweight inline style (class names + dimensions)
-│   │   └── IInlineStyle.cs        # Inline style interface
-│   │
-│   ├── Widgets/            # Reusable element definitions (class-based)
-│   │   ├── Label, Button, TextField, Slider, Toggle, ...
-│   │   ├── VerticalLayout, HorizontalLayout, ScrollView, Foldout, ...
-│   │   ├── ListView, TreeView, MultiColumnListView
-│   │   ├── Toolbar, ToolbarButton, ToolbarToggle, ...
-│   │   ├── UE/                     # Unity Editor specific (UeCard)
-│   │   └── MD/                     # Markdown widgets (see below)
-│   │
-│   ├── Contexts/           # Built-in context providers
-│   │   └── DisableContext.cs
-│   │
-│   └── MD/                 # Markdown parser
-│       ├── MdParser.cs             # Lightweight, dependency-free parser
-│       ├── MdBlock.cs              # Block-level AST (Heading, Paragraph, CodeBlock, ...)
-│       └── MdInline.cs             # Inline-level AST (Bold, Italic, Code, Link, ...)
+├── Core/                    # UniDecl.Core (noEngineReferences: true)
+│   ├── IElement.cs                 # Element base interface
+│   ├── Element.cs                  # Abstract base (Element, ContainerElement, Element<TState>)
+│   ├── DOMTree.cs                  # Two-phase DOM construction + diff rebuild
+│   ├── DOMNode.cs                  # Node in the DOM tree
+│   ├── ElementRenderHost.cs        # Render pipeline: BuildDOM → Render, event dispatch
+│   ├── IElementRender.cs           # Renderer + Updater interfaces
+│   ├── UniDeclLog.cs               # Engine-agnostic logging entry
+│   ├── Context/                    # ContextStack, ContextProvider, ContextConsumer
+│   ├── State/                      # StateManager, StateStack, ElementState
+│   ├── Event/                      # EventDispatcher (generic struct events)
+│   ├── Components/                 # InlineStyle / IInlineStyle / event components
+│   ├── Contexts/                   # Built-in context providers (DisableContext)
+│   └── Navigation/                 # Anchors + URL navigation
 │
-├── PropertyGrid/
-│   ├── Editor/
-│   │   ├── PropertyGridModule.cs      # 模块入口 + 元素树构造
-│   │   ├── PropertyGridElement.cs     # 根元素（IScopeProvider）
-│   │   ├── BuildContext.cs             # 渲染上下文（@ 引用解析链）
-│   │   ├── FieldBinder.cs             # 字段绑定器（方法/属性反射）
-│   │   ├── ReflectionCache.cs         # 类型元数据缓存
-│   │   ├── LayoutResolver.cs          # 布局树生成
-│   │   ├── WidgetFactory.cs           # LayoutTree → UniDecl 元素树
-│   │   ├── Accessor/                  # PropertyAccessor（字段读写）
-│   │   ├── Fields/                    # 类型渲染器（int, float, bool...）
-│   │   ├── Elements/                  # PropertyField, FieldLabel 等元素
-│   │   ├── Decorators/                # Attribute 装饰器
-│   │   ├── Layout/                    # 布局节点 + Handler
-│   │   ├── Plugins/                   # Plugin 发现与注册
-│   │   └── Examples/                  # 完整使用示例
-│   └── Runtime/
-│       ├── Attributes.cs              # 全部 PropertyGrid Attribute
-│       └── package.json
+├── Snapshot/                # UniDecl.Snapshot (noEngineReferences: true)
+│   ├── SnapshotManager.cs          # Undo/Redo engine
+│   ├── SnapshotBinding.cs          # Binding tree (leaf / object / list / dict)
+│   ├── ISnapshotLeafPolicy.cs      # Injected engine leaf-type policy
+│   └── DefaultSnapshotLeafPolicy.cs
 │
-├── UIToolKit/
-│   ├── Runtime/
-│   │   ├── UITKStyle.cs            # UI Toolkit native style bridge
-│   │   └── Widgets/                # UITK-specific widgets (ListView, TreeView, ...)
-│   │
-│   └── Editor/
-│       ├── UIToolkitRenderManager.cs   # ElementRenderHost<VisualElement> implementation
-│       ├── Renderers/                 # 55+ renderers returning VisualElement
-│       │   ├── UE/                   # Unity Editor field renderers
-│       │   └── MD/                   # Markdown widget renderers
-│       ├── Style/                     # USS style sheets
-│       └── Examples/                  # Example EditorWindows
+├── Widgets/                 # UniDecl.Widgets (noEngineReferences: true)
+│   ├── Label, Button, TextField, Slider, Toggle, ...
+│   ├── VerticalLayout, HorizontalLayout, ScrollView, Foldout, ...
+│   ├── Toolbar, ToolbarButton, ToolbarToggle, ...
+│   ├── UE/                         # UE-style shell widgets (UeCard)
+│   └── MD/                         # Markdown parser + Markdown widgets
 │
-└── Editor/
-    └── UniDecl.Editor.asmdef
+├── Unity/                   # UniDecl.Unity (Unity runtime adapter)
+│   ├── Widgets/                    # Vector/Color/Rect/Bounds/Curve/Gradient/Object fields
+│   ├── Logging/                    # UniDeclLog → UnityEngine.Debug bridge
+│   └── Snapshot/                   # UnitySnapshotLeafPolicy
+│
+├── UnityEditor/             # UniDecl.Unity.Editor
+│   ├── EditorHostManager.cs        # [DeclHostWindow] discovery + navigation
+│   ├── EditorSnapshotManager.cs    # ISnapshotManager ↔ Unity Undo decorator
+│   └── Tests/                      # Snapshot tests
+│
+├── Backends/
+│   └── UIToolKit/
+│       ├── Runtime/                # UniDecl.Backend.UIToolKit
+│       │   ├── UITKStyle.cs        # UI Toolkit native style bridge
+│       │   └── Widgets/            # UITK-specific widgets (ListView, TreeView, ...)
+│       └── Editor/                 # UniDecl.Backend.UIToolKit.Editor
+│           ├── UIToolkitRenderManager.cs
+│           ├── Renderers/          # 55+ renderers returning VisualElement
+│           │   ├── UE/             # Unity Editor field renderers
+│           │   └── MD/             # Markdown widget renderers
+│           ├── Style/              # USS style sheets
+│           ├── Resources/          # Themes / fonts / effects
+│           └── Examples/           # Example EditorWindows
+│
+└── PropertyGrid/
+    ├── Runtime/                    # UniDecl.PropertyGrid (noEngineReferences: true)
+    │   └── Attributes.cs           # All PropertyGrid attributes
+    └── Editor/                     # UniDecl.PropertyGrid.Editor
+        ├── PropertyGridModule.cs   # Module entry + element tree
+        ├── PropertyGridElement.cs  # Root element (IScopeProvider)
+        ├── BuildContext.cs         # Render context (@ reference resolution)
+        ├── LayoutResolver.cs       # Layout tree generation
+        ├── WidgetFactory.cs        # LayoutTree → UniDecl element tree
+        ├── Accessor/ Fields/ Elements/ Decorators/ Layout/ Plugins/
+        └── Examples/               # Complete usage examples
 ```
+
+### Assembly dependency rule
+
+```
+UniDecl.Core → UniDecl.Snapshot
+UniDecl.Widgets → UniDecl.Core
+UniDecl.Unity → UniDecl.Core + UniDecl.Snapshot
+UniDecl.Unity.Editor → UniDecl.Unity
+UniDecl.Backend.UIToolKit → UniDecl.Widgets + UniDecl.Unity
+UniDecl.Backend.UIToolKit.Editor → UniDecl.Backend.UIToolKit + UniDecl.Unity.Editor
+UniDecl.PropertyGrid (attributes) → (no dependencies)
+UniDecl.PropertyGrid.Editor → UniDecl.PropertyGrid + Widgets + Backend.UIToolKit.Editor
+```
+
+`UniDecl.Core`, `UniDecl.Snapshot`, `UniDecl.Widgets`, and `UniDecl.PropertyGrid` are pure C# assemblies
+(`noEngineReferences: true`). Backends and Unity-specific widgets live above them, so a future
+Unreal UMG backend only needs to reference the four engine-agnostic assemblies.
 
 ## Core Concepts
 
@@ -395,8 +408,8 @@ PropertyGrid 是 UniDecl 的**声明式编辑面板引擎**——通过 Attribut
 ```csharp
 using UnityEngine;
 using UniDecl.PropertyGrid.Editor;
-using UniDecl.PropertyGrid.Runtime;
-using IAttr = UniDecl.PropertyGrid.Runtime;
+using UniDecl.PropertyGrid;
+using IAttr = UniDecl.PropertyGrid;
 
 [Serializable]
 public class PlayerConfig
@@ -515,8 +528,8 @@ PluginDiscovery 在 `PropertyGridModule.Initialize()` 时自动扫描所有程�
 ```csharp
 using UnityEditor;
 using UnityEngine;
-using UniDecl.Editor.UIToolKit;
-using UniDecl.Runtime.Widgets;
+using UniDecl.Backend.UIToolKit.Editor;
+using UniDecl.Widgets;
 
 public class MyWindow : EditorWindow
 {

@@ -1,15 +1,16 @@
+using UniDecl.Unity.Snapshot;
 using System;
 using System.Diagnostics;
-using UniDecl.BuiltIn.Editor.Snapshot;
-using UniDecl.BuiltIn.Runtime.Core;
-using UniDecl.BuiltIn.Runtime.Snapshot;
-using UniDecl.BuiltIn.Runtime.Widgets;
-using UniDecl.Editor.UIToolKit;
+using UniDecl.Unity.Editor;
+using UniDecl.Core;
+using UniDecl.Snapshot;
+using UniDecl.Widgets;
+using UniDecl.Backend.UIToolKit.Editor;
 using UniDecl.PropertyGrid.Editor;
-using UniDecl.PropertyGrid.Runtime;
+using UniDecl.PropertyGrid;
 using UnityEditor;
 using UnityEngine;
-using IAttr = UniDecl.PropertyGrid.Runtime;
+using IAttr = UniDecl.PropertyGrid;
 
 namespace UniDecl.PropertyGrid.Editor.Examples
 {
@@ -135,7 +136,7 @@ namespace UniDecl.PropertyGrid.Editor.Examples
 
         private void CreateGUI()
         {
-            _manager = new UIToolkitRenderManager(new EditorSnapshotManager(new SnapshotManager()));
+            _manager = new UIToolkitRenderManager(new EditorSnapshotManager(new SnapshotManager(new UnitySnapshotLeafPolicy())));
             _manager.RegisterStyleSheet(Resources.Load<UnityEngine.UIElements.StyleSheet>("Themes/DefaultStyle"));
             Rebuild();
         }

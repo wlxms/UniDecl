@@ -1,5 +1,5 @@
-using UniDecl.BuiltIn.Runtime.Core;
-using UniDecl.PropertyGrid.Runtime;
+using UniDecl.Core;
+using UniDecl.PropertyGrid;
 using PropertyField = UniDecl.PropertyGrid.Editor.Elements.PropertyField;
 
 namespace UniDecl.PropertyGrid.Editor.Decorators

@@ -2,8 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using NUnit.Framework;
-using UniDecl.BuiltIn.Runtime.Widgets;
-using UniDecl.PropertyGrid.Runtime;
+using UniDecl.Widgets;
+using UniDecl.PropertyGrid;
 using PropertyField = UniDecl.PropertyGrid.Editor.Elements.PropertyField;
 
 namespace UniDecl.PropertyGrid.Editor.Tests

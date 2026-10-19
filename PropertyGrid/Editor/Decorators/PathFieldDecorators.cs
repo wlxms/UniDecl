@@ -1,12 +1,12 @@
 using System;
-using UniDecl.BuiltIn.Runtime.Core;
-using UniDecl.BuiltIn.Runtime.Widgets;
-using UniDecl.PropertyGrid.Runtime;
-using UniDecl.UIToolKit.Runtime;
+using UniDecl.Core;
+using UniDecl.Widgets;
+using UniDecl.PropertyGrid;
+using UniDecl.Backend.UIToolKit;
 using UnityEditor;
 using PropertyField = UniDecl.PropertyGrid.Editor.Elements.PropertyField;
 // UnityEditor.FilePathAttribute 与本框架特性同名，显式别名消歧
-using FilePathAttribute = UniDecl.PropertyGrid.Runtime.FilePathAttribute;
+using FilePathAttribute = UniDecl.PropertyGrid.FilePathAttribute;
 
 namespace UniDecl.PropertyGrid.Editor.Decorators
 {
@@ -67,7 +67,7 @@ namespace UniDecl.PropertyGrid.Editor.Decorators
                 if (!string.IsNullOrEmpty(path))
                 {
                     ctx.Accessor.SetValue(path);
-                    if (textEditor is UniDecl.BuiltIn.Runtime.Widgets.TextField tf)
+                    if (textEditor is UniDecl.Widgets.TextField tf)
                     {
                         tf.Value = path;
                         tf.NotifyChanged();

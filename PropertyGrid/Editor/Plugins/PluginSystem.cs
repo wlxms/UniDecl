@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using UniDecl.PropertyGrid.Editor.Decorators;
-using UniDecl.PropertyGrid.Runtime;
+using UniDecl.PropertyGrid;
 using UnityEngine;
 
 namespace UniDecl.PropertyGrid.Editor

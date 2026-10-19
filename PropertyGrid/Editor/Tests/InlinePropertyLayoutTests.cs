@@ -1,9 +1,9 @@
 using System;
 using System.Linq;
 using NUnit.Framework;
-using UniDecl.BuiltIn.Runtime.Widgets;
+using UniDecl.Widgets;
 using UniDecl.PropertyGrid.Editor.Examples;
-using UniDecl.PropertyGrid.Runtime;
+using UniDecl.PropertyGrid;
 
 namespace UniDecl.PropertyGrid.Editor.Tests
 {

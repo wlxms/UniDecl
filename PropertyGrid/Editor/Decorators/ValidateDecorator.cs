@@ -1,7 +1,7 @@
 using System;
-using UniDecl.BuiltIn.Runtime.Core;
-using UniDecl.BuiltIn.Runtime.Widgets;
-using UniDecl.PropertyGrid.Runtime;
+using UniDecl.Core;
+using UniDecl.Widgets;
+using UniDecl.PropertyGrid;
 using UnityEngine;
 using PropertyField = UniDecl.PropertyGrid.Editor.Elements.PropertyField;
 

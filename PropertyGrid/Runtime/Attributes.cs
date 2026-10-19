@@ -1,7 +1,7 @@
 using System;
 using System.Diagnostics;
 
-namespace UniDecl.PropertyGrid.Runtime
+namespace UniDecl.PropertyGrid
 {
     // =========================================================================
     // 基类

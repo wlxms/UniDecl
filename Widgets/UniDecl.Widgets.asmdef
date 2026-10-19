@@ -1,0 +1,16 @@
+{
+    "name": "UniDecl.Widgets",
+    "rootNamespace": "UniDecl.Widgets",
+    "references": [
+        "UniDecl.Core"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": true
+}

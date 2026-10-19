@@ -3,9 +3,14 @@
     "rootNamespace": "UniDecl.PropertyGrid.Editor.Tests",
     "references": [
         "UniDecl.PropertyGrid.Editor",
-        "UniDecl.PropertyGrid.Runtime",
-        "UniDecl.BuiltIn.Runtime",
-        "UniDecl.BuiltIn.Runtime.Snapshot",
+        "UniDecl.PropertyGrid",
+        "UniDecl.Core",
+        "UniDecl.Snapshot",
+        "UniDecl.Widgets",
+        "UniDecl.Unity",
+        "UniDecl.Backend.UIToolKit",
+        "UniDecl.Backend.UIToolKit.Editor",
+        "UniDecl.Unity.Editor",
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner"
     ],

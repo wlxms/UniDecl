@@ -5,14 +5,14 @@ using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
 using NUnit.Framework;
-using UniDecl.BuiltIn.Runtime.Core;
+using UniDecl.Core;
 using UniDecl.PropertyGrid.Editor.Examples;
 using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.TestTools;
 using UnityEngine.UIElements;
-using W = UniDecl.BuiltIn.Runtime.Widgets;
+using W = UniDecl.Widgets;
 
 namespace UniDecl.PropertyGrid.Editor.Tests
 {

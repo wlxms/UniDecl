@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using UniDecl.PropertyGrid.Runtime;
-using UniDecl.BuiltIn.Runtime.Core;
-using UniDecl.BuiltIn.Runtime.Widgets;
+using UniDecl.PropertyGrid;
+using UniDecl.Core;
+using UniDecl.Widgets;
 using UnityEditor;
 using UnityEngine;
 using PropertyField = UniDecl.PropertyGrid.Editor.Elements.PropertyField;

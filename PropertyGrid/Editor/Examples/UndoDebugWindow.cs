@@ -1,10 +1,11 @@
+using UniDecl.Unity.Snapshot;
 using System;
 using System.Reflection;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
-using UniDecl.BuiltIn.Runtime.Snapshot;
-using UniDecl.BuiltIn.Editor.Snapshot;
+using UniDecl.Snapshot;
+using UniDecl.Unity.Editor;
 
 namespace UniDecl.PropertyGrid.Editor.Examples
 {
@@ -32,7 +33,7 @@ namespace UniDecl.PropertyGrid.Editor.Examples
         public void CreateGUI()
         {
             _data = new TestData();
-            _mgr = new EditorSnapshotManager(new SnapshotManager());
+            _mgr = new EditorSnapshotManager(new SnapshotManager(new UnitySnapshotLeafPolicy()));
             _mgr.OnUndoRedoPerformed += RebuildField;
 
             // 单轨叶子绑定：getter/setter 统一入口，Commit 时基线对比（变更才记录）

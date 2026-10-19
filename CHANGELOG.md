@@ -4,6 +4,36 @@ All notable changes to UniDecl will be documented in this file.
 
 ## [Unreleased]
 
+### 2026-10-19 — Assembly split & engine-agnostic core
+
+**refactor: split into engine-agnostic and Unity-specific assemblies**
+- Directory layout: `Core/`, `Snapshot/`, `Widgets/`, `Unity/`, `UnityEditor/`, `Backends/UIToolKit/`, `PropertyGrid/`
+- New assemblies:
+  - `UniDecl.Core` (`noEngineReferences: true`) — DOM, element tree, render pipeline, context/state/events/navigation
+  - `UniDecl.Snapshot` (`noEngineReferences: true`) — Undo/Redo engine
+  - `UniDecl.Widgets` (`noEngineReferences: true`) — backend-neutral widget definitions + Markdown
+  - `UniDecl.PropertyGrid` (`noEngineReferences: true`) — PropertyGrid attributes
+  - `UniDecl.Unity` — Unity value-type widgets, log bridge, Unity leaf policy
+  - `UniDecl.Unity.Editor` — editor host + Unity Undo adapter
+  - `UniDecl.Backend.UIToolKit` / `UniDecl.Backend.UIToolKit.Editor` — UI Toolkit backend
+  - `UniDecl.PropertyGrid.Editor` — PropertyGrid editor
+- Namespaces migrated to match the new assembly boundaries:
+  - `UniDecl.BuiltIn.Runtime.Core` → `UniDecl.Core`
+  - `UniDecl.BuiltIn.Runtime.Components` → `UniDecl.Core.Components`
+  - `UniDecl.BuiltIn.Runtime.Contexts` → `UniDecl.Core.Contexts`
+  - `UniDecl.BuiltIn.Runtime.Navigation` → `UniDecl.Core.Navigation`
+  - `UniDecl.BuiltIn.Runtime.Snapshot` → `UniDecl.Snapshot`
+  - `UniDecl.BuiltIn.Runtime.Widgets` → `UniDecl.Widgets`
+  - `UniDecl.BuiltIn.Runtime.Widgets.MD` / `.MD` → `UniDecl.Widgets.MD`
+  - Unity value-type widgets → `UniDecl.Unity.Widgets`
+  - `UniDecl.BuiltIn.Editor*` → `UniDecl.Unity.Editor`
+  - `UniDecl.UIToolKit.Runtime` → `UniDecl.Backend.UIToolKit`
+  - `UniDecl.Editor.UIToolKit*` → `UniDecl.Backend.UIToolKit.Editor*`
+  - `UniDecl.PropertyGrid.Runtime` → `UniDecl.PropertyGrid`
+- `SnapshotManager` now takes an injected `ISnapshotLeafPolicy` (constructor injection) instead of a global registration:
+  `new SnapshotManager(new UnitySnapshotLeafPolicy())`
+- Added `UniDeclLog` in Core and `UnityLogBootstrap` in `UniDecl.Unity` to remove direct `UnityEngine.Debug` usage from pure assemblies.
+
 ### 2026-04-18 — MD widgets namespace migration & enhancements
 
 **refactor: MD widgets to dedicated namespace, add syntax highlighting, enhance TocView/RichText, improve themes** `527b62f`

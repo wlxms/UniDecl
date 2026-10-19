@@ -31,7 +31,7 @@ UniDecl 将渲染拆分为两个阶段，就像先读图纸再盖房子：
 
 Unity 正从 IMGUI 向 UI Toolkit 迁移，没有人知道这个过渡期会持续多久。一个与单一后端绑定的框架，是在替开发者做选择——而开发者自己还没有答案。
 
-UniDecl 的核心（`Runtime/Core`）不持有任何后端立场。它管理的是一棵逻辑上的元素树：构建它、Diff 它、重建它。至于这棵树最终以什么形式呈现——`GUILayout` 调用、`VisualElement` 实例、还是尚未出现的第三个后端——那是渲染器的责任，不是框架的。
+UniDecl 的核心（`Core/`）不持有任何后端立场。它管理的是一棵逻辑上的元素树：构建它、Diff 它、重建它。至于这棵树最终以什么形式呈现——`GUILayout` 调用、`VisualElement` 实例、还是尚未出现的第三个后端——那是渲染器的责任，不是框架的。
 
 > 框架应该为后端的多样性提供空间，而不是为后端的单一性做出承诺。
 
@@ -109,54 +109,74 @@ new Button("删除", () =>
 
 ```
 UniDecl/
-├── Runtime/
-│   ├── Core/              # 后端无关的核心抽象
-│   │   ├── IElement.cs            # 元素基础接口
-│   │   ├── Element.cs             # 抽象基类（Element、ContainerElement、Element<TState>）
-│   │   ├── DOMTree.cs             # 两阶段 DOM 构建 + Diff 重建
-│   │   ├── DOMNode.cs             # DOM 树节点
-│   │   ├── ElementRenderHost.cs   # 渲染管线：BuildDOM → Render、事件分发
-│   │   ├── IElementRender.cs      # 渲染器 + 更新器接口
-│   │   ├── Context/               # ContextStack、ContextProvider、ContextConsumer
-│   │   ├── State/                 # StateManager、StateStack、ElementState
-│   │   └── Event/                 # EventDispatcher（泛型 struct 事件）
-│   │
-│   ├── Components/         # 后端无关的元素定义
-│   │   ├── InlineStyle.cs         # 轻量内联样式（class name + 尺寸属性）
-│   │   └── IInlineStyle.cs        # 内联样式接口
-│   │
-│   ├── Widgets/            # 可复用的元素定义（class-based）
-│   │   ├── Label, Button, TextField, Slider, Toggle, ...
-│   │   ├── VerticalLayout, HorizontalLayout, ScrollView, Foldout, ...
-│   │   ├── ListView, TreeView, MultiColumnListView
-│   │   ├── Toolbar, ToolbarButton, ToolbarToggle, ...
-│   │   ├── UE/                     # Unity Editor 专用（UeCard）
-│   │   └── MD/                     # Markdown Widget（见下文）
-│   │
-│   ├── Contexts/           # 内置上下文提供者
-│   │   └── DisableContext.cs
-│   │
-│   └── MD/                 # Markdown 解析器
-│       ├── MdParser.cs             # 轻量、无外部依赖的解析器
-│       ├── MdBlock.cs              # 块级 AST（Heading、Paragraph、CodeBlock 等）
-│       └── MdInline.cs             # 行内级 AST（Bold、Italic、Code、Link 等）
+├── Core/                    # UniDecl.Core（noEngineReferences: true）
+│   ├── IElement.cs / Element.cs / DOMTree.cs / DOMNode.cs
+│   ├── ElementRenderHost.cs        # 渲染管线：BuildDOM → Render、事件分发
+│   ├── UniDeclLog.cs               # 引擎无关日志入口
+│   ├── Context/ State/ Event/      # 上下文、状态、事件
+│   ├── Components/                 # InlineStyle / 事件组件
+│   ├── Contexts/                   # DisableContext 等
+│   └── Navigation/                 # Anchor / URL 导航
 │
-├── UIToolKit/
-│   ├── Runtime/
-│   │   ├── UITKStyle.cs            # UI Toolkit 原生样式桥接
-│   │   └── Widgets/                # UI Toolkit 专用 Widget（ListView、TreeView 等）
-│   │
-│   └── Editor/
-│       ├── UIToolkitRenderManager.cs   # ElementRenderHost<VisualElement> 实现
-│       ├── Renderers/                 # 55+ 个返回 VisualElement 的渲染器
-│       │   ├── UE/                   # Unity Editor 字段渲染器
-│       │   └── MD/                   # Markdown Widget 渲染器
-│       ├── Style/                     # USS 样式表
-│       └── Examples/                  # 示例 EditorWindow
+├── Snapshot/                # UniDecl.Snapshot（noEngineReferences: true）
+│   ├── SnapshotManager.cs          # Undo/Redo 引擎
+│   ├── SnapshotBinding.cs          # 绑定树
+│   ├── ISnapshotLeafPolicy.cs      # 构造 SnapshotManager 时注入的叶子策略
+│   └── DefaultSnapshotLeafPolicy.cs
 │
-└── Editor/
-    └── UniDecl.Editor.asmdef
+├── Widgets/                 # UniDecl.Widgets（noEngineReferences: true）
+│   ├── Label, Button, TextField, Slider, Toggle, ...
+│   ├── VerticalLayout, HorizontalLayout, ScrollView, Foldout, ...
+│   ├── Toolbar, ToolbarButton, ToolbarToggle, ...
+│   ├── UE/                         # UE 风格外壳控件（UeCard）
+│   └── MD/                         # Markdown 解析器 + Markdown Widget
+│
+├── Unity/                   # UniDecl.Unity（Unity 运行时适配）
+│   ├── Widgets/                    # Vector/Color/Rect/Bounds/Curve/Gradient/Object
+│   ├── Logging/                    # UniDeclLog → UnityEngine.Debug
+│   └── Snapshot/                   # UnitySnapshotLeafPolicy
+│
+├── UnityEditor/             # UniDecl.Unity.Editor
+│   ├── EditorHostManager.cs        # [DeclHostWindow] 发现与导航
+│   ├── EditorSnapshotManager.cs    # ISnapshotManager ↔ Unity Undo
+│   └── Tests/                      # Snapshot 测试
+│
+├── Backends/
+│   └── UIToolKit/
+│       ├── Runtime/                # UniDecl.Backend.UIToolKit
+│       │   ├── UITKStyle.cs
+│       │   └── Widgets/            # UITK 专用 Widget（ListView、TreeView 等）
+│       └── Editor/                 # UniDecl.Backend.UIToolKit.Editor
+│           ├── UIToolkitRenderManager.cs
+│           ├── Renderers/          # 55+ 个返回 VisualElement 的渲染器
+│           ├── Style/ Resources/   # USS / 主题 / 字体
+│           └── Examples/           # 示例 EditorWindow
+│
+└── PropertyGrid/
+    ├── Runtime/                    # UniDecl.PropertyGrid（noEngineReferences: true）
+    │   └── Attributes.cs           # 全部 PropertyGrid Attribute
+    └── Editor/                     # UniDecl.PropertyGrid.Editor
+        ├── PropertyGridModule.cs / PropertyGridElement.cs
+        ├── Accessor/ Fields/ Elements/ Decorators/ Layout/ Plugins/
+        └── Examples/
 ```
+
+### 程序集依赖规则
+
+```
+UniDecl.Core → UniDecl.Snapshot
+UniDecl.Widgets → UniDecl.Core
+UniDecl.Unity → UniDecl.Core + UniDecl.Snapshot
+UniDecl.Unity.Editor → UniDecl.Unity
+UniDecl.Backend.UIToolKit → UniDecl.Widgets + UniDecl.Unity
+UniDecl.Backend.UIToolKit.Editor → UniDecl.Backend.UIToolKit + UniDecl.Unity.Editor
+UniDecl.PropertyGrid（Attributes）→ 无依赖
+UniDecl.PropertyGrid.Editor → UniDecl.PropertyGrid + Widgets + Backend.UIToolKit.Editor
+```
+
+`UniDecl.Core`、`UniDecl.Snapshot`、`UniDecl.Widgets`、`UniDecl.PropertyGrid` 均为纯 C# 程序集
+（`noEngineReferences: true`）。后端与 Unity 专用 Widget 位于它们之上，因此未来接入
+Unreal UMG 时，只需引用这四个与引擎无关的程序集。
 
 ## 核心概念
 
@@ -368,8 +388,8 @@ UeCard
 ```csharp
 using UnityEditor;
 using UnityEngine;
-using UniDecl.Editor.UIToolKit;
-using UniDecl.Runtime.Widgets;
+using UniDecl.Backend.UIToolKit.Editor;
+using UniDecl.Widgets;
 
 public class MyWindow : EditorWindow
 {

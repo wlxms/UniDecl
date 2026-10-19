@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
-using UniDecl.PropertyGrid.Runtime;
+using UniDecl.PropertyGrid;
 using UnityEditor;
 using UnityEngine;
 

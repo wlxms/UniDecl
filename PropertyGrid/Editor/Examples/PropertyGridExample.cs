@@ -1,16 +1,17 @@
+using UniDecl.Unity.Snapshot;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
 using UnityEngine;
-using UniDecl.BuiltIn.Editor.Snapshot;
-using UniDecl.BuiltIn.Runtime.Core;
-using UniDecl.BuiltIn.Runtime.Snapshot;
-using UniDecl.BuiltIn.Runtime.Widgets;
-using UniDecl.BuiltIn.Runtime.Widgets.MD;
-using UniDecl.Editor.UIToolKit;
+using UniDecl.Unity.Editor;
+using UniDecl.Core;
+using UniDecl.Snapshot;
+using UniDecl.Widgets;
+using UniDecl.Widgets.MD;
+using UniDecl.Backend.UIToolKit.Editor;
 using UniDecl.PropertyGrid.Editor;
-using IAttr = UniDecl.PropertyGrid.Runtime;
+using IAttr = UniDecl.PropertyGrid;
 
 namespace UniDecl.PropertyGrid.Editor.Examples
 {
@@ -283,7 +284,7 @@ namespace UniDecl.PropertyGrid.Editor.Examples
             _config = new PropertyGridShowcase();
 
             // 注入 EditorSnapshotManager：PropertyGrid 的 Undo/Redo 由 Host 自动接线
-            _manager = new UIToolkitRenderManager(new EditorSnapshotManager(new SnapshotManager()));
+            _manager = new UIToolkitRenderManager(new EditorSnapshotManager(new SnapshotManager(new UnitySnapshotLeafPolicy())));
             var root = new Panel
             {
                 new VerticalLayout

@@ -2,13 +2,14 @@
     "name": "UniDecl.PropertyGrid.Editor",
     "rootNamespace": "UniDecl.PropertyGrid.Editor",
     "references": [
-        "UniDecl.PropertyGrid.Runtime",
-        "UniDecl.BuiltIn.Runtime",
-        "UniDecl.UIToolKit",
-        "UniDecl.UIToolKit.Editor",
-        "UniDecl.BuiltIn.Editor",
-        "UniDecl.BuiltIn.Runtime.Snapshot",
-        "UniDecl.BuiltIn.Editor.Snapshot"
+        "UniDecl.PropertyGrid",
+        "UniDecl.Core",
+        "UniDecl.Snapshot",
+        "UniDecl.Widgets",
+        "UniDecl.Unity",
+        "UniDecl.Backend.UIToolKit",
+        "UniDecl.Backend.UIToolKit.Editor",
+        "UniDecl.Unity.Editor"
     ],
     "includePlatforms": [
         "Editor"

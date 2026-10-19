@@ -1,7 +1,0 @@
-{
-	"name": "UniDecl.BuiltIn.Runtime",
-	"rootNamespace": "UniDecl.BuiltIn.Runtime",
-	"references": [
-		"UniDecl.BuiltIn.Runtime.Snapshot"
-	]
-}

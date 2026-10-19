@@ -1,7 +1,7 @@
-using UniDecl.BuiltIn.Runtime.Core;
-using UniDecl.BuiltIn.Runtime.Contexts;
-using UniDecl.BuiltIn.Runtime.Widgets;
-using UniDecl.UIToolKit.Runtime;
+using UniDecl.Core;
+using UniDecl.Core.Contexts;
+using UniDecl.Widgets;
+using UniDecl.Backend.UIToolKit;
 using UnityEngine.UIElements;
 
 namespace UniDecl.PropertyGrid.Editor.Elements

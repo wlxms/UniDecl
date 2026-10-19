@@ -1,8 +1,8 @@
 using System.Linq;
 using NUnit.Framework;
 using UniDecl.PropertyGrid.Editor.Examples;
-using UniDecl.PropertyGrid.Runtime;
-using IAttr = UniDecl.PropertyGrid.Runtime;
+using UniDecl.PropertyGrid;
+using IAttr = UniDecl.PropertyGrid;
 
 namespace UniDecl.PropertyGrid.Editor.Tests
 {

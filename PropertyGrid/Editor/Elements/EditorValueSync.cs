@@ -1,6 +1,6 @@
 using System;
 using System.Reflection;
-using UniDecl.BuiltIn.Runtime.Core;
+using UniDecl.Core;
 
 namespace UniDecl.PropertyGrid.Editor.Elements
 {

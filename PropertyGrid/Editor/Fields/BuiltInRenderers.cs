@@ -1,13 +1,14 @@
+using UniDecl.Unity.Widgets;
 using System;
-using UniDecl.BuiltIn.Runtime.Core;
-using UniDecl.BuiltIn.Runtime.Widgets;
-using UniDecl.PropertyGrid.Runtime;
+using UniDecl.Core;
+using UniDecl.Widgets;
+using UniDecl.PropertyGrid;
 using PropertyField = UniDecl.PropertyGrid.Editor.Elements.PropertyField;
-using RangeAttribute = UniDecl.PropertyGrid.Runtime.RangeAttribute;
-using TextAreaAttribute = UniDecl.PropertyGrid.Runtime.TextAreaAttribute;
-using TooltipAttribute = UniDecl.PropertyGrid.Runtime.TooltipAttribute;
+using RangeAttribute = UniDecl.PropertyGrid.RangeAttribute;
+using TextAreaAttribute = UniDecl.PropertyGrid.TextAreaAttribute;
+using TooltipAttribute = UniDecl.PropertyGrid.TooltipAttribute;
 using UnityEngine;
-using Button = UniDecl.BuiltIn.Runtime.Widgets.Button;
+using Button = UniDecl.Widgets.Button;
 
 namespace UniDecl.PropertyGrid.Editor
 {
@@ -342,7 +343,7 @@ namespace UniDecl.PropertyGrid.Editor
             var attr = ctx.GetAttribute<DropdownAttribute>();
             var choices = ResolveChoices(attr, ctx.BuildContext.Renderer, ctx.BuildContext.Target);
             var idx = ResolveIndex(ctx.Accessor.PropertyType, ctx.Accessor.GetValue(), choices);
-            var dd = new UniDecl.BuiltIn.Runtime.Widgets.Dropdown(null, choices, idx);
+            var dd = new UniDecl.Widgets.Dropdown(null, choices, idx);
             dd.WithKey(pf.Editor?.Key);
             dd.OnSelectionChanged = (ni) =>
             {

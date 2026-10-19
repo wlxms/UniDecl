@@ -3,9 +3,9 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using UniDecl.BuiltIn.Runtime.Core;
-using UniDecl.BuiltIn.Runtime.Widgets;
-using UniDecl.UIToolKit.Runtime;
+using UniDecl.Core;
+using UniDecl.Widgets;
+using UniDecl.Backend.UIToolKit;
 using UnityEditor;
 
 namespace UniDecl.PropertyGrid.Editor

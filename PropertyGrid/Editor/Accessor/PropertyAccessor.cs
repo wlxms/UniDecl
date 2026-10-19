@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
-using UniDecl.BuiltIn.Runtime.Core;
-using UniDecl.PropertyGrid.Runtime;
+using UniDecl.Core;
+using UniDecl.PropertyGrid;
 
 namespace UniDecl.PropertyGrid.Editor
 {
@@ -115,7 +115,7 @@ namespace UniDecl.PropertyGrid.Editor
     public sealed class FallbackTypeRenderer : IFieldTypeRenderer
     {
         public Type FieldType => typeof(object);
-        public IElement CreateWidget(PropertyAccessor a, BuildContext c) => new UniDecl.BuiltIn.Runtime.Widgets.Label($"{a.DisplayName}: {a.GetValue() ?? "null"}");
+        public IElement CreateWidget(PropertyAccessor a, BuildContext c) => new UniDecl.Widgets.Label($"{a.DisplayName}: {a.GetValue() ?? "null"}");
     }
 
     public static class FieldTypeRendererRegistry

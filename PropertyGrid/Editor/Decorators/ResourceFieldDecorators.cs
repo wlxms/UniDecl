@@ -1,10 +1,11 @@
+using UniDecl.Unity.Widgets;
 using System;
 using System.Linq;
 using System.Reflection;
-using UniDecl.BuiltIn.Runtime.Core;
-using UniDecl.BuiltIn.Runtime.Widgets;
-using UniDecl.PropertyGrid.Runtime;
-using UniDecl.UIToolKit.Runtime;
+using UniDecl.Core;
+using UniDecl.Widgets;
+using UniDecl.PropertyGrid;
+using UniDecl.Backend.UIToolKit;
 using UnityEditor;
 using UnityEngine;
 using PropertyField = UniDecl.PropertyGrid.Editor.Elements.PropertyField;
@@ -114,7 +115,7 @@ namespace UniDecl.PropertyGrid.Editor.Decorators
                     OnClick = () =>
                     {
                         ctx.Accessor.SetValue(color);
-                        if (colorEditor is UniDecl.BuiltIn.Runtime.Widgets.ColorField cf)
+                        if (colorEditor is UniDecl.Unity.Widgets.ColorField cf)
                         {
                             cf.Value = color;
                             cf.NotifyChanged();

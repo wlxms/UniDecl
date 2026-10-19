@@ -1,7 +1,7 @@
-using UniDecl.BuiltIn.Runtime.Components;
-using UniDecl.BuiltIn.Runtime.Core;
-using UniDecl.BuiltIn.Runtime.Widgets;
-using UniDecl.UIToolKit.Runtime;
+using UniDecl.Core.Components;
+using UniDecl.Core;
+using UniDecl.Widgets;
+using UniDecl.Backend.UIToolKit;
 using UnityEngine.UIElements;
 
 namespace UniDecl.PropertyGrid.Editor.Elements
@@ -48,7 +48,7 @@ namespace UniDecl.PropertyGrid.Editor.Elements
             if (Disabled)
                 style.AddClass("ud-field-label--disabled");
 
-            return new UniDecl.BuiltIn.Runtime.Widgets.Label(Text).With(style);
+            return new UniDecl.Widgets.Label(Text).With(style);
         }
     }
 }

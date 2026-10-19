@@ -1,7 +1,7 @@
 using System;
 using System.Linq;
 using System.Reflection;
-using UniDecl.PropertyGrid.Runtime;
+using UniDecl.PropertyGrid;
 
 namespace UniDecl.PropertyGrid.Editor
 {

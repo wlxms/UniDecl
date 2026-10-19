@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Generic;
-using UniDecl.BuiltIn.Runtime.Core;
-using UniDecl.BuiltIn.Runtime.Widgets;
-using UniDecl.PropertyGrid.Runtime;
+using UniDecl.Core;
+using UniDecl.Widgets;
+using UniDecl.PropertyGrid;
 
 namespace UniDecl.PropertyGrid.Editor
 {
