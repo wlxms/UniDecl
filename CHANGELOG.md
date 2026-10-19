@@ -4,6 +4,21 @@ All notable changes to UniDecl will be documented in this file.
 
 ## [Unreleased]
 
+### 2026-10-20 — Repository split by backend
+
+**refactor: extract Unity/UI Toolkit backends into separate repositories**
+- `UniDecl` core repository now contains only engine/backend-agnostic code:
+  - `Core/` (`UniDecl.Core`, `noEngineReferences: true`)
+  - `Snapshot/` (`UniDecl.Snapshot`, `noEngineReferences: true`)
+  - `Widgets/` (`UniDecl.Widgets`, `noEngineReferences: true`)
+  - `PropertyGrid/Runtime/` (`UniDecl.PropertyGrid`, `noEngineReferences: true`)
+- New separate repositories:
+  - `UniDecl.UIToolKit` — shared Unity adapter (`UniDecl.Unity`, `UniDecl.Unity.Editor`) + UI Toolkit backend + PropertyGrid editor
+  - `UniDecl.IMGUI` — Unity IMGUI backend (placeholder)
+  - `UniDecl.UMG` — Unreal UMG backend (placeholder)
+- Core assemblies no longer reference any Unity assembly.
+- `package.json` description updated to reflect the core-only package.
+
 ### 2026-10-19 — Assembly split & engine-agnostic core
 
 **refactor: split into engine-agnostic and Unity-specific assemblies**

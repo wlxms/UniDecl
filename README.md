@@ -107,9 +107,11 @@ At a deeper level, this follows the core thesis of declarative UI: **describe "w
 
 ## Architecture
 
+This repository is the **engine-agnostic core package** (`com.wlxms.unidecl`).
+
 ```
-UniDecl/
-├── Core/                    # UniDecl.Core (noEngineReferences: true)
+UniDecl/                      # com.wlxms.unidecl (no Unity/engine dependency)
+├── Core/                     # UniDecl.Core (noEngineReferences: true)
 │   ├── IElement.cs                 # Element base interface
 │   ├── Element.cs                  # Abstract base (Element, ContainerElement, Element<TState>)
 │   ├── DOMTree.cs                  # Two-phase DOM construction + diff rebuild
@@ -124,72 +126,56 @@ UniDecl/
 │   ├── Contexts/                   # Built-in context providers (DisableContext)
 │   └── Navigation/                 # Anchors + URL navigation
 │
-├── Snapshot/                # UniDecl.Snapshot (noEngineReferences: true)
+├── Snapshot/                 # UniDecl.Snapshot (noEngineReferences: true)
 │   ├── SnapshotManager.cs          # Undo/Redo engine
 │   ├── SnapshotBinding.cs          # Binding tree (leaf / object / list / dict)
 │   ├── ISnapshotLeafPolicy.cs      # Injected engine leaf-type policy
 │   └── DefaultSnapshotLeafPolicy.cs
 │
-├── Widgets/                 # UniDecl.Widgets (noEngineReferences: true)
+├── Widgets/                  # UniDecl.Widgets (noEngineReferences: true)
 │   ├── Label, Button, TextField, Slider, Toggle, ...
 │   ├── VerticalLayout, HorizontalLayout, ScrollView, Foldout, ...
 │   ├── Toolbar, ToolbarButton, ToolbarToggle, ...
 │   ├── UE/                         # UE-style shell widgets (UeCard)
 │   └── MD/                         # Markdown parser + Markdown widgets
 │
-├── Unity/                   # UniDecl.Unity (Unity runtime adapter)
-│   ├── Widgets/                    # Vector/Color/Rect/Bounds/Curve/Gradient/Object fields
-│   ├── Logging/                    # UniDeclLog → UnityEngine.Debug bridge
-│   └── Snapshot/                   # UnitySnapshotLeafPolicy
-│
-├── UnityEditor/             # UniDecl.Unity.Editor
-│   ├── EditorHostManager.cs        # [DeclHostWindow] discovery + navigation
-│   ├── EditorSnapshotManager.cs    # ISnapshotManager ↔ Unity Undo decorator
-│   └── Tests/                      # Snapshot tests
-│
-├── Backends/
-│   └── UIToolKit/
-│       ├── Runtime/                # UniDecl.Backend.UIToolKit
-│       │   ├── UITKStyle.cs        # UI Toolkit native style bridge
-│       │   └── Widgets/            # UITK-specific widgets (ListView, TreeView, ...)
-│       └── Editor/                 # UniDecl.Backend.UIToolKit.Editor
-│           ├── UIToolkitRenderManager.cs
-│           ├── Renderers/          # 55+ renderers returning VisualElement
-│           │   ├── UE/             # Unity Editor field renderers
-│           │   └── MD/             # Markdown widget renderers
-│           ├── Style/              # USS style sheets
-│           ├── Resources/          # Themes / fonts / effects
-│           └── Examples/           # Example EditorWindows
-│
 └── PropertyGrid/
-    ├── Runtime/                    # UniDecl.PropertyGrid (noEngineReferences: true)
-    │   └── Attributes.cs           # All PropertyGrid attributes
-    └── Editor/                     # UniDecl.PropertyGrid.Editor
-        ├── PropertyGridModule.cs   # Module entry + element tree
-        ├── PropertyGridElement.cs  # Root element (IScopeProvider)
-        ├── BuildContext.cs         # Render context (@ reference resolution)
-        ├── LayoutResolver.cs       # Layout tree generation
-        ├── WidgetFactory.cs        # LayoutTree → UniDecl element tree
-        ├── Accessor/ Fields/ Elements/ Decorators/ Layout/ Plugins/
-        └── Examples/               # Complete usage examples
+    └── Runtime/              # UniDecl.PropertyGrid (noEngineReferences: true)
+        └── Attributes.cs           # All PropertyGrid attributes
 ```
 
+### Backend packages (separate repositories)
+
+| Package | Repository | Contents |
+|---|---|---|
+| `com.wlxms.unidecl.uitoolkit` | `UniDecl.UIToolKit` | Shared Unity adapter (`UniDecl.Unity`, `UniDecl.Unity.Editor`) + UI Toolkit runtime/editor + PropertyGrid editor |
+| `com.wlxms.unidecl.imgui` | `UniDecl.IMGUI` | Unity IMGUI backend (placeholder) |
+| `com.wlxms.unidecl.umg` | `UniDecl.UMG` | Unreal UMG backend (placeholder) |
+
 ### Assembly dependency rule
+
+Core repository:
 
 ```
 UniDecl.Core → UniDecl.Snapshot
 UniDecl.Widgets → UniDecl.Core
-UniDecl.Unity → UniDecl.Core + UniDecl.Snapshot
-UniDecl.Unity.Editor → UniDecl.Unity
-UniDecl.Backend.UIToolKit → UniDecl.Widgets + UniDecl.Unity
-UniDecl.Backend.UIToolKit.Editor → UniDecl.Backend.UIToolKit + UniDecl.Unity.Editor
-UniDecl.PropertyGrid (attributes) → (no dependencies)
-UniDecl.PropertyGrid.Editor → UniDecl.PropertyGrid + Widgets + Backend.UIToolKit.Editor
+UniDecl.PropertyGrid → (no dependencies)
+```
+
+Backend repositories depend on the core, never the other way around:
+
+```
+UniDecl.UIToolKit:
+  UniDecl.Unity → UniDecl.Core + UniDecl.Snapshot
+  UniDecl.Unity.Editor → UniDecl.Unity
+  UniDecl.Backend.UIToolKit → UniDecl.Widgets + UniDecl.Unity
+  UniDecl.Backend.UIToolKit.Editor → UniDecl.Backend.UIToolKit + UniDecl.Unity.Editor
+  UniDecl.PropertyGrid.Editor → UniDecl.PropertyGrid + Widgets + Backend.UIToolKit.Editor
 ```
 
 `UniDecl.Core`, `UniDecl.Snapshot`, `UniDecl.Widgets`, and `UniDecl.PropertyGrid` are pure C# assemblies
-(`noEngineReferences: true`). Backends and Unity-specific widgets live above them, so a future
-Unreal UMG backend only needs to reference the four engine-agnostic assemblies.
+(`noEngineReferences: true`). A future Unreal UMG backend only needs to reference these four
+engine-agnostic assemblies.
 
 ## Core Concepts
 
@@ -401,6 +387,8 @@ UeCard
 
 ## PropertyGrid 系统
 
+> The PropertyGrid editor (`UniDecl.PropertyGrid.Editor`) is distributed in the `UniDecl.UIToolKit` backend package. This core repository only contains the backend-agnostic attributes (`UniDecl.PropertyGrid`).
+
 PropertyGrid 是 UniDecl 的**声明式编辑面板引擎**——通过 Attribute 标记数据类字段，自动生成对应的编辑 UI 树。它与 UniDecl 的渲染管线深度集成：属性标记 → 反射分析 → 布局树 → Widget 树 → 渲染。
 
 ### 基本用法
@@ -524,6 +512,8 @@ PluginDiscovery 在 `PropertyGridModule.Initialize()` 时自动扫描所有程�
 - `UndoDebugWindow.cs` — 纯 Snapshot 机制演示
 
 ## Quick Start (UI Toolkit)
+
+> Requires the `UniDecl.UIToolKit` backend package.
 
 ```csharp
 using UnityEditor;

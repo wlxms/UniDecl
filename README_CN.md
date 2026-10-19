@@ -107,9 +107,11 @@ new Button("删除", () =>
 
 ## 架构
 
+本仓库是**与引擎无关的核心包**（`com.wlxms.unidecl`）。
+
 ```
-UniDecl/
-├── Core/                    # UniDecl.Core（noEngineReferences: true）
+UniDecl/                      # com.wlxms.unidecl（无 Unity/引擎依赖）
+├── Core/                     # UniDecl.Core（noEngineReferences: true）
 │   ├── IElement.cs / Element.cs / DOMTree.cs / DOMNode.cs
 │   ├── ElementRenderHost.cs        # 渲染管线：BuildDOM → Render、事件分发
 │   ├── UniDeclLog.cs               # 引擎无关日志入口
@@ -118,65 +120,55 @@ UniDecl/
 │   ├── Contexts/                   # DisableContext 等
 │   └── Navigation/                 # Anchor / URL 导航
 │
-├── Snapshot/                # UniDecl.Snapshot（noEngineReferences: true）
+├── Snapshot/                 # UniDecl.Snapshot（noEngineReferences: true）
 │   ├── SnapshotManager.cs          # Undo/Redo 引擎
 │   ├── SnapshotBinding.cs          # 绑定树
 │   ├── ISnapshotLeafPolicy.cs      # 构造 SnapshotManager 时注入的叶子策略
 │   └── DefaultSnapshotLeafPolicy.cs
 │
-├── Widgets/                 # UniDecl.Widgets（noEngineReferences: true）
+├── Widgets/                  # UniDecl.Widgets（noEngineReferences: true）
 │   ├── Label, Button, TextField, Slider, Toggle, ...
 │   ├── VerticalLayout, HorizontalLayout, ScrollView, Foldout, ...
 │   ├── Toolbar, ToolbarButton, ToolbarToggle, ...
 │   ├── UE/                         # UE 风格外壳控件（UeCard）
 │   └── MD/                         # Markdown 解析器 + Markdown Widget
 │
-├── Unity/                   # UniDecl.Unity（Unity 运行时适配）
-│   ├── Widgets/                    # Vector/Color/Rect/Bounds/Curve/Gradient/Object
-│   ├── Logging/                    # UniDeclLog → UnityEngine.Debug
-│   └── Snapshot/                   # UnitySnapshotLeafPolicy
-│
-├── UnityEditor/             # UniDecl.Unity.Editor
-│   ├── EditorHostManager.cs        # [DeclHostWindow] 发现与导航
-│   ├── EditorSnapshotManager.cs    # ISnapshotManager ↔ Unity Undo
-│   └── Tests/                      # Snapshot 测试
-│
-├── Backends/
-│   └── UIToolKit/
-│       ├── Runtime/                # UniDecl.Backend.UIToolKit
-│       │   ├── UITKStyle.cs
-│       │   └── Widgets/            # UITK 专用 Widget（ListView、TreeView 等）
-│       └── Editor/                 # UniDecl.Backend.UIToolKit.Editor
-│           ├── UIToolkitRenderManager.cs
-│           ├── Renderers/          # 55+ 个返回 VisualElement 的渲染器
-│           ├── Style/ Resources/   # USS / 主题 / 字体
-│           └── Examples/           # 示例 EditorWindow
-│
 └── PropertyGrid/
-    ├── Runtime/                    # UniDecl.PropertyGrid（noEngineReferences: true）
-    │   └── Attributes.cs           # 全部 PropertyGrid Attribute
-    └── Editor/                     # UniDecl.PropertyGrid.Editor
-        ├── PropertyGridModule.cs / PropertyGridElement.cs
-        ├── Accessor/ Fields/ Elements/ Decorators/ Layout/ Plugins/
-        └── Examples/
+    └── Runtime/              # UniDecl.PropertyGrid（noEngineReferences: true）
+        └── Attributes.cs           # 全部 PropertyGrid Attribute
 ```
 
+### 后端包（独立仓库）
+
+| 包 | 仓库 | 内容 |
+|---|---|---|
+| `com.wlxms.unidecl.uitoolkit` | `UniDecl.UIToolKit` | 共享 Unity 适配层（`UniDecl.Unity`、`UniDecl.Unity.Editor`）+ UI Toolkit Runtime/Editor + PropertyGrid Editor |
+| `com.wlxms.unidecl.imgui` | `UniDecl.IMGUI` | Unity IMGUI 后端（占位） |
+| `com.wlxms.unidecl.umg` | `UniDecl.UMG` | Unreal UMG 后端（占位） |
+
 ### 程序集依赖规则
+
+核心仓库：
 
 ```
 UniDecl.Core → UniDecl.Snapshot
 UniDecl.Widgets → UniDecl.Core
-UniDecl.Unity → UniDecl.Core + UniDecl.Snapshot
-UniDecl.Unity.Editor → UniDecl.Unity
-UniDecl.Backend.UIToolKit → UniDecl.Widgets + UniDecl.Unity
-UniDecl.Backend.UIToolKit.Editor → UniDecl.Backend.UIToolKit + UniDecl.Unity.Editor
-UniDecl.PropertyGrid（Attributes）→ 无依赖
-UniDecl.PropertyGrid.Editor → UniDecl.PropertyGrid + Widgets + Backend.UIToolKit.Editor
+UniDecl.PropertyGrid → 无依赖
+```
+
+后端仓库依赖核心，核心永不反向依赖后端：
+
+```
+UniDecl.UIToolKit：
+  UniDecl.Unity → UniDecl.Core + UniDecl.Snapshot
+  UniDecl.Unity.Editor → UniDecl.Unity
+  UniDecl.Backend.UIToolKit → UniDecl.Widgets + UniDecl.Unity
+  UniDecl.Backend.UIToolKit.Editor → UniDecl.Backend.UIToolKit + UniDecl.Unity.Editor
+  UniDecl.PropertyGrid.Editor → UniDecl.PropertyGrid + Widgets + Backend.UIToolKit.Editor
 ```
 
 `UniDecl.Core`、`UniDecl.Snapshot`、`UniDecl.Widgets`、`UniDecl.PropertyGrid` 均为纯 C# 程序集
-（`noEngineReferences: true`）。后端与 Unity 专用 Widget 位于它们之上，因此未来接入
-Unreal UMG 时，只需引用这四个与引擎无关的程序集。
+（`noEngineReferences: true`）。未来接入 Unreal UMG 时，只需引用这四个与引擎无关的程序集。
 
 ## 核心概念
 
@@ -384,6 +376,8 @@ Vector2Field, Vector3Field, Vector4Field, Vector2IntField, Vector3IntField, Rect
 UeCard
 
 ## 快速开始（UI Toolkit）
+
+> 需要 `UniDecl.UIToolKit` 后端包。
 
 ```csharp
 using UnityEditor;
