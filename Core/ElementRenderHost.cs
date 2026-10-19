@@ -60,13 +60,37 @@ namespace UniDecl.Core
 
         protected virtual EventDispatcher CreateEventDispatcher() => new EventDispatcher();
 
+        /// <summary>
+        /// 惰性创建事件分发器。Subscribe/Unsubscribe/Dispatch 可能在 BuildDOM 之前被调用
+        /// （例如 EditorWindow.CreateGUI 里先 Subscribe 再 RenderRoot），此时不能依赖
+        /// EnsureInitialized() 里的初始化顺序。
+        /// </summary>
+        private void EnsureEventDispatcher()
+        {
+            if (_eventDispatcher != null) return;
+            _eventDispatcher = CreateEventDispatcher();
+            _eventDispatcher.Subscribe(this);
+        }
+
         // ---- IEventDispatcher ----
 
-        public void Dispatch<T>(T @event) where T : struct => _eventDispatcher.Dispatch(@event);
+        public void Dispatch<T>(T @event) where T : struct
+        {
+            EnsureEventDispatcher();
+            _eventDispatcher.Dispatch(@event);
+        }
 
-        public void Subscribe(IEventListener listener) => _eventDispatcher.Subscribe(listener);
+        public void Subscribe(IEventListener listener)
+        {
+            EnsureEventDispatcher();
+            _eventDispatcher.Subscribe(listener);
+        }
 
-        public void Unsubscribe(IEventListener listener) => _eventDispatcher.Unsubscribe(listener);
+        public void Unsubscribe(IEventListener listener)
+        {
+            EnsureEventDispatcher();
+            _eventDispatcher.Unsubscribe(listener);
+        }
 
         // ---- IContextReader ----
 
@@ -300,8 +324,7 @@ namespace UniDecl.Core
             if (!_initialized)
             {
                 DiscoverRenderers();
-                _eventDispatcher = CreateEventDispatcher();
-                _eventDispatcher.Subscribe(this);
+                EnsureEventDispatcher();
                 SetupPlugins();
                 SetupSnapshot();
                 _initialized = true;
