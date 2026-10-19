@@ -48,14 +48,14 @@ namespace UniDecl.Editor.UIToolKit.Renderers
                 if (element.IsDelayed)
                 {
                     binding.BreakMerge();
-                    binding.Commit();
+                    binding.BreakMerge(); binding.Commit(); // 离散提交点：打断时间窗合并
                 }
                 element.NotifyChanged();
             });
             field.RegisterCallback<BlurEvent>(_ =>
             {
                 binding.BreakMerge(); // 显式提交点：与上次编辑隔离
-                binding.Commit();
+                binding.BreakMerge(); binding.Commit(); // 离散提交点：打断时间窗合并
                 element.OnCommit?.Invoke(element.Value ?? string.Empty);
             });
             UIToolkitStyleApplier.ApplyElementStyles(element, field);

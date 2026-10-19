@@ -1,0 +1,26 @@
+{
+    "name": "UniDecl.BuiltIn.Editor.Snapshot.Tests",
+    "rootNamespace": "UniDecl.BuiltIn.Editor.Snapshot.Tests",
+    "references": [
+        "UniDecl.BuiltIn.Runtime",
+        "UniDecl.BuiltIn.Runtime.Snapshot",
+        "UniDecl.BuiltIn.Editor.Snapshot",
+        "UnityEngine.TestRunner",
+        "UnityEditor.TestRunner"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "nunit.framework.dll"
+    ],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "UNITY_INCLUDE_TESTS"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

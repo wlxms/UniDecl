@@ -13,6 +13,8 @@ namespace UniDecl.PropertyGrid.Editor.Elements
     ///
     /// 实现：直接实现 IElement（不继承 Label），Render() 返回一个带 InlineStyle 的 Label 实例。
     /// 这样运行时精确类型是 Label，会被 Label 渲染器命中；FieldLabel 本身只是"结构包装节点"。
+    ///
+    /// 皮肤（文字色 / 字号 / 对齐）由 .ud-field-label 承担，宽度等尺寸仍走 InlineStyle。
     /// </summary>
     public class FieldLabel : Element
     {
@@ -25,20 +27,28 @@ namespace UniDecl.PropertyGrid.Editor.Elements
 
         public string Text { get; set; }
 
+        /// <summary>只读字段的 label 一并置灰，与 Unity Inspector 的表现一致</summary>
+        public bool Disabled { get; set; }
+
         public FieldLabel(string text) { Text = text; }
 
         public override IElement Render()
         {
-            return new UniDecl.BuiltIn.Runtime.Widgets.Label(Text)
-                .With(new UITKStyle
-                {
-                    Width = DefaultWidth,
-                    MinWidth = DefaultWidth,
-                    MaxWidth = DefaultWidth,
-                    FlexGrow = 0,
-                    FlexShrink = 0,
-                    AlignSelf = Align.Center,
-                });
+            var style = new UITKStyle
+            {
+                Width = DefaultWidth,
+                MinWidth = DefaultWidth,
+                MaxWidth = DefaultWidth,
+                FlexGrow = 0,
+                FlexShrink = 0,
+                AlignSelf = Align.Center,
+                MarginRight = 6,
+            };
+            style.AddClass("ud-field-label");
+            if (Disabled)
+                style.AddClass("ud-field-label--disabled");
+
+            return new UniDecl.BuiltIn.Runtime.Widgets.Label(Text).With(style);
         }
     }
 }

@@ -74,12 +74,14 @@ namespace UniDecl.BuiltIn.Editor.Snapshot.Tests
         [Test]
         public void Test_ValueLeaf_IndependentCommitsNotMerged()
         {
-            // 独立提交点（如两次 Blur）各自成 step，不跨提交合并——可分别 undo
+            // 独立提交点（如两次 Blur/两次选择）由 BreakMerge 显式隔离——各自成 step、可分别 undo；
+            // 未打断的连续记录才按时间窗合并（拖动等连续事件流的设计，见 MergeWithinGroup/StackLimit）
             float current = 0f;
             var binding = CreateLeaf(() => current, v => current = v);
 
             current = 10f;
             binding.Commit();
+            binding.BreakMerge(); // 离散提交点：打断与上一步的合并
             current = 20f;
             binding.Commit();
 
@@ -417,12 +419,12 @@ namespace UniDecl.BuiltIn.Editor.Snapshot.Tests
 
             obj.A = 99;
             binding.Commit();
-            _mgr.Undo();
-            _mgr.Redo();
+            _mgr.Undo();  // 事件：99 → 1
+            _mgr.Redo();  // 事件：1 → 99（本次操作前的值=撤销后值，恢复到 99）
 
             Assert.IsNotNull(last);
-            Assert.AreEqual(99, last.Changes[0].OldValue); // redo：旧=撤销后值
-            Assert.AreEqual(1, last.Changes[0].NewValue);  // 新=恢复值
+            Assert.AreEqual(1, last.Changes[0].OldValue);  // redo：旧=撤销后的值
+            Assert.AreEqual(99, last.Changes[0].NewValue); // 新=恢复值
         }
 
         // ═══════════════════════════════════════
@@ -430,8 +432,10 @@ namespace UniDecl.BuiltIn.Editor.Snapshot.Tests
         // ═══════════════════════════════════════
 
         [Test]
-        public void Test_Scope_DisposeCleansBindingsAndHistory()
+        public void Test_Scope_DisposeKeepsHistory_UndoNoOp()
         {
+            // 设计：DisposeScope 反注册 binding 但保留历史——跨结构 rebuild 的 undo 靠 Path 兜底。
+            // 已无当代 binding 的 step 成为 no-op（弹出但不产生写回，redo 不产生）。
             float x = 0f;
             var binding = CreateLeaf(() => x, v => x = v);
 
@@ -441,22 +445,43 @@ namespace UniDecl.BuiltIn.Editor.Snapshot.Tests
 
             _mgr.DisposeScope(_scopeId);
 
-            Assert.AreEqual(0, _mgr.UndoCount);
-            Assert.IsFalse(_mgr.Undo()); // 历史已清，binding 已反注册
+            Assert.AreEqual(1, _mgr.UndoCount, "历史按设计保留（Path 兜底）");
+            Assert.IsTrue(_mgr.Undo()); // step 弹出成功
+            Assert.AreEqual(10f, x, 0.001f, "无当代 binding：不写回");
+            Assert.IsFalse(_mgr.Redo(), "no-op 不产生 redo step");
         }
 
         [Test]
-        public void Test_Scope_DisposeBindingCleansHistory()
+        public void Test_Scope_DisposeBinding_PathFallbackRestores()
+        {
+            // 设计动机：结构 rebuild（条件显隐等）会 dispose 旧 binding 并注册同 Path 新 binding，
+            // 历史不清理——undo 经 Path 兜底落到当代 binding 上照常恢复。
+            float x = 0f;
+            var old = CreateLeaf(() => x, v => x = v);
+            x = 10f;
+            old.Commit();
+
+            var fresh = CreateLeaf(() => x, v => x = v); // 模拟 rebuild 后的同 Path 新代
+            old.Dispose();                                // 旧代反注册
+
+            Assert.AreEqual(1, _mgr.UndoCount, "换代不丢历史");
+            Assert.IsTrue(_mgr.Undo());
+            Assert.AreEqual(0f, x, 0.001f, "Path 兜底到当代 binding 恢复");
+        }
+
+        [Test]
+        public void Test_Scope_DisposeBinding_KeepsHistory()
         {
             float x = 0f;
             var binding = CreateLeaf(() => x, v => x = v);
             x = 10f;
             binding.Commit();
 
-            binding.Dispose(); // 显式反注册（等价 GC 后的惰性清理）
+            binding.Dispose(); // 显式反注册；历史保留（Path 兜底设计）
 
-            Assert.AreEqual(0, _mgr.UndoCount);
-            Assert.IsFalse(_mgr.Undo());
+            Assert.AreEqual(1, _mgr.UndoCount);
+            Assert.IsTrue(_mgr.Undo());
+            Assert.AreEqual(10f, x, 0.001f, "已反注册：不写回");
         }
 
         [Test]
@@ -471,8 +496,10 @@ namespace UniDecl.BuiltIn.Editor.Snapshot.Tests
             binding.Commit();
             Assert.AreEqual(1, _mgr.UndoCount);
 
-            _mgr.DisposeScope(_scopeId); // 父级联清理子 scope
-            Assert.AreEqual(0, _mgr.UndoCount);
+            _mgr.DisposeScope(_scopeId); // 父级联清理子 scope 的 binding；历史保留
+            Assert.AreEqual(1, _mgr.UndoCount, "级联反注册后历史仍保留（Path 兜底）");
+            Assert.IsTrue(_mgr.Undo());
+            Assert.AreEqual(10f, x, 0.001f, "子 binding 已随 scope 反注册：不写回");
         }
 
         [Test]

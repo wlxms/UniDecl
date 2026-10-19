@@ -141,6 +141,26 @@ UniDecl/
 │       ├── MdBlock.cs              # Block-level AST (Heading, Paragraph, CodeBlock, ...)
 │       └── MdInline.cs             # Inline-level AST (Bold, Italic, Code, Link, ...)
 │
+├── PropertyGrid/
+│   ├── Editor/
+│   │   ├── PropertyGridModule.cs      # 模块入口 + 元素树构造
+│   │   ├── PropertyGridElement.cs     # 根元素（IScopeProvider）
+│   │   ├── BuildContext.cs             # 渲染上下文（@ 引用解析链）
+│   │   ├── FieldBinder.cs             # 字段绑定器（方法/属性反射）
+│   │   ├── ReflectionCache.cs         # 类型元数据缓存
+│   │   ├── LayoutResolver.cs          # 布局树生成
+│   │   ├── WidgetFactory.cs           # LayoutTree → UniDecl 元素树
+│   │   ├── Accessor/                  # PropertyAccessor（字段读写）
+│   │   ├── Fields/                    # 类型渲染器（int, float, bool...）
+│   │   ├── Elements/                  # PropertyField, FieldLabel 等元素
+│   │   ├── Decorators/                # Attribute 装饰器
+│   │   ├── Layout/                    # 布局节点 + Handler
+│   │   ├── Plugins/                   # Plugin 发现与注册
+│   │   └── Examples/                  # 完整使用示例
+│   └── Runtime/
+│       ├── Attributes.cs              # 全部 PropertyGrid Attribute
+│       └── package.json
+│
 ├── UIToolKit/
 │   ├── Runtime/
 │   │   ├── UITKStyle.cs            # UI Toolkit native style bridge
@@ -365,6 +385,130 @@ Vector2Field, Vector3Field, Vector4Field, Vector2IntField, Vector3IntField, Rect
 
 ### Special
 UeCard
+
+## PropertyGrid 系统
+
+PropertyGrid 是 UniDecl 的**声明式编辑面板引擎**——通过 Attribute 标记数据类字段，自动生成对应的编辑 UI 树。它与 UniDecl 的渲染管线深度集成：属性标记 → 反射分析 → 布局树 → Widget 树 → 渲染。
+
+### 基本用法
+
+```csharp
+using UnityEngine;
+using UniDecl.PropertyGrid.Editor;
+using UniDecl.PropertyGrid.Runtime;
+using IAttr = UniDecl.PropertyGrid.Runtime;
+
+[Serializable]
+public class PlayerConfig
+{
+    [IAttr.LabelText("角色名称")]
+    public string playerName = "Hero";
+
+    [IAttr.Range(1, 99)]
+    public int level = 1;
+
+    [IAttr.FoldoutGroup("Combat")]
+    [IAttr.LabelText("攻击力")]
+    public float attack = 10f;
+
+    [IAttr.FoldoutGroup("Combat")]
+    [IAttr.LabelText("防御力")]
+    [IAttr.Range(0, 100)]
+    public int defense = 5;
+}
+
+// 在 EditorWindow 中使用 PropertyGridElement
+new PropertyGridElement(new PlayerConfig())
+```
+
+### 架构
+
+```
+数据类 ──→ ReflectionCache（反射分析 + 缓存）
+     │
+     ▼
+LayoutResolver ──→ LayoutTree（ILayoutNode 树）
+     │
+     ▼
+WidgetFactory ──→ UniDecl 元素树
+     │
+     ▼
+PropertyGridElement ──→ UniDecl 渲染管线
+```
+
+### Attribute 分类
+
+**布局分组**：`[HeaderGroup]`, `[BoxGroup]`, `[FoldoutGroup]`, `[TabGroup]`, `[HGroup]`, `[VGroup]`, `[PropertyOrder]`
+
+**显示控制**：`[LabelText]`, `[HideLabel]`, `[Tooltip]`, `[Title]`, `[Divider]`, `[Space]`, `[InfoBox]`, `[ReadOnly]`, `[GUIColor]`, `[Indent]`, `[HideInPlayMode]`, `[DisableInPlayMode]`
+
+**Flex 对齐**：`[FlexGrow]`, `[Width]`, `[AlignRight]`, `[AlignCenter]`
+
+**数值约束**：`[Range]`, `[MinValue]`, `[MaxValue]`, `[MinMaxSlider]`, `[Step]`, `[Wrap]`
+
+**条件控制**：`[ShowIf]`, `[HideIf]`, `[EnableIf]`
+
+**Editor 绑定**：`[Dropdown]`, `[Validate]`, `[OnValueChanged]`
+
+**资源选择**：`[PreviewField]`, `[FilePath]`, `[FolderPath]`, `[AssetsOnly]`, `[SceneObjectsOnly]`
+
+**枚举/颜色/多行**：`[EnumToggleButtons]`, `[ColorPalette]`, `[TextArea]`
+
+**类级控件**：`[PropertyGridLabel]`, `[PropertyGridInfoBox]`, `[Button]`
+
+**内联展开**：`[InlineProperty]`, `[StyleClass]`
+
+`InlineProperty` 只表示当前嵌套对象字段的 Value 采用横向初始布局。它不会修改父级的布局组，不会影响后续兄弟字段，也不会像 `[HGroup]` / `[VGroup]` 一样广播布局状态。
+
+### Renderer 绑定
+
+通过 `[PropertyGridRenderer]` 为数据类绑定专属 Renderer，支持 `@` 引用和值变更回调：
+
+```csharp
+[Serializable]
+public class CharConfig { public string name = "Hero"; }
+
+[IAttr.PropertyGridRenderer(typeof(CharConfig))]
+public class CharConfigRenderer
+{
+    public string GetTitle() => $"角色: {name}";
+    private string name;
+}
+```
+
+@ 引用解析链：`Renderer` → 数据类 → 父级 → 字面量
+
+### Plugin 扩展
+
+PropertyGrid 通过 Plugin 体系支持**无侵入扩展**——添加新的组类型、布局 Handler，无需修改框架：
+
+```csharp
+[UniPropertyGridPlugin("MyPlugin")]
+public class MyPlugin : IUniPropertyGridPlugin
+{
+    public string Name => "MyPlugin";
+    public void OnInit(IPluginRegistry r)
+    {
+        r.RegisterLayoutHandler<MyGroupAttr, MyLayoutNode>(new MyHandler());
+    }
+}
+```
+
+PluginDiscovery 在 `PropertyGridModule.Initialize()` 时自动扫描所有程序集并加载。
+
+### PropertyGridElement
+
+`PropertyGridElement` 是 PropertyGrid 的根元素，实现 `IScopeProvider`（自动与 Snapshot Undo/Redo 集成）。Render() 内部调用 `PropertyGridModule.CreateElementTree(this)` 完成自动展开。
+
+### 示例参考
+
+完整示例代码见 `PropertyGrid/Editor/Examples/`：
+- `GameCharacterConfig.cs` — **生产级用例**：TabGroup 分区 · 三级嵌套（Character → Equipment → ModifierEntry） · InlineProperty · 条件控制（ShowIf/HideIf/EnableIf） · Dropdown/Validate/OnValueChanged · Range/MinMaxSlider · PreviewField/FilePath/FolderPath · EnumToggleButtons/ColorPalette/TextArea · @ 表达式 · 类级/字段级 Button · FlexGrow/Width 布局 · List 字段
+- `PropertyGridExample.cs` — 基础特性综合演示
+- `CardGroupExample.cs` — 自定义 Plugin 扩展（CardGroup）
+- `Step2PropertyGridDebugWindow.cs` — PropertyGrid + Snapshot 集成
+- `Step3ShowcaseDebugWindow.cs` — 更多特性展示
+- `UndoDebugWindow.cs` — 纯 Snapshot 机制演示
 
 ## Quick Start (UI Toolkit)
 

@@ -595,13 +595,15 @@ namespace UniDecl.PropertyGrid.Runtime
 
     /// <summary>
     /// 声明一个 Serializable 子对象在父 PropertyGrid 中展开渲染（而非嵌套 PropertyGridElement）。
-    /// 仅改变子对象展开后的初始 currentGroup 方向（默认垂直）。
-    /// 注意：本特性不是 LayoutGroupAttribute 子类，不参与传染式状态机。
+    /// 仅改变当前字段对应 Value 的初始布局方向（默认垂直）。
+    /// 不改变父级 currentGroup，不影响当前字段之后的兄弟字段，也不参与传染式状态机。
     /// </summary>
     [Conditional("UNITY_EDITOR")]
     [AttributeUsage(AttributeTargets.Field, Inherited = true, AllowMultiple = false)]
     public class InlinePropertyAttribute : PropertyGridAttribute
     {
+        public override bool PropagateOnInline => false;
+
         /// <summary>是否剥离子字段自身的 Group Attribute（默认 false，子字段保留原 Group 路径）。</summary>
         public bool StripOwnGroups { get; set; }
     }

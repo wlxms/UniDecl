@@ -134,6 +134,18 @@ namespace UniDecl.Editor.UIToolKit.Style
                 case MarkdownView:
                     yield return "ud-markdown";
                     break;
+                case Tabs:
+                    yield return "ud-tabs";
+                    break;
+                case EnumToggleGroup:
+                    yield return "ud-enum-toggle-group";
+                    break;
+                case ScrollView:
+                    yield return "ud-scrollview";
+                    break;
+                case VisualSplitter:
+                    yield return "ud-splitter";
+                    break;
             }
         }
 

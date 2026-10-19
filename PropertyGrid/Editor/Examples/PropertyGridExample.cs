@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEditor;
 using UnityEngine;
 using UniDecl.BuiltIn.Editor.Snapshot;
@@ -288,19 +289,24 @@ namespace UniDecl.PropertyGrid.Editor.Examples
                 new VerticalLayout
                 {
                     new Label("PropertyGrid 完整特性用例"),
-                    new Label("本用例覆盖：类级标签/信息框/按钮、布局组、Dropdown、按钮替换、ShowIf/HideIf、嵌套对象与常见字段类型。"),
+                    new Label("本用例覆盖：类级标签/信息框/按钮、布局组、Dropdown、ShowIf/HideIf、嵌套对象与常见字段类型。"),
                     new Label("说明：渲染覆盖区主要用于验证控件可见性，核心交互链路集中在“基础信息 / 交互链路验证 / 条件与动作 / 嵌套对象”。"),
                     new Divider(),
-                    new ScrollView
-                    {
-                        new PropertyGridElement(_config).WithKey("feature_showcase_propertygrid"),
-                    },
+                    BuildPropertyScroll(),
                 },
             };
 
             var ve = _manager.RenderRoot(root);
             if (ve != null)
                 rootVisualElement.Add(ve);
+        }
+
+        /// <summary>属性面板滚动区（按纵向滚动，横向不出现空滚动条）。</summary>
+        private ScrollView BuildPropertyScroll()
+        {
+            var scroll = new ScrollView { HorizontalScrollerVisibility = ScrollerVisibility.Hidden };
+            scroll.Add(new PropertyGridElement(_config).WithKey("feature_showcase_propertygrid"));
+            return scroll;
         }
 
         private void OnDestroy()

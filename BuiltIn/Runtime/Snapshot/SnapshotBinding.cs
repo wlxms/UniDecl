@@ -78,6 +78,36 @@ namespace UniDecl.BuiltIn.Runtime.Snapshot
 
         internal SnapshotBinding Parent { get; set; }
 
+        // ─── 引用漂移追踪（对象字段被整体替换时退化为整体引用叶子）───
+        // 对象字段（如 parent.Child = new Child()）替换引用后，子绑定展开的仍是旧对象，
+        // 字段级 diff 无法感知引用变化。展开目标引用 + 字段写回 setter 使其可记录/恢复。
+        private object _expandedTarget;
+        private SnapshotSetter _referenceWriteback;
+
+        /// <summary>登记展开目标引用与字段写回（仅由 CreateValueBinding 的对象字段分支调用）。</summary>
+        internal void AttachReferenceTracking(object target, SnapshotSetter writeback)
+        {
+            _expandedTarget = target;
+            _referenceWriteback = writeback;
+        }
+
+        /// <summary>
+        /// 引用漂移提交 guard：getter 引用已不是展开目标 → 记整体引用 step（旧引用→新引用），
+        /// 并按新对象重建子树。返回 true 表示已处理，调用方中止常规提交。
+        /// </summary>
+        protected bool CommitReferenceDrift()
+        {
+            if (_referenceWriteback == null) return false;
+            var target = _getter();
+            if (ReferenceEquals(target, _expandedTarget)) return false;
+
+            _manager.RecordValue(_baseline, Id, _path, _scopeId);
+            _baseline = target;
+            RebuildChildren(target);
+            if (Parent == null) _manager.CommitPending();
+            return true;
+        }
+
         /// <summary>叶子判定：值类型 / string / Unity 对象不展开</summary>
         protected virtual bool IsLeaf(object value)
         {
@@ -130,7 +160,11 @@ namespace UniDecl.BuiltIn.Runtime.Snapshot
             else if (value is IDictionary)
                 child = new DictSnapshotBinding(_manager, _scopeId, childPath, getter, null, visited);
             else
+            {
                 child = new SnapshotBinding(_manager, _scopeId, childPath, getter, null, visited);
+                // 对象字段登记引用追踪：字段引用被整体替换时可记/恢复整体引用
+                ((SnapshotBinding)child).AttachReferenceTracking(value, setter);
+            }
             if (child is SnapshotBinding sb)
                 sb.Parent = this; // 恢复时 changeSet 冒泡链
             return child;
@@ -145,6 +179,7 @@ namespace UniDecl.BuiltIn.Runtime.Snapshot
                 throw new InvalidOperationException(
                     $"Cannot commit binding '{_path}' during undo/redo restore.");
             if (_children.Count == 0) CommitLeaf();
+            else if (CommitReferenceDrift()) { /* 引用被整体替换：整体 step，子树已重建 */ }
             else CommitContainer();
         }
 
@@ -206,12 +241,35 @@ namespace UniDecl.BuiltIn.Runtime.Snapshot
         /// <summary>恢复（仅 SnapshotManager 调用）：写回旧值并冒泡通知容器，返回当前值（生成 redo step）</summary>
         public virtual object Restore(object value, ChangeSet changes)
         {
+            // 引用漂移 step：整体写回旧引用，并按旧对象重建子树
+            if (_children.Count > 0 && _referenceWriteback != null && !ReferenceEquals(value, _expandedTarget))
+            {
+                var currentRef = _getter();
+                changes.Add(_path, currentRef, value);
+                _referenceWriteback(value, currentRef, changes);
+                _baseline = value;
+                RebuildChildren(value);
+                Parent?.Notify(changes);
+                return currentRef;
+            }
+
             var current = _getter();
             changes.Add(_path, current, value); // 追加自身变更（容器聚合由此积累）
             _setter?.Invoke(value, current, changes);
             _baseline = value; // 基线同步：恢复后再 Commit 不误判
             Parent?.Notify(changes);
             return current;
+        }
+
+        /// <summary>按新目标对象重建子树（引用漂移后子绑定指向新对象）。</summary>
+        private void RebuildChildren(object target)
+        {
+            foreach (var child in _children) child.Dispose();
+            _children.Clear();
+            if (target == null) { _expandedTarget = null; return; }
+            var visited = new HashSet<object> { target };
+            ExpandObject(target, _children, visited);
+            _expandedTarget = target;
         }
 
         /// <summary>容器通知：收到子树变更聚合，向上冒泡</summary>

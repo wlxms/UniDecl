@@ -15,6 +15,9 @@ namespace UniDecl.PropertyGrid.Editor
         public string Title;
         public int Order;
         public bool Expanded = true;
+
+        /// <summary>类级声明的布局特性（决定组节点类型的依据；字段未显式声明时中间路径段也按此升级）</summary>
+        public LayoutGroupAttribute Attr;
     }
 
     /// <summary>

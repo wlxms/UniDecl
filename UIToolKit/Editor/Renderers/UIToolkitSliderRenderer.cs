@@ -43,6 +43,7 @@ namespace UniDecl.Editor.UIToolKit.Renderers
             });
             slider.RegisterCallback<PointerUpEvent>(_ => element.OnCommit?.Invoke(element.Value));
             UIToolkitStyleApplier.ApplyElementStyles(element, slider);
+            // 填充 Value 列的手势几何见 .ud-slider（DefaultStyle.uss）
             return slider;
         }
     }

@@ -6,7 +6,11 @@ using UniDecl.PropertyGrid.Runtime;
 
 namespace UniDecl.PropertyGrid.Editor
 {
-    public sealed class PropertyAccessor
+    /// <summary>
+    /// 字段访问器——沿 FieldInfo 路径读写目标对象。
+    /// 非 sealed：列表元素访问器（ListItemAccessor）等非字段寻址子类可覆写读写语义。
+    /// </summary>
+    public class PropertyAccessor
     {
         public object Root { get; }
         public Type PropertyType { get; }
@@ -26,7 +30,8 @@ namespace UniDecl.PropertyGrid.Editor
             StyleClass = styleClass; Context = context;
         }
 
-        public object GetValue()
+        /// <summary>沿字段路径读取当前值。virtual 供列表元素访问器等非字段寻址的子类覆写。</summary>
+        public virtual object GetValue()
         {
             object cur = Root;
             for (int i = 0; i < _path.Length; i++)
@@ -37,7 +42,8 @@ namespace UniDecl.PropertyGrid.Editor
             return cur;
         }
 
-        public void SetValue(object value)
+        /// <summary>沿字段路径写入新值；值类型中间层自动回写。virtual 供子类覆写。</summary>
+        public virtual void SetValue(object value)
         {
             object[] chain = new object[_path.Length];
             object cur = Root;
@@ -57,8 +63,14 @@ namespace UniDecl.PropertyGrid.Editor
                 var carrier = (i == 0) ? Root : chain[i - 1];
                 _path[i].SetValue(carrier, chain[i]);
             }
-            ValueChanged?.Invoke(value, oldVal);
-            Context?.RaiseFieldChanged(SourceField?.Name, value);
+            RaiseChanged(value, oldVal);
+        }
+
+        /// <summary>触发 ValueChanged / BuildContext.FieldChanged（子类覆写 SetValue 后复用）。</summary>
+        protected void RaiseChanged(object newValue, object oldValue)
+        {
+            ValueChanged?.Invoke(newValue, oldValue);
+            Context?.RaiseFieldChanged(SourceField?.Name, newValue);
         }
 
         public PropertyAccessor Child(FieldInfo childField)
@@ -118,6 +130,10 @@ namespace UniDecl.PropertyGrid.Editor
             // 2. 继承链回退（enum → typeof(Enum)，子类 → typeof(UnityEngine.Object)）
             if (t.IsEnum && _r.TryGetValue(typeof(Enum), out r)) return true;
             if (typeof(UnityEngine.Object).IsAssignableFrom(t) && _r.TryGetValue(typeof(UnityEngine.Object), out r)) return true;
+            // 3. 集合回退：数组/IList → 集合渲染器（string 自身实现 IList，需排除）
+            if (t != typeof(string)
+                && typeof(System.Collections.IList).IsAssignableFrom(t)
+                && _r.TryGetValue(typeof(System.Collections.IList), out r)) return true;
             r = null;
             return false;
         }

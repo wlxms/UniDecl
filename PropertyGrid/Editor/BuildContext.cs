@@ -29,7 +29,9 @@ namespace UniDecl.PropertyGrid.Editor
             object r = null;
             if (node.RendererType != null)
                 try { r = Activator.CreateInstance(node.RendererType); } catch (Exception ex) { UnityEngine.Debug.LogWarning($"[PropertyGrid] Renderer creation failed: {ex.Message}"); }
-            return new BuildContext { Target = node.Target, Renderer = r, Meta = node.Meta, PropertyGridElement = Root.PropertyGridElement, Parent = this };
+            // 子对象无专属 Renderer 时继承父级的——嵌套字段的 Dropdown/Button/Validate
+            // 等回调约定（Method() / Method(T)）沿层级向根查找，与 ResolveMember 的解析链一致
+            return new BuildContext { Target = node.Target, Renderer = r ?? Renderer, Meta = node.Meta, PropertyGridElement = Root.PropertyGridElement, Parent = this };
         }
 
         public object ResolveMember(string member)

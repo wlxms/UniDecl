@@ -149,11 +149,28 @@ namespace UniDecl.PropertyGrid.Editor
         {
             if (!(input is PropertyField pf)) return input;
             var attr = ctx.GetAttribute<RangeAttribute>();
+            var step = ctx.GetAttribute<StepAttribute>();
             var slider = new Slider(value: Convert.ToSingle(ctx.Accessor.GetValue()), low: (float)attr.Min, high: (float)attr.Max);
             slider.WithKey(pf.Editor?.Key); // 继承 insp_字段名：跨 rebuild 稳定（undo 合并按 Path 匹配）
-            slider.OnValueChanged = (n) => ctx.Accessor.SetValue(ctx.Accessor.PropertyType == typeof(int) ? Mathf.RoundToInt(n) : (object)n);
+            slider.OnValueChanged = (n) =>
+            {
+                if (step != null) n = NumericStep.Snap(n, (float)attr.Min, (float)attr.Max, step.Value);
+                ctx.Accessor.SetValue(ctx.Accessor.PropertyType == typeof(int) ? Mathf.RoundToInt(n) : (object)n);
+            };
             pf.Editor = slider;
             return pf;
+        }
+    }
+
+    /// <summary>数值步进——把连续值吸附到 min + k*step 网格并夹回范围。</summary>
+    public static class NumericStep
+    {
+        public static float Snap(float value, float min, float max, double step)
+        {
+            if (step <= 0) return Mathf.Clamp(value, min, max);
+            var k = Math.Round((value - min) / step, MidpointRounding.AwayFromZero);
+            var snapped = min + (float)(k * step);
+            return Mathf.Clamp(snapped, min, max);
         }
     }
 
@@ -269,8 +286,13 @@ namespace UniDecl.PropertyGrid.Editor
         public override IElement Process(IElement input, DecoratorContext ctx)
         {
             if (!(input is PropertyField pf)) return input;
+            var attr = ctx.GetAttribute<TextAreaAttribute>();
             var val = ctx.Accessor.GetValue() as string ?? "";
-            var ta = new ResizableTextArea(val);
+            var ta = new ResizableTextArea(val)
+            {
+                MinLines = attr.MinLines,
+                MaxLines = attr.MaxLines,
+            };
             ta.WithKey(pf.Editor?.Key);
             ta.OnValueChanged = (n, _) => ctx.Accessor.SetValue(n);
             pf.Editor = ta;
@@ -287,10 +309,10 @@ namespace UniDecl.PropertyGrid.Editor
             if (!(input is PropertyField pf)) return input;
             var t = ctx.Accessor.PropertyType;
             var v = ctx.Accessor.GetValue();
-            var ef = new EnumField(null, t, v != null ? Convert.ToInt32(v) : 0);
-            ef.WithKey(pf.Editor?.Key);
-            ef.OnValueChanged = (n) => ctx.Accessor.SetValue(Enum.ToObject(t, n));
-            pf.Editor = ef;
+            var group = new EnumToggleGroup(t, v != null ? Convert.ToInt32(v) : 0);
+            group.WithKey(pf.Editor?.Key);
+            group.OnValueChanged = (n) => ctx.Accessor.SetValue(Enum.ToObject(t, n));
+            pf.Editor = group;
             return pf;
         }
     }
@@ -304,15 +326,7 @@ namespace UniDecl.PropertyGrid.Editor
             var attr = ctx.GetAttribute<ButtonAttribute>();
             var btn = new Button(attr.Label);
             btn.WithKey(pf.Editor?.Key);
-            btn.OnClick = () =>
-            {
-                if (ctx.BuildContext.Renderer == null) return;
-                var m = FieldBinder.FindMethod(ctx.BuildContext.Renderer.GetType(), attr.Method, ctx.BuildContext.Target?.GetType());
-                if (m == null) return;
-                var ps = m.GetParameters();
-                if (ps.Length == 0) m.Invoke(ctx.BuildContext.Renderer, null);
-                else if (ps.Length == 1 && ctx.BuildContext.Target != null) m.Invoke(ctx.BuildContext.Renderer, new[] { ctx.BuildContext.Target });
-            };
+            btn.OnClick = () => WidgetFactory.InvokeRendererMethod(ctx.BuildContext, attr.Method);
             pf.Editor = btn;
             pf.ShowLabel = false;
             return pf;
@@ -399,16 +413,7 @@ namespace UniDecl.PropertyGrid.Editor
         {
             if (!(input is PropertyField pf) || pf.Accessor == null) return input;
             var attr = ctx.GetAttribute<OnValueChangedAttribute>();
-            pf.Accessor.ValueChanged += (newVal, oldVal) =>
-            {
-                if (ctx.BuildContext.Renderer == null) return;
-                var m = FieldBinder.FindMethod(ctx.BuildContext.Renderer.GetType(), attr.Method, ctx.BuildContext.Target?.GetType());
-                if (m == null) return;
-                var ps = m.GetParameters();
-                if (ps.Length == 0) m.Invoke(ctx.BuildContext.Renderer, null);
-                else if (ps.Length == 2) m.Invoke(ctx.BuildContext.Renderer, new[] { oldVal, newVal });
-                else if (ps.Length == 3) m.Invoke(ctx.BuildContext.Renderer, new[] { oldVal, newVal, ctx.BuildContext.Target });
-            };
+            pf.Accessor.ValueChanged += (_, __) => WidgetFactory.InvokeRendererMethod(ctx.BuildContext, attr.Method);
             return input;
         }
     }

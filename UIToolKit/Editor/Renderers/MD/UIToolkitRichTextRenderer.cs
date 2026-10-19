@@ -41,8 +41,7 @@ namespace UniDecl.Editor.UIToolKit.Renderers.MD
             // Always use slow path to ensure links/images are clickable
             var container = new VisualElement();
             container.AddToClassList("ud-md-text-row");
-            container.style.flexDirection = FlexDirection.Row;
-            container.style.flexWrap = Wrap.Wrap;
+            // 行向 / 折行 / 交叉轴对齐由 .ud-md-text-row 承担（DefaultStyle.uss）
             RenderInlinesIntoContainer(inlines, container, onUrlClick);
             return container;
         }

@@ -40,7 +40,7 @@ namespace UniDecl.Editor.UIToolKit.Renderers
                 element.OnSelectionChanged?.Invoke(newIndex);
                 manager.Dispatch(new DropdownChangeEvent(element, newIndex));
                 binding.BreakMerge(); // 离散选择：每次独立 step
-                binding.Commit();
+                binding.BreakMerge(); binding.Commit(); // 离散提交点：打断时间窗合并
                 element.NotifyChanged();
             });
             UIToolkitStyleApplier.ApplyElementStyles(element, field);

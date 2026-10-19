@@ -16,15 +16,19 @@ namespace UniDecl.Editor.UIToolKit.Renderers.MD
     /// </summary>
     public class UIToolkitCodeBlockRenderer : IElementRenderer<W.CodeBlock, VisualElement>
     {
-        private const string DefaultCodeColor = "#d4d4d4";
+        const string CopyBtnClass = "ud-md-codeblock-copy-btn";
+        const string CopyBtnOkClass = "ud-md-codeblock-copy-btn--ok";
+        const string IconClass = "ud-md-codeblock-icon";
+        const string IconOkClass = "ud-md-codeblock-icon--ok";
 
         public VisualElement Render(W.CodeBlock element, VisualElement existing, IElementRenderHost<VisualElement> manager, ElementState state)
         {
             if (element == null) return null;
 
+            // 外观（底色 / 描边 / 圆角 / 内边距 / 字体）全部由 .ud-md-codeblock* 承担，
+            // 此处只负责结构：容器 → 标签条 → 代码文本。
             var container = new VisualElement();
             container.AddToClassList("ud-md-codeblock");
-            container.style.flexDirection = FlexDirection.Column;
 
             // ── Label bar: language text (left) + copy icon (right) ────
             bool hasLabelBar = !string.IsNullOrEmpty(element.Language) || element.ShowCopyButton;
@@ -32,20 +36,17 @@ namespace UniDecl.Editor.UIToolKit.Renderers.MD
             {
                 var labelBar = new VisualElement();
                 labelBar.AddToClassList("ud-md-codeblock-lang");
-                labelBar.style.flexDirection = FlexDirection.Row;
-                labelBar.style.justifyContent = Justify.SpaceBetween;
-                labelBar.style.alignItems = Align.Center;
 
                 if (!string.IsNullOrEmpty(element.Language))
                 {
                     var langText = new Label(element.Language);
-                    langText.style.unityFontStyleAndWeight = FontStyle.Bold;
+                    langText.AddToClassList("ud-md-codeblock-lang-text");
                     labelBar.Add(langText);
                 }
                 else
                 {
                     var spacer = new VisualElement();
-                    spacer.style.flexGrow = 1;
+                    spacer.AddToClassList("ud-md-codeblock-lang-spacer");
                     labelBar.Add(spacer);
                 }
 
@@ -78,11 +79,8 @@ namespace UniDecl.Editor.UIToolKit.Renderers.MD
                 enableRichText = richText,
                 parseEscapeSequences = false,
             };
-            codeLabel.AddToClassList("ud-md-code");
+            codeLabel.AddToClassList("ud-md-code");   // 前景色取自 --ud-text-code
             codeLabel.selection.isSelectable = true;
-
-            if (!richText)
-                codeLabel.style.color = ColorUtility.TryParseHtmlString(DefaultCodeColor, out var dc) ? dc : Color.white;
 
             container.Add(codeLabel);
 
@@ -94,32 +92,15 @@ namespace UniDecl.Editor.UIToolKit.Renderers.MD
         // Copy icon — small transparent Image button using built-in icons
         // =================================================================
 
-        private static VisualElement CreateCopyIconButton(string code, System.Action<string> onCopy)
+        static VisualElement CreateCopyIconButton(string code, System.Action<string> onCopy)
         {
             var icon = EditorGUIUtility.IconContent("TreeEditor.Duplicate")?.image
                        ?? EditorGUIUtility.FindTexture("TreeEditor.Duplicate");
 
             var btn = new Button();
-            btn.AddToClassList("ud-md-codeblock-copy-btn");
-            btn.style.width = 20;
-            btn.style.height = 20;
-            btn.style.alignItems = Align.Center;
-            btn.style.justifyContent = Justify.Center;
+            btn.AddToClassList(CopyBtnClass);
             btn.Clear();
-
-            if (icon != null)
-            {
-                var img = new Image { image = icon, scaleMode = ScaleMode.ScaleToFit };
-                img.style.width = 20;
-                img.style.height = 20;
-                btn.Add(img);
-            }
-            else
-            {
-                btn.text = "\u2398";
-                btn.style.fontSize = 18;
-                btn.style.unityTextAlign = TextAnchor.MiddleCenter;
-            }
+            SetCopyIcon(btn, icon as Texture2D);
 
             btn.tooltip = "Copy to clipboard";
             Texture2D capturedIcon = icon as Texture2D;
@@ -130,38 +111,51 @@ namespace UniDecl.Editor.UIToolKit.Renderers.MD
                 else GUIUtility.systemCopyBuffer = code;
 
                 // Briefly show green checkmark
-                btn.Clear();
-                var checkIcon = EditorGUIUtility.FindTexture("d_Valid");
-                if (checkIcon != null)
-                {
-                    var ci = new Image { image = checkIcon as Texture2D, scaleMode = ScaleMode.ScaleToFit };
-                    ci.style.width = 20; ci.style.height = 20;
-                    ci.style.unityBackgroundImageTintColor = new StyleColor(new Color(0.4f, 0.8f, 0.4f));
-                    btn.Add(ci);
-                }
-                else
-                {
-                    btn.text = "\u2713";
-                    btn.style.color = new Color(0.4f, 0.8f, 0.4f);
-                }
+                btn.AddToClassList(CopyBtnOkClass);
+                SetCheckIcon(btn);
 
                 btn.schedule.Execute(() =>
                 {
-                    btn.Clear();
-                    if (capturedIcon != null)
-                    {
-                        var img2 = new Image { image = capturedIcon, scaleMode = ScaleMode.ScaleToFit };
-                        img2.style.width = 20; img2.style.height = 20;
-                        btn.Add(img2);
-                    }
-                    else
-                    {
-                        btn.text = "\u2398";
-                    }
+                    btn.RemoveFromClassList(CopyBtnOkClass);
+                    SetCopyIcon(btn, capturedIcon);
                 }).ExecuteLater(1500);
             };
 
             return btn;
+        }
+
+        static void SetCopyIcon(Button btn, Texture2D icon)
+        {
+            btn.Clear();
+            btn.text = string.Empty;
+            if (icon != null)
+            {
+                var img = new Image { image = icon, scaleMode = ScaleMode.ScaleToFit };
+                img.AddToClassList(IconClass);
+                btn.Add(img);
+            }
+            else
+            {
+                btn.text = "\u2398";
+            }
+        }
+
+        static void SetCheckIcon(Button btn)
+        {
+            btn.Clear();
+            btn.text = string.Empty;
+            var checkIcon = EditorGUIUtility.FindTexture("d_Valid") as Texture2D;
+            if (checkIcon != null)
+            {
+                var ci = new Image { image = checkIcon, scaleMode = ScaleMode.ScaleToFit };
+                ci.AddToClassList(IconClass);
+                ci.AddToClassList(IconOkClass);
+                btn.Add(ci);
+            }
+            else
+            {
+                btn.text = "\u2713";
+            }
         }
     }
 }

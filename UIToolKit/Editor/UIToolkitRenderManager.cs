@@ -110,6 +110,8 @@ namespace UniDecl.Editor.UIToolKit
             RegisterRenderer<IMGUIContainer>(new UIToolkitIMGUIContainerRenderer());
             RegisterRenderer<UniDecl.BuiltIn.Runtime.Widgets.PopupWindow>(new UIToolkitPopupWindowRenderer());
             RegisterRenderer<ResizableTextArea>(new UIToolkitResizableTextAreaRenderer());
+            RegisterRenderer<Tabs>(new UIToolkitTabsRenderer());
+            RegisterRenderer<EnumToggleGroup>(new UIToolkitEnumToggleGroupRenderer());
             RegisterRenderer<UeCard>(new UIToolkitUeCardRenderer());
             // P1-D: 数值字段扩展
             RegisterRenderer<SliderInt>(new UIToolkitSliderIntRenderer());

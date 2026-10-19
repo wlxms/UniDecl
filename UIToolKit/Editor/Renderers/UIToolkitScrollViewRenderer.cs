@@ -12,8 +12,9 @@ namespace UniDecl.Editor.UIToolKit.Renderers
             if (element == null) return null;
 
             var scrollView = new UnityEngine.UIElements.ScrollView();
-            scrollView.style.flexGrow = 1;
-            scrollView.style.flexShrink = 1;
+            // flex-grow / shrink / min-height 见 .ud-scrollview（DefaultStyle.uss）
+            scrollView.horizontalScrollerVisibility = ToVisibility(element.HorizontalScrollerVisibility);
+            scrollView.verticalScrollerVisibility = ToVisibility(element.VerticalScrollerVisibility);
 
             foreach (var child in element.Children)
             {
@@ -25,6 +26,11 @@ namespace UniDecl.Editor.UIToolKit.Renderers
             UIToolkitStyleApplier.ApplyElementStyles(element, scrollView);
             return scrollView;
         }
+
+        static UnityEngine.UIElements.ScrollerVisibility ToVisibility(W.ScrollerVisibility v)
+            => v == W.ScrollerVisibility.AlwaysVisible ? UnityEngine.UIElements.ScrollerVisibility.AlwaysVisible
+             : v == W.ScrollerVisibility.Hidden ? UnityEngine.UIElements.ScrollerVisibility.Hidden
+             : UnityEngine.UIElements.ScrollerVisibility.Auto;
 
         public void OnEvent(NavigationEvent @event, DOMNode<VisualElement> node, DOMTree<VisualElement> tree)
         {

@@ -1,13 +1,14 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using UniDecl.PropertyGrid.Runtime;
 using UniDecl.BuiltIn.Runtime.Core;
 using UniDecl.BuiltIn.Runtime.Widgets;
 using UnityEditor;
 using UnityEngine;
 using PropertyField = UniDecl.PropertyGrid.Editor.Elements.PropertyField;
+using EditorValueSync = UniDecl.PropertyGrid.Editor.Elements.EditorValueSync;
+using TabSelectionMemory = UniDecl.PropertyGrid.Editor.Elements.TabSelectionMemory;
 
 namespace UniDecl.PropertyGrid.Editor
 {
@@ -20,6 +21,7 @@ namespace UniDecl.PropertyGrid.Editor
             if (node is FieldLayoutNode f) return BuildField(f, ctx);
             if (node is ClassElementLayoutNode c) return BuildClass(c, ctx);
             if (node is ObjectLayoutNode o) return BuildObject(o, ctx);
+            if (node is TabViewLayoutNode tv) return BuildTabView(tv, ctx);
             if (node is GroupLayoutNode g) return BuildGroup(g, ctx);
             return null;
         }
@@ -29,6 +31,7 @@ namespace UniDecl.PropertyGrid.Editor
             var childCtx = ctx.CreateChild(node);
             var handler = GlobalPropertyGridRegistry.FindByNode(node) ?? new ObjectLayoutHandler();
             var container = (ContainerElement)handler.Build(node, childCtx);
+            // 子节点顺序已在 LayoutResolver.Normalize 统一排序，此处按序直出
             foreach (var c in node.Children) { var el = BuildNode(c, childCtx); if (el != null) container.Add(el); }
             return container;
         }
@@ -42,10 +45,32 @@ namespace UniDecl.PropertyGrid.Editor
             // P2-2: 组级 StyleClass 通过 Key 前缀携带，渲染层解析（Element 无 StyleClass 字段）
             if (!string.IsNullOrEmpty(node.StyleClass))
                 container.WithKey($"{container.Key}#{node.StyleClass.Replace(' ', '_')}");
-            var items = new List<(int o, IElement e)>();
-            foreach (var c in node.Children) { var el = BuildNode(c, ctx); if (el != null) items.Add((c.Order, el)); }
-            foreach (var (_, element) in items.OrderBy(x => x.o)) container.Add(element);
+            foreach (var c in node.Children) { var el = BuildNode(c, ctx); if (el != null) container.Add(el); }
             return container;
+        }
+
+        /// <summary>
+        /// 页签视图——Normalize 合成的连续 TabGroup 容器。
+        /// 页内容直出（不再包一层 Foldout），页标题取自 Tab 节点的 DisplayName（类级 Title）。
+        /// 页选择经 TabSelectionMemory 跨整树重建持久化（交互会触发根级重建）。
+        /// </summary>
+        static IElement BuildTabView(TabViewLayoutNode node, BuildContext ctx)
+        {
+            var keyPaths = node.Children.Select(c => c.Path).ToArray();
+            var viewKey = $"tabview_{string.Join("|", keyPaths)}";
+            var tabs = new Tabs { SelectedIndex = TabSelectionMemory.Get(viewKey, node.SelectedIndex) };
+            tabs.WithKey(viewKey);
+            tabs.OnSelectionChanged = index => TabSelectionMemory.Set(viewKey, index);
+            foreach (var c in node.Children)
+            {
+                if (!(c is GroupLayoutNode g)) continue;
+                var page = new VerticalLayout();
+                page.WithKey($"tabpage_{g.Path}");
+                foreach (var ch in g.Children) { var el = BuildNode(ch, ctx); if (el != null) page.Add(el); }
+                tabs.AddPage(g.DisplayName ?? g.Path, page);
+            }
+            if (tabs.Pages.Count == 0) return null;
+            return tabs;
         }
 
         static IElement BuildField(FieldLayoutNode node, BuildContext ctx)
@@ -62,15 +87,30 @@ namespace UniDecl.PropertyGrid.Editor
             var pf = new PropertyField(label) { Editor = editor, Accessor = a };
             // EnableIf 处理（P1-2 修复）
             ApplyEnableIf(attrs, ctx, pf);
+
+            // 数据被外部（按钮回调/校验器等）修改后，把最新值回写编辑器驱动刷新。
+            // 订阅先于装饰器执行：Validate 等构建期写入 FieldChanged 时即被捕捉。
+            ctx.Root.FieldChanged += (_, __) => EditorValueSync.Sync(pf.Editor, a);
+
             var dc = new DecoratorContext(a, attrs, ctx, pf);
             IElement result = pf;
             foreach (var d in FieldDecoratorRegistry.All) if (d.Applies(dc)) result = d.Process(result, dc);
+
+            // 构建期装饰器可能已改数据（如 Validate 回写结果），渲染前对齐一次编辑器初值
+            EditorValueSync.Sync(pf.Editor, a);
+
             return result;
         }
 
         static IElement BuildClass(ClassElementLayoutNode node, BuildContext ctx)
         {
-            if (node.Source is ButtonAttribute ba) { var b = new Button(ba.Label); b.WithKey($"clsbtn_{ba.Method}"); b.OnClick = () => { if (ctx.Renderer == null) return; var m = FieldBinder.FindMethod(ctx.Renderer.GetType(), ba.Method, ctx.Target?.GetType()); if (m != null) { var ps = m.GetParameters(); if (ps.Length == 0) m.Invoke(ctx.Renderer, null); else if (ps.Length == 1 && ctx.Target != null) m.Invoke(ctx.Renderer, new[] { ctx.Target }); } }; return b; }
+            if (node.Source is ButtonAttribute ba)
+            {
+                var b = new Button(ba.Label);
+                b.WithKey($"clsbtn_{ba.Method}");
+                b.OnClick = () => InvokeRendererMethod(ctx, ba.Method);
+                return b;
+            }
             if (node.Source is PropertyGridLabelAttribute la)
             {
                 var label = new Label(FieldBinder.ResolveReference(la.Text, ctx.Renderer, ctx.Target));
@@ -95,6 +135,22 @@ namespace UniDecl.PropertyGrid.Editor
             var placeholder = new Label(node.DisplayName ?? string.Empty);
             placeholder.WithKey($"clsmsg_{node.DisplayName}");
             return placeholder;
+        }
+
+        /// <summary>
+        /// 调用 Renderer 方法（Button/Validate 等回调的统一入口）。
+        /// 方法可能直接改写数据对象而不经 accessor——调用后广播 FieldChanged，
+        /// 让 @ 标签、条件显隐与编辑器值同步统一走既有刷新链路。
+        /// </summary>
+        internal static void InvokeRendererMethod(BuildContext ctx, string method)
+        {
+            if (ctx.Renderer == null) return;
+            var m = FieldBinder.FindMethod(ctx.Renderer.GetType(), method, ctx.Target?.GetType());
+            if (m == null) return;
+            var ps = m.GetParameters();
+            if (ps.Length == 0) m.Invoke(ctx.Renderer, null);
+            else if (ctx.Target != null) m.Invoke(ctx.Renderer, new[] { ctx.Target });
+            ctx.Root.RaiseFieldChanged(method, null);
         }
 
         static HelpBoxMessageType ToMessageType(InfoBoxType type)

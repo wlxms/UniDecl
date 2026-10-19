@@ -22,14 +22,13 @@ namespace UniDecl.Editor.UIToolKit.Renderers.MD
 
             var table = new VisualElement();
             table.AddToClassList("ud-md-table");
-            table.style.flexDirection = FlexDirection.Column;
+            // 轴向由 .ud-md-table / __header / __row 承担（DefaultStyle.uss）
 
             // Header row
             if (element.Columns != null && element.Columns.Count > 0)
             {
                 var headerRow = new VisualElement();
                 headerRow.AddToClassList("ud-md-table-header");
-                headerRow.style.flexDirection = FlexDirection.Row;
 
                 for (int col = 0; col < element.Columns.Count; col++)
                 {
@@ -46,7 +45,6 @@ namespace UniDecl.Editor.UIToolKit.Renderers.MD
             {
                 var dataRow = new VisualElement();
                 dataRow.AddToClassList("ud-md-table-row");
-                dataRow.style.flexDirection = FlexDirection.Row;
 
                 if (element.Columns != null)
                 {

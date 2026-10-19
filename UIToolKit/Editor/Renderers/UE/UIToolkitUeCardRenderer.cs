@@ -13,8 +13,7 @@ namespace UniDecl.Editor.UIToolKit.Renderers.UE
             if (element == null) return null;
 
             var container = new VisualElement();
-            container.style.flexDirection = FlexDirection.Column;
-            container.style.alignItems = Align.Stretch;
+            // 轴向 / 交叉轴对齐由 .ud-card 承担（DefaultStyle.uss）
 
             if (!string.IsNullOrEmpty(element.Title))
             {

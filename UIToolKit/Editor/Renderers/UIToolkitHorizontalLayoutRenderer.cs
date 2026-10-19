@@ -14,8 +14,7 @@ namespace UniDecl.Editor.UIToolKit.Renderers
             if (element == null) return null;
 
             var container = new VisualElement();
-            container.style.flexDirection = FlexDirection.Row;
-            container.style.alignItems = Align.Center;
+            // 轴向 / 交叉轴对齐见 .ud-horizontal-layout（DefaultStyle.uss）
 
             foreach (var child in element.Children)
             {

@@ -13,8 +13,7 @@ namespace UniDecl.Editor.UIToolKit.Renderers
 
             // VisualSplitter is internal in this Unity version; fallback to a container
             var container = new VisualElement();
-            container.style.flexDirection = FlexDirection.Row;
-            container.style.flexGrow = 1;
+            // 轴向 / 伸缩由 .ud-splitter 承担（DefaultStyle.uss）
 
             foreach (var child in element.Children)
             {

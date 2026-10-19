@@ -26,6 +26,13 @@ namespace UniDecl.Editor.UIToolKit.Renderers
                 isDelayed = true
             };
 
+            // 行数约束：UITK 无原生行数 API，按单行行高（约 20px）换算 min/max 高度
+            const float lineHeight = 20f;
+            if (element.MinLines > 0)
+                field.style.minHeight = element.MinLines * lineHeight;
+            if (element.MaxLines > 0)
+                field.style.maxHeight = element.MaxLines * lineHeight;
+
             // Snapshot 绑定——连续输入型，Blur 时提交
             var binding = new SnapshotBinding(state?.Scope, element.Key,
                 () => element.Value ?? string.Empty,
@@ -42,12 +49,12 @@ namespace UniDecl.Editor.UIToolKit.Renderers
                 element.OnValueChanged?.Invoke(evt.newValue, evt.previousValue);
                 manager.Dispatch(new ResizableTextAreaChangeEvent(element, evt.newValue));
                 // isDelayed=true：ChangeEvent 仅在失焦/回车触发一次，即提交点
-                binding.Commit();
+                binding.BreakMerge(); binding.Commit(); // 离散提交点：打断时间窗合并
                 element.NotifyChanged();
             });
             field.RegisterCallback<BlurEvent>(_ =>
             {
-                binding.Commit();
+                binding.BreakMerge(); binding.Commit(); // 离散提交点：打断时间窗合并
                 element.OnCommit?.Invoke(element.Value ?? string.Empty);
             });
             UIToolkitStyleApplier.ApplyElementStyles(element, field);

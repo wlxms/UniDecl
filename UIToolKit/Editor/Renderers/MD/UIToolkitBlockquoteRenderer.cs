@@ -18,7 +18,7 @@ namespace UniDecl.Editor.UIToolKit.Renderers.MD
 
             var container = new VisualElement();
             container.AddToClassList("ud-md-blockquote");
-            container.style.flexDirection = FlexDirection.Column;
+            // 轴向由 .ud-md-blockquote 承担（DefaultStyle.uss）
 
             foreach (var child in element.Children)
             {

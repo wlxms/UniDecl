@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
+using UniDecl.PropertyGrid.Editor.Decorators;
 using UniDecl.PropertyGrid.Runtime;
 using UnityEngine;
 
@@ -87,6 +88,8 @@ namespace UniDecl.PropertyGrid.Editor
             FieldTypeRendererRegistry.Register(new GradientTypeRenderer());
             FieldTypeRendererRegistry.Register(new LayerMaskTypeRenderer());
             FieldTypeRendererRegistry.Register(new ObjectTypeRenderer());
+            // 集合：注册键为 IList 标记类型，TryResolve 集合回退分支路由（数组/List<>）
+            FieldTypeRendererRegistry.Register(new ListTypeRenderer());
 
             // Replacement Decorator（P=2000）
             FieldDecoratorRegistry.Register(new RangeDecorator());
@@ -95,6 +98,10 @@ namespace UniDecl.PropertyGrid.Editor
             FieldDecoratorRegistry.Register(new EnumToggleButtonsDecorator());
             FieldDecoratorRegistry.Register(new ButtonFieldDecorator());
             FieldDecoratorRegistry.Register(new DropdownDecorator());
+            FieldDecoratorRegistry.Register(new FilePathDecorator());
+            FieldDecoratorRegistry.Register(new FolderPathDecorator());
+            FieldDecoratorRegistry.Register(new PreviewFieldDecorator());
+            FieldDecoratorRegistry.Register(new ColorPaletteDecorator());
             // Metadata Decorator（P=1000）
             FieldDecoratorRegistry.Register(new LabelTextDecorator());
             FieldDecoratorRegistry.Register(new HideLabelDecorator());
@@ -103,6 +110,9 @@ namespace UniDecl.PropertyGrid.Editor
             FieldDecoratorRegistry.Register(new IndentDecorator());
             FieldDecoratorRegistry.Register(new OnValueChangedDecorator());
             FieldDecoratorRegistry.Register(new ConditionDecorator());
+            FieldDecoratorRegistry.Register(new ValidateDecorator());
+            FieldDecoratorRegistry.Register(new SpaceDecorator());
+            FieldDecoratorRegistry.Register(new FlexSizeDecorator());
         }
     }
 }

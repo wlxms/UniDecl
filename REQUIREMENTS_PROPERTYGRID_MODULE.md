@@ -232,6 +232,15 @@ public class EquipConfig
 - 类级：提供**可覆盖的默认值**（标题、排序等），方便扫一眼类名就感知布局
 - 字段级：**创建并进入**组，实际影响渲染结构
 
+### 3.1.1 InlineProperty 的局部语义
+
+`[InlineProperty]` 不是布局组，也不参与 `[HGroup]` / `[VGroup]` 的传染式状态机。它只作用于当前字段的嵌套对象 Value：
+
+- 嵌套对象 Inline 展开时，Value 内部的初始布局方向为横向。
+- 不改变父级 `currentGroup`，不影响当前字段之后的兄弟字段。
+- 嵌套对象内部的布局 Attribute 在该对象自己的字段作用域内解析；横向初始方向不会回传到父对象。
+- 需要让后续字段持续水平排列时，必须显式使用 `[HGroup]`。
+
 ### 3.2 双重定向引用（@）
 
 适用于文本框内容的属性（如 `[LabelText]`、`[Tooltip]`、`[SuffixLabel]`），字符串参数加 `@` 前缀会在渲染时自动解析——`[LabelText("@displayName")]` 从 Renderer 取显示标签，`[SuffixLabel("@unit")]` 从 Renderer 取单位后缀。

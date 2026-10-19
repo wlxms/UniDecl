@@ -34,7 +34,15 @@ namespace UniDecl.PropertyGrid.Editor
         public Type LayoutNodeType => typeof(ObjectLayoutNode); public Type AttributeType => null;
         public ObjectLayoutNode CreateNode(string p) => new ObjectLayoutNode { Path = p, DisplayName = p };
         public void MergeAttribute(ObjectLayoutNode n, LayoutGroupAttribute a) { }
-        public IElement Build(ObjectLayoutNode n, BuildContext c) { var v = n.Parent == null ? new VerticalLayout() : (ContainerElement)(n.Direction == InlineDirection.Horizontal ? new HorizontalLayout() : new VerticalLayout()); v.WithKey(n.Parent == null ? "root" : $"obj_{n.DisplayName}"); return v; }
+        public IElement Build(ObjectLayoutNode n, BuildContext c)
+        {
+            var isRoot = n.ValueAccessor == null;
+            var value = !isRoot && n.InitialValueDirection == InlineDirection.Horizontal
+                ? (ContainerElement)new HorizontalLayout()
+                : new VerticalLayout();
+            value.WithKey(isRoot ? "root" : $"obj_{n.ValueAccessor?.FullPath ?? n.DisplayName}");
+            return value;
+        }
         Type ILayoutHandler.LayoutNodeType => LayoutNodeType; Type ILayoutHandler.AttributeType => AttributeType;
         ILayoutNode ILayoutHandler.CreateNode(string p) => CreateNode(p);
         void ILayoutHandler.MergeAttribute(ILayoutNode n, LayoutGroupAttribute a) => MergeAttribute((ObjectLayoutNode)n, a);

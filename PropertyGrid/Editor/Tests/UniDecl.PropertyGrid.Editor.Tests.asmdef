@@ -1,0 +1,27 @@
+{
+    "name": "UniDecl.PropertyGrid.Editor.Tests",
+    "rootNamespace": "UniDecl.PropertyGrid.Editor.Tests",
+    "references": [
+        "UniDecl.PropertyGrid.Editor",
+        "UniDecl.PropertyGrid.Runtime",
+        "UniDecl.BuiltIn.Runtime",
+        "UniDecl.BuiltIn.Runtime.Snapshot",
+        "UnityEngine.TestRunner",
+        "UnityEditor.TestRunner"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "nunit.framework.dll"
+    ],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "UNITY_INCLUDE_TESTS"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

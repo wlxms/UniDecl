@@ -13,7 +13,7 @@ namespace UniDecl.Editor.UIToolKit.Renderers
             if (element == null) return null;
 
             var container = new VisualElement();
-            container.style.flexDirection = FlexDirection.Column;
+            // 轴向由 .ud-panel 承担（DefaultStyle.uss）
 
             foreach (var child in element.Children)
             {
